@@ -23,94 +23,72 @@
 
 static int indent_space = 4;
 
-static void print_node_info(const pll_rnode_t * root, int options)
-{
-  if (options & PLL_UTREE_SHOW_LABEL)
-    printf (" %s", root->label);
-  if (options & PLL_UTREE_SHOW_BRANCH_LENGTH)
-    printf (" %f", root->length);
-  if (options & PLL_UTREE_SHOW_CLV_INDEX)
-    printf (" %u", root->clv_index);
-  if (options & PLL_UTREE_SHOW_SCALER_INDEX)
-    printf (" %d", root->scaler_index);
+static void print_node_info(const pll_rnode_t *root, int options) {
+  if (options & PLL_UTREE_SHOW_LABEL) printf(" %s", root->label);
+  if (options & PLL_UTREE_SHOW_BRANCH_LENGTH) printf(" %f", root->length);
+  if (options & PLL_UTREE_SHOW_CLV_INDEX) printf(" %u", root->clv_index);
+  if (options & PLL_UTREE_SHOW_SCALER_INDEX) printf(" %d", root->scaler_index);
   if (options & PLL_UTREE_SHOW_PMATRIX_INDEX)
-    printf (" %u", root->pmatrix_index);
+    printf(" %u", root->pmatrix_index);
   printf("\n");
 }
 
-static void print_tree_recurse(const pll_rnode_t * root,
-                               int indent_level,
-                               int * active_node_order,
-                               int options)
-{
-  int i,j;
+static void print_tree_recurse(const pll_rnode_t *root,
+                               int                indent_level,
+                               int *              active_node_order,
+                               int                options) {
+  int i, j;
 
   if (!root) return;
 
-  for (i = 0; i < indent_level; ++i)
-  {
-    if (active_node_order[i])
-      printf("|");
+  for (i = 0; i < indent_level; ++i) {
+    if (active_node_order[i]) printf("|");
     else
       printf(" ");
 
-    for (j = 0; j < indent_space-1; ++j)
-      printf(" ");
+    for (j = 0; j < indent_space - 1; ++j) printf(" ");
   }
   printf("\n");
 
-  for (i = 0; i < indent_level-1; ++i)
-  {
-    if (active_node_order[i])
-      printf("|");
+  for (i = 0; i < indent_level - 1; ++i) {
+    if (active_node_order[i]) printf("|");
     else
       printf(" ");
 
-    for (j = 0; j < indent_space-1; ++j)
-      printf(" ");
+    for (j = 0; j < indent_space - 1; ++j) printf(" ");
   }
 
   printf("+");
-  for (j = 0; j < indent_space-1; ++j)
-    printf ("-");
+  for (j = 0; j < indent_space - 1; ++j) printf("-");
   if (root->left || root->right) printf("+");
 
   print_node_info(root, options);
 
-  if (active_node_order[indent_level-1] == 2)
-    active_node_order[indent_level-1] = 0;
+  if (active_node_order[indent_level - 1] == 2)
+    active_node_order[indent_level - 1] = 0;
 
   active_node_order[indent_level] = 1;
-  print_tree_recurse(root->left,
-                     indent_level+1,
-                     active_node_order,
-                     options);
+  print_tree_recurse(root->left, indent_level + 1, active_node_order, options);
   active_node_order[indent_level] = 2;
-  print_tree_recurse(root->right,
-                     indent_level+1,
-                     active_node_order,
-                     options);
-
+  print_tree_recurse(root->right, indent_level + 1, active_node_order, options);
 }
 
-static unsigned int tree_indent_level(const pll_rnode_t * root, unsigned int indent)
-{
+static unsigned int tree_indent_level(const pll_rnode_t *root,
+                                      unsigned int       indent) {
   if (!root) return indent;
 
-  unsigned int a = tree_indent_level(root->left,  indent+1);
-  unsigned int b = tree_indent_level(root->right, indent+1);
+  unsigned int a = tree_indent_level(root->left, indent + 1);
+  unsigned int b = tree_indent_level(root->right, indent + 1);
 
   return (a > b ? a : b);
 }
 
-PLL_EXPORT void pll_rtree_show_ascii(const pll_rnode_t * root, int options)
-{
+PLL_EXPORT void pll_rtree_show_ascii(const pll_rnode_t *root, int options) {
 
-  unsigned int indent_max = tree_indent_level(root,0);
+  unsigned int indent_max = tree_indent_level(root, 0);
 
-  int * active_node_order = (int *)malloc((indent_max+1) * sizeof(int));
-  if (!active_node_order)
-  {
+  int *active_node_order = (int *)malloc((indent_max + 1) * sizeof(int));
+  if (!active_node_order) {
     pll_errno = PLL_ERROR_MEM_ALLOC;
     snprintf(pll_errmsg, 200, "Unable to allocate enough memory.");
     return;
@@ -119,56 +97,39 @@ PLL_EXPORT void pll_rtree_show_ascii(const pll_rnode_t * root, int options)
   active_node_order[1] = 1;
 
   print_node_info(root, options);
-  print_tree_recurse(root->left,  1, active_node_order, options);
+  print_tree_recurse(root->left, 1, active_node_order, options);
   print_tree_recurse(root->right, 1, active_node_order, options);
   free(active_node_order);
 }
 
-static char * rtree_export_newick_recursive(const pll_rnode_t * root,
-                                  char * (*cb_serialize)(const pll_rnode_t *))
-{
-  char * newick;
-  int size_alloced;
+static char *
+rtree_export_newick_recursive(const pll_rnode_t *root,
+                              char *(*cb_serialize)(const pll_rnode_t *)) {
+  char *newick;
+  int   size_alloced;
   assert(root != NULL);
 
-  if (!(root->left) || !(root->right))
-  {
-    if (cb_serialize)
-    {
-      newick = cb_serialize(root);
-      size_alloced = (int) strlen(newick);
-    }
-    else
-    {
+  if (!(root->left) || !(root->right)) {
+    if (cb_serialize) {
+      newick       = cb_serialize(root);
+      size_alloced = (int)strlen(newick);
+    } else {
       size_alloced = asprintf(&newick, "%s:%f", root->label, root->length);
     }
-  }
-  else
-  {
-    char * subtree1 = rtree_export_newick_recursive(root->left,cb_serialize);
-    if (subtree1 == NULL)
-    {
-      return NULL;
-    }
-    char * subtree2 = rtree_export_newick_recursive(root->right,cb_serialize);
-    if (subtree2 == NULL)
-    {
+  } else {
+    char *subtree1 = rtree_export_newick_recursive(root->left, cb_serialize);
+    if (subtree1 == NULL) { return NULL; }
+    char *subtree2 = rtree_export_newick_recursive(root->right, cb_serialize);
+    if (subtree2 == NULL) {
       free(subtree1);
       return NULL;
     }
 
-    if (cb_serialize)
-    {
-      char * temp = cb_serialize(root);
-      size_alloced = asprintf(&newick,
-                              "(%s,%s)%s",
-                              subtree1,
-                              subtree2,
-                              temp);
+    if (cb_serialize) {
+      char *temp   = cb_serialize(root);
+      size_alloced = asprintf(&newick, "(%s,%s)%s", subtree1, subtree2, temp);
       free(temp);
-    }
-    else
-    {
+    } else {
       size_alloced = asprintf(&newick,
                               "(%s,%s)%s:%f",
                               subtree1,
@@ -179,8 +140,7 @@ static char * rtree_export_newick_recursive(const pll_rnode_t * root,
     free(subtree1);
     free(subtree2);
   }
-  if (size_alloced < 0)
-  {
+  if (size_alloced < 0) {
     pll_errno = PLL_ERROR_MEM_ALLOC;
     snprintf(pll_errmsg, 200, "memory allocation during newick export failed.");
     return NULL;
@@ -189,55 +149,40 @@ static char * rtree_export_newick_recursive(const pll_rnode_t * root,
   return newick;
 }
 
-PLL_EXPORT char * pll_rtree_export_newick(const pll_rnode_t * root,
-                                   char * (*cb_serialize)(const pll_rnode_t *))
-{
-  char * newick;
-  int size_alloced;
+PLL_EXPORT char *
+pll_rtree_export_newick(const pll_rnode_t *root,
+                        char *(*cb_serialize)(const pll_rnode_t *)) {
+  char *newick;
+  int   size_alloced;
   if (!root) return NULL;
 
-  if (!(root->left) || !(root->right))
-  {
-    if (cb_serialize)
-    {
-      newick = cb_serialize(root);
-      size_alloced = (int) strlen(newick);
-    }
-    else
-    {
+  if (!(root->left) || !(root->right)) {
+    if (cb_serialize) {
+      newick       = cb_serialize(root);
+      size_alloced = (int)strlen(newick);
+    } else {
       size_alloced = asprintf(&newick, "%s:%f", root->label, root->length);
     }
-  }
-  else
-  {
-    char * subtree1 = rtree_export_newick_recursive(root->left,cb_serialize);
-    if (subtree1 == NULL)
-    {
+  } else {
+    char *subtree1 = rtree_export_newick_recursive(root->left, cb_serialize);
+    if (subtree1 == NULL) {
       pll_errno = PLL_ERROR_MEM_ALLOC;
       snprintf(pll_errmsg, 200, "Unable to allocate enough memory.");
       return NULL;
     }
-    char * subtree2 = rtree_export_newick_recursive(root->right,cb_serialize);
-    if (subtree2 == NULL)
-    {
+    char *subtree2 = rtree_export_newick_recursive(root->right, cb_serialize);
+    if (subtree2 == NULL) {
       free(subtree1);
       pll_errno = PLL_ERROR_MEM_ALLOC;
       snprintf(pll_errmsg, 200, "Unable to allocate enough memory.");
       return NULL;
     }
 
-    if (cb_serialize)
-    {
-      char * temp = cb_serialize(root);
-      size_alloced = asprintf(&newick,
-                              "(%s,%s)%s",
-                              subtree1,
-                              subtree2,
-                              temp);
+    if (cb_serialize) {
+      char *temp   = cb_serialize(root);
+      size_alloced = asprintf(&newick, "(%s,%s)%s", subtree1, subtree2, temp);
       free(temp);
-    }
-    else
-    {
+    } else {
       size_alloced = asprintf(&newick,
                               "(%s,%s)%s:%f;",
                               subtree1,
@@ -248,8 +193,7 @@ PLL_EXPORT char * pll_rtree_export_newick(const pll_rnode_t * root,
     free(subtree1);
     free(subtree2);
   }
-  if (size_alloced < 0)
-  {
+  if (size_alloced < 0) {
     pll_errno = PLL_ERROR_MEM_ALLOC;
     snprintf(pll_errmsg, 200, "memory allocation during newick export failed");
     return NULL;
@@ -258,43 +202,38 @@ PLL_EXPORT char * pll_rtree_export_newick(const pll_rnode_t * root,
   return newick;
 }
 
-
-PLL_EXPORT void pll_rtree_create_operations(pll_rnode_t * const* trav_buffer,
-                                            unsigned int trav_buffer_size,
-                                            double * branches,
-                                            unsigned int * pmatrix_indices,
-                                            pll_operation_t * ops,
-                                            unsigned int * matrix_count,
-                                            unsigned int * ops_count)
-{
-  pll_rnode_t * node;
+PLL_EXPORT void pll_rtree_create_operations(pll_rnode_t *const *trav_buffer,
+                                            unsigned int     trav_buffer_size,
+                                            double *         branches,
+                                            unsigned int *   pmatrix_indices,
+                                            pll_operation_t *ops,
+                                            unsigned int *   matrix_count,
+                                            unsigned int *   ops_count) {
+  pll_rnode_t *node;
   unsigned int i;
 
-  *ops_count = 0;
+  *ops_count    = 0;
   *matrix_count = 0;
 
-  for (i = 0; i < trav_buffer_size; ++i)
-  {
+  for (i = 0; i < trav_buffer_size; ++i) {
     node = trav_buffer[i];
 
     /* do not store the branch of the root, since it does not exist */
-    if (i < trav_buffer_size-1)
-    {
-      *branches++ = node->length;
+    if (i < trav_buffer_size - 1) {
+      *branches++        = node->length;
       *pmatrix_indices++ = node->pmatrix_index;
-      *matrix_count = *matrix_count + 1;
+      *matrix_count      = *matrix_count + 1;
     }
 
-    if (node->left)
-    {
-      ops[*ops_count].parent_clv_index = node->clv_index;
+    if (node->left) {
+      ops[*ops_count].parent_clv_index    = node->clv_index;
       ops[*ops_count].parent_scaler_index = node->scaler_index;
 
-      ops[*ops_count].child1_clv_index = node->left->clv_index;
+      ops[*ops_count].child1_clv_index    = node->left->clv_index;
       ops[*ops_count].child1_scaler_index = node->left->scaler_index;
       ops[*ops_count].child1_matrix_index = node->left->pmatrix_index;
 
-      ops[*ops_count].child2_clv_index = node->right->clv_index;
+      ops[*ops_count].child2_clv_index    = node->right->clv_index;
       ops[*ops_count].child2_scaler_index = node->right->scaler_index;
       ops[*ops_count].child2_matrix_index = node->right->pmatrix_index;
 
@@ -303,61 +242,51 @@ PLL_EXPORT void pll_rtree_create_operations(pll_rnode_t * const* trav_buffer,
   }
 }
 
-static void rtree_traverse_postorder(pll_rnode_t * node,
+static void rtree_traverse_postorder(pll_rnode_t *node,
                                      int (*cbtrav)(pll_rnode_t *),
-                                     unsigned int * index,
-                                     pll_rnode_t ** outbuffer)
-{
-  if (!node->left)
-  {
-    if (cbtrav(node))
-    {
+                                     unsigned int *index,
+                                     pll_rnode_t **outbuffer) {
+  if (!node->left) {
+    if (cbtrav(node)) {
       outbuffer[*index] = node;
-      *index = *index + 1;
+      *index            = *index + 1;
     }
     return;
   }
-  if (!cbtrav(node))
-    return;
+  if (!cbtrav(node)) return;
 
   rtree_traverse_postorder(node->left, cbtrav, index, outbuffer);
   rtree_traverse_postorder(node->right, cbtrav, index, outbuffer);
 
   outbuffer[*index] = node;
-  *index = *index + 1;
+  *index            = *index + 1;
 }
 
-static void rtree_traverse_preorder(pll_rnode_t * node,
+static void rtree_traverse_preorder(pll_rnode_t *node,
                                     int (*cbtrav)(pll_rnode_t *),
-                                    unsigned int * index,
-                                    pll_rnode_t ** outbuffer)
-{
-  if (!node->left)
-  {
-    if (cbtrav(node))
-    {
+                                    unsigned int *index,
+                                    pll_rnode_t **outbuffer) {
+  if (!node->left) {
+    if (cbtrav(node)) {
       outbuffer[*index] = node;
-      *index = *index + 1;
+      *index            = *index + 1;
     }
     return;
   }
-  if (!cbtrav(node))
-    return;
+  if (!cbtrav(node)) return;
 
   outbuffer[*index] = node;
-  *index = *index + 1;
+  *index            = *index + 1;
 
   rtree_traverse_preorder(node->left, cbtrav, index, outbuffer);
   rtree_traverse_preorder(node->right, cbtrav, index, outbuffer);
-
 }
 
-PLL_EXPORT int pll_rtree_traverse(pll_rnode_t * root,
-                                  int traversal,
+PLL_EXPORT int pll_rtree_traverse(pll_rnode_t *root,
+                                  int          traversal,
                                   int (*cbtrav)(pll_rnode_t *),
-                                  pll_rnode_t ** outbuffer,
-                                  unsigned int * trav_size)
-{
+                                  pll_rnode_t **outbuffer,
+                                  unsigned int *trav_size) {
   *trav_size = 0;
   if (!root->left) return PLL_FAILURE;
 
@@ -375,8 +304,7 @@ PLL_EXPORT int pll_rtree_traverse(pll_rnode_t * root,
     rtree_traverse_postorder(root, cbtrav, trav_size, outbuffer);
   else if (traversal == PLL_TREE_TRAVERSE_PREORDER)
     rtree_traverse_preorder(root, cbtrav, trav_size, outbuffer);
-  else
-  {
+  else {
     snprintf(pll_errmsg, 200, "Invalid traversal value.");
     pll_errno = PLL_ERROR_PARAM_INVALID;
     return PLL_FAILURE;
@@ -455,22 +383,19 @@ PLL_EXPORT unsigned int pll_rtree_query_innernodes(pll_rtree_t * root,
 }
 #endif
 
-PLL_EXPORT void pll_rtree_create_pars_buildops(pll_rnode_t * const* trav_buffer,
+PLL_EXPORT void pll_rtree_create_pars_buildops(pll_rnode_t *const *trav_buffer,
                                                unsigned int trav_buffer_size,
-                                               pll_pars_buildop_t * ops,
-                                               unsigned int * ops_count)
-{
-  pll_rnode_t * node;
+                                               pll_pars_buildop_t *ops,
+                                               unsigned int *      ops_count) {
+  pll_rnode_t *node;
   unsigned int i;
 
   *ops_count = 0;
 
-  for (i = 0; i < trav_buffer_size; ++i)
-  {
+  for (i = 0; i < trav_buffer_size; ++i) {
     node = trav_buffer[i];
 
-    if (node->left)
-    {
+    if (node->left) {
       ops[*ops_count].parent_score_index = node->clv_index;
       ops[*ops_count].child1_score_index = node->left->clv_index;
       ops[*ops_count].child2_score_index = node->right->clv_index;
@@ -480,34 +405,28 @@ PLL_EXPORT void pll_rtree_create_pars_buildops(pll_rnode_t * const* trav_buffer,
   }
 }
 
-PLL_EXPORT void pll_rtree_create_pars_recops(pll_rnode_t * const* trav_buffer,
-                                             unsigned int trav_buffer_size,
-                                             pll_pars_recop_t * ops,
-                                             unsigned int * ops_count)
-{
-  pll_rnode_t * node;
+PLL_EXPORT void pll_rtree_create_pars_recops(pll_rnode_t *const *trav_buffer,
+                                             unsigned int      trav_buffer_size,
+                                             pll_pars_recop_t *ops,
+                                             unsigned int *    ops_count) {
+  pll_rnode_t *node;
   unsigned int i;
 
   *ops_count = 0;
 
-  for (i = 0; i < trav_buffer_size; ++i)
-  {
+  for (i = 0; i < trav_buffer_size; ++i) {
     node = trav_buffer[i];
 
-    if (node->left)
-    {
-      ops[*ops_count].node_score_index = node->clv_index;
+    if (node->left) {
+      ops[*ops_count].node_score_index     = node->clv_index;
       ops[*ops_count].node_ancestral_index = node->clv_index;
 
-      if (node->parent)
-      {
-        ops[*ops_count].parent_score_index = node->parent->clv_index;
+      if (node->parent) {
+        ops[*ops_count].parent_score_index     = node->parent->clv_index;
         ops[*ops_count].parent_ancestral_index = node->parent->clv_index;
-      }
-      else
-      {
+      } else {
         /* invalid entries for the root - they will never be used */
-        ops[*ops_count].parent_score_index = 0;
+        ops[*ops_count].parent_score_index     = 0;
         ops[*ops_count].parent_ancestral_index = 0;
       }
 
@@ -515,4 +434,3 @@ PLL_EXPORT void pll_rtree_create_pars_recops(pll_rnode_t * const* trav_buffer,
     }
   }
 }
-

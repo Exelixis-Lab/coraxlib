@@ -1,0 +1,19 @@
+---
+Language:        Cpp
+BasedOnStyle:  LLVM
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortBlocksOnASingleLine: Always
+AllowShortLoopsOnASingleLine: true
+BinPackArguments: false
+BinPackParameters: false
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+BreakStringLiterals: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+PointerAlignment: Right
+AlignOperands: true
+BreakBeforeBinaryOperators: NonAssignment
+...

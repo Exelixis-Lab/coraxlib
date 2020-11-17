@@ -21,29 +21,26 @@
 
 #include "pll.h"
 
-static int sumtable_tipinner(pll_partition_t * partition,
-                             unsigned int parent_clv_index,
-                             unsigned int child_clv_index,
-                             const unsigned int * parent_scaler,
-                             const unsigned int * child_scaler,
-                             const unsigned int * params_indices,
-                             double *sumtable)
-{
-  int retval;
-  unsigned int i;
-  unsigned int tip_clv_index;
-  unsigned int inner_clv_index;
-  unsigned int sites = partition->sites;
-  const unsigned int * scaler;
+static int sumtable_tipinner(pll_partition_t *   partition,
+                             unsigned int        parent_clv_index,
+                             unsigned int        child_clv_index,
+                             const unsigned int *parent_scaler,
+                             const unsigned int *child_scaler,
+                             const unsigned int *params_indices,
+                             double *            sumtable) {
+  int                 retval;
+  unsigned int        i;
+  unsigned int        tip_clv_index;
+  unsigned int        inner_clv_index;
+  unsigned int        sites = partition->sites;
+  const unsigned int *scaler;
 
-  double ** eigenvecs = (double **)malloc(partition->rate_cats *
-                                          sizeof(double *));
-  double ** inv_eigenvecs = (double **)malloc(partition->rate_cats *
-                                              sizeof(double *));
-  double ** freqs = (double **)malloc(partition->rate_cats *
-                                      sizeof(double *));
-  if (!eigenvecs || !inv_eigenvecs || !freqs)
-  {
+  double **eigenvecs =
+      (double **)malloc(partition->rate_cats * sizeof(double *));
+  double **inv_eigenvecs =
+      (double **)malloc(partition->rate_cats * sizeof(double *));
+  double **freqs = (double **)malloc(partition->rate_cats * sizeof(double *));
+  if (!eigenvecs || !inv_eigenvecs || !freqs) {
     if (eigenvecs) free(eigenvecs);
     if (inv_eigenvecs) free(inv_eigenvecs);
     if (freqs) free(freqs);
@@ -54,28 +51,23 @@ static int sumtable_tipinner(pll_partition_t * partition,
   }
 
   /* ascertaiment bias correction */
-  if (partition->asc_bias_alloc)
-    sites += partition->states;
+  if (partition->asc_bias_alloc) sites += partition->states;
 
-  for (i = 0; i < partition->rate_cats; ++i)
-  {
-    eigenvecs[i] = partition->eigenvecs[params_indices[i]];
+  for (i = 0; i < partition->rate_cats; ++i) {
+    eigenvecs[i]     = partition->eigenvecs[params_indices[i]];
     inv_eigenvecs[i] = partition->inv_eigenvecs[params_indices[i]];
-    freqs[i] = partition->frequencies[params_indices[i]];
+    freqs[i]         = partition->frequencies[params_indices[i]];
   }
 
   /* find which of the two child nodes is the tip */
-  if (parent_clv_index < partition->tips)
-  {
-    tip_clv_index = parent_clv_index;
+  if (parent_clv_index < partition->tips) {
+    tip_clv_index   = parent_clv_index;
     inner_clv_index = child_clv_index;
-    scaler = child_scaler;
-  }
-  else
-  {
-    tip_clv_index = child_clv_index;
+    scaler          = child_scaler;
+  } else {
+    tip_clv_index   = child_clv_index;
     inner_clv_index = parent_clv_index;
-    scaler = parent_scaler;
+    scaler          = parent_scaler;
   }
 
   retval = pll_core_update_sumtable_ti(partition->states,
@@ -99,26 +91,23 @@ static int sumtable_tipinner(pll_partition_t * partition,
   return retval;
 }
 
-static int sumtable_innerinner(pll_partition_t * partition,
-                                unsigned int parent_clv_index,
-                                unsigned int child_clv_index,
-                                const unsigned int * parent_scaler,
-                                const unsigned int * child_scaler,
-                                const unsigned int * params_indices,
-                                double *sumtable)
-{
-  int retval;
+static int sumtable_innerinner(pll_partition_t *   partition,
+                               unsigned int        parent_clv_index,
+                               unsigned int        child_clv_index,
+                               const unsigned int *parent_scaler,
+                               const unsigned int *child_scaler,
+                               const unsigned int *params_indices,
+                               double *            sumtable) {
+  int          retval;
   unsigned int i;
   unsigned int sites = partition->sites;
 
-  double ** eigenvecs = (double **)malloc(partition->rate_cats *
-                                          sizeof(double *));
-  double ** inv_eigenvecs = (double **)malloc(partition->rate_cats *
-                                              sizeof(double *));
-  double ** freqs = (double **)malloc(partition->rate_cats *
-                                      sizeof(double *));
-  if (!eigenvecs || !inv_eigenvecs || !freqs)
-  {
+  double **eigenvecs =
+      (double **)malloc(partition->rate_cats * sizeof(double *));
+  double **inv_eigenvecs =
+      (double **)malloc(partition->rate_cats * sizeof(double *));
+  double **freqs = (double **)malloc(partition->rate_cats * sizeof(double *));
+  if (!eigenvecs || !inv_eigenvecs || !freqs) {
     if (eigenvecs) free(eigenvecs);
     if (inv_eigenvecs) free(inv_eigenvecs);
     if (freqs) free(freqs);
@@ -130,13 +119,12 @@ static int sumtable_innerinner(pll_partition_t * partition,
 
   /* ascertaiment bias correction */
   if (partition->asc_bias_alloc)
-    sites += (unsigned int) partition->asc_additional_sites;
+    sites += (unsigned int)partition->asc_additional_sites;
 
-  for (i = 0; i < partition->rate_cats; ++i)
-  {
-    eigenvecs[i] = partition->eigenvecs[params_indices[i]];
+  for (i = 0; i < partition->rate_cats; ++i) {
+    eigenvecs[i]     = partition->eigenvecs[params_indices[i]];
     inv_eigenvecs[i] = partition->inv_eigenvecs[params_indices[i]];
-    freqs[i] = partition->frequencies[params_indices[i]];
+    freqs[i]         = partition->frequencies[params_indices[i]];
   }
 
   retval = pll_core_update_sumtable_ii(partition->states,
@@ -159,26 +147,23 @@ static int sumtable_innerinner(pll_partition_t * partition,
   return retval;
 }
 
-static int sumtable_repeats(pll_partition_t * partition,
-                                unsigned int parent_clv_index,
-                                unsigned int child_clv_index,
-                                const unsigned int * parent_scaler,
-                                const unsigned int * child_scaler,
-                                const unsigned int * params_indices,
-                                double *sumtable)
-{
-  int retval;
+static int sumtable_repeats(pll_partition_t *   partition,
+                            unsigned int        parent_clv_index,
+                            unsigned int        child_clv_index,
+                            const unsigned int *parent_scaler,
+                            const unsigned int *child_scaler,
+                            const unsigned int *params_indices,
+                            double *            sumtable) {
+  int          retval;
   unsigned int i;
   unsigned int sites = partition->sites;
 
-  double ** eigenvecs = (double **)malloc(partition->rate_cats *
-                                          sizeof(double *));
-  double ** inv_eigenvecs = (double **)malloc(partition->rate_cats *
-                                              sizeof(double *));
-  double ** freqs = (double **)malloc(partition->rate_cats *
-                                      sizeof(double *));
-  if (!eigenvecs || !inv_eigenvecs || !freqs)
-  {
+  double **eigenvecs =
+      (double **)malloc(partition->rate_cats * sizeof(double *));
+  double **inv_eigenvecs =
+      (double **)malloc(partition->rate_cats * sizeof(double *));
+  double **freqs = (double **)malloc(partition->rate_cats * sizeof(double *));
+  if (!eigenvecs || !inv_eigenvecs || !freqs) {
     if (eigenvecs) free(eigenvecs);
     if (inv_eigenvecs) free(inv_eigenvecs);
     if (freqs) free(freqs);
@@ -190,41 +175,40 @@ static int sumtable_repeats(pll_partition_t * partition,
 
   /* ascertaiment bias correction */
   if (partition->asc_bias_alloc)
-    sites += (unsigned int) partition->asc_additional_sites;
+    sites += (unsigned int)partition->asc_additional_sites;
 
-  for (i = 0; i < partition->rate_cats; ++i)
-  {
-    eigenvecs[i] = partition->eigenvecs[params_indices[i]];
+  for (i = 0; i < partition->rate_cats; ++i) {
+    eigenvecs[i]     = partition->eigenvecs[params_indices[i]];
     inv_eigenvecs[i] = partition->inv_eigenvecs[params_indices[i]];
-    freqs[i] = partition->frequencies[params_indices[i]];
+    freqs[i]         = partition->frequencies[params_indices[i]];
   }
 
-  const unsigned int * parent_site_id =
-    pll_get_site_id(partition, parent_clv_index);
-  const unsigned int * child_site_id = 
-    pll_get_site_id(partition, child_clv_index);
+  const unsigned int *parent_site_id =
+      pll_get_site_id(partition, parent_clv_index);
+  const unsigned int *child_site_id =
+      pll_get_site_id(partition, child_clv_index);
 
   unsigned int parent_ids = pll_get_sites_number(partition, parent_clv_index);
-  unsigned int child_ids = pll_get_sites_number(partition, child_clv_index);
-  unsigned int inv = parent_ids > child_ids;
-  retval =
-    pll_core_update_sumtable_repeats(partition->states,
-                        sites,
-                        inv ? child_ids : parent_ids,
-                        partition->rate_cats,
-                        partition->clv[inv ? child_clv_index : parent_clv_index],
-                        partition->clv[!inv ? child_clv_index : parent_clv_index],
-                        inv ? child_scaler : parent_scaler,
-                        !inv ? child_scaler : parent_scaler,
-                        eigenvecs,
-                        inv_eigenvecs,
-                        freqs,
-                        sumtable,
-                        inv ? child_site_id : parent_site_id,
-                        !inv ? child_site_id : parent_site_id,
-                        partition->repeats->bclv_buffer,
-                        inv,
-                        partition->attributes);
+  unsigned int child_ids  = pll_get_sites_number(partition, child_clv_index);
+  unsigned int inv        = parent_ids > child_ids;
+  retval                  = pll_core_update_sumtable_repeats(
+      partition->states,
+      sites,
+      inv ? child_ids : parent_ids,
+      partition->rate_cats,
+      partition->clv[inv ? child_clv_index : parent_clv_index],
+      partition->clv[!inv ? child_clv_index : parent_clv_index],
+      inv ? child_scaler : parent_scaler,
+      !inv ? child_scaler : parent_scaler,
+      eigenvecs,
+      inv_eigenvecs,
+      freqs,
+      sumtable,
+      inv ? child_site_id : parent_site_id,
+      !inv ? child_site_id : parent_site_id,
+      partition->repeats->bclv_buffer,
+      inv,
+      partition->attributes);
 
   free(freqs);
   free(eigenvecs);
@@ -235,58 +219,50 @@ static int sumtable_repeats(pll_partition_t * partition,
 
 /* computes the table containing the constant parts of the likelihood function
  * partial derivatives on the branch lengths.
- * sumtable: [output] must be allocated for storing (rates x states_padded) values */
-PLL_EXPORT int pll_update_sumtable(pll_partition_t * partition,
-                                      unsigned int parent_clv_index,
-                                      unsigned int child_clv_index,
-                                      int parent_scaler_index,
-                                      int child_scaler_index,
-                                      const unsigned int * params_indices,
-                                      double *sumtable)
-{
+ * sumtable: [output] must be allocated for storing (rates x states_padded)
+ * values */
+PLL_EXPORT int pll_update_sumtable(pll_partition_t *   partition,
+                                   unsigned int        parent_clv_index,
+                                   unsigned int        child_clv_index,
+                                   int                 parent_scaler_index,
+                                   int                 child_scaler_index,
+                                   const unsigned int *params_indices,
+                                   double *            sumtable) {
   int retval;
 
-  unsigned int * parent_scaler;
-  unsigned int * child_scaler;
+  unsigned int *parent_scaler;
+  unsigned int *child_scaler;
 
   /* get parent scaler */
-  if (parent_scaler_index == PLL_SCALE_BUFFER_NONE)
-    parent_scaler = NULL;
+  if (parent_scaler_index == PLL_SCALE_BUFFER_NONE) parent_scaler = NULL;
   else
     parent_scaler = partition->scale_buffer[parent_scaler_index];
 
-  if (child_scaler_index == PLL_SCALE_BUFFER_NONE)
-    child_scaler = NULL;
+  if (child_scaler_index == PLL_SCALE_BUFFER_NONE) child_scaler = NULL;
   else
     child_scaler = partition->scale_buffer[child_scaler_index];
 
-
-  if (pll_repeats_enabled(partition) && 
-      (partition->repeats->pernode_ids[parent_clv_index] 
-       || partition->repeats->pernode_ids[child_clv_index])) 
-  {
+  if (pll_repeats_enabled(partition)
+      && (partition->repeats->pernode_ids[parent_clv_index]
+          || partition->repeats->pernode_ids[child_clv_index])) {
     retval = sumtable_repeats(partition,
-                                 parent_clv_index,
-                                 child_clv_index,
-                                 parent_scaler,
-                                 child_scaler,
-                                 params_indices,
-                                 sumtable);
-  }
-  else if (partition->attributes & PLL_ATTRIB_PATTERN_TIP)
-  {
-    if ((parent_clv_index < partition->tips) &&
-        (child_clv_index < partition->tips))
-    {
+                              parent_clv_index,
+                              child_clv_index,
+                              parent_scaler,
+                              child_scaler,
+                              params_indices,
+                              sumtable);
+  } else if (partition->attributes & PLL_ATTRIB_PATTERN_TIP) {
+    if ((parent_clv_index < partition->tips)
+        && (child_clv_index < partition->tips)) {
       /* tip-tip case */
       pll_errno = PLL_ERROR_PARAM_INVALID;
-      snprintf(pll_errmsg, 200,
+      snprintf(pll_errmsg,
+               200,
                "pll_update_sumtable() was called for the tip-tip case!");
       retval = PLL_FAILURE;
-    }
-    else if ((parent_clv_index < partition->tips) ||
-             (child_clv_index < partition->tips))
-    {
+    } else if ((parent_clv_index < partition->tips)
+               || (child_clv_index < partition->tips)) {
       /* tip-inner */
       retval = sumtable_tipinner(partition,
                                  parent_clv_index,
@@ -295,9 +271,7 @@ PLL_EXPORT int pll_update_sumtable(pll_partition_t * partition,
                                  child_scaler,
                                  params_indices,
                                  sumtable);
-    }
-    else
-    {
+    } else {
       /* inner-inner */
       retval = sumtable_innerinner(partition,
                                    parent_clv_index,
@@ -307,9 +281,7 @@ PLL_EXPORT int pll_update_sumtable(pll_partition_t * partition,
                                    params_indices,
                                    sumtable);
     }
-  }
-  else
-  {
+  } else {
     /* inner-inner */
     retval = sumtable_innerinner(partition,
                                  parent_clv_index,
@@ -330,25 +302,24 @@ PLL_EXPORT int pll_update_sumtable(pll_partition_t * partition,
  * d_f:  [output] first derivative
  * dd_f: [output] second derivative
  */
-PLL_EXPORT int pll_compute_likelihood_derivatives(pll_partition_t * partition,
-                                                  int parent_scaler_index,
-                                                  int child_scaler_index,
-                                                  double branch_length,
-                                                  const unsigned int * params_indices,
-                                                  const double * sumtable,
-                                                  double * d_f,
-                                                  double * dd_f)
-{
-  unsigned int * parent_scaler;
-  unsigned int * child_scaler;
-  unsigned int i;
-  unsigned int rate_cats = partition->rate_cats;
+PLL_EXPORT int
+pll_compute_likelihood_derivatives(pll_partition_t *   partition,
+                                   int                 parent_scaler_index,
+                                   int                 child_scaler_index,
+                                   double              branch_length,
+                                   const unsigned int *params_indices,
+                                   const double *      sumtable,
+                                   double *            d_f,
+                                   double *            dd_f) {
+  unsigned int *parent_scaler;
+  unsigned int *child_scaler;
+  unsigned int  i;
+  unsigned int  rate_cats = partition->rate_cats;
 
-  double ** eigenvals = (double **) malloc(rate_cats * sizeof(double *));
-  double ** freqs     = (double **) malloc(rate_cats * sizeof(double *));
-  double * prop_invar = (double *)  malloc(rate_cats * sizeof(double));
-  if (!eigenvals || !prop_invar || !freqs)
-  {
+  double **eigenvals  = (double **)malloc(rate_cats * sizeof(double *));
+  double **freqs      = (double **)malloc(rate_cats * sizeof(double *));
+  double * prop_invar = (double *)malloc(rate_cats * sizeof(double));
+  if (!eigenvals || !prop_invar || !freqs) {
     if (eigenvals) free(eigenvals);
     if (prop_invar) free(prop_invar);
     if (freqs) free(freqs);
@@ -358,37 +329,32 @@ PLL_EXPORT int pll_compute_likelihood_derivatives(pll_partition_t * partition,
     return PLL_FAILURE;
   }
 
-  for (i=0; i<rate_cats; ++i)
-  {
+  for (i = 0; i < rate_cats; ++i) {
     eigenvals[i]  = partition->eigenvals[params_indices[i]];
     freqs[i]      = partition->frequencies[params_indices[i]];
     prop_invar[i] = partition->prop_invar[params_indices[i]];
   }
 
   /* get parent scaler */
-  if (parent_scaler_index == PLL_SCALE_BUFFER_NONE)
-    parent_scaler = NULL;
+  if (parent_scaler_index == PLL_SCALE_BUFFER_NONE) parent_scaler = NULL;
   else
     parent_scaler = partition->scale_buffer[parent_scaler_index];
 
-  if (child_scaler_index == PLL_SCALE_BUFFER_NONE)
-    child_scaler = NULL;
+  if (child_scaler_index == PLL_SCALE_BUFFER_NONE) child_scaler = NULL;
   else
     child_scaler = partition->scale_buffer[child_scaler_index];
 
-
   unsigned int parent_ids = partition->sites;
-  unsigned int child_ids = partition->sites;
-  if (pll_repeats_enabled(partition))
-  {
-    parent_ids = parent_scaler_index != PLL_SCALE_BUFFER_NONE 
-      ? partition->repeats->perscale_ids[parent_scaler_index]
-      : 0;
+  unsigned int child_ids  = partition->sites;
+  if (pll_repeats_enabled(partition)) {
+    parent_ids = parent_scaler_index != PLL_SCALE_BUFFER_NONE
+                     ? partition->repeats->perscale_ids[parent_scaler_index]
+                     : 0;
     parent_ids = parent_ids ? parent_ids : partition->sites;
-    child_ids = child_scaler_index != PLL_SCALE_BUFFER_NONE 
-      ? partition->repeats->perscale_ids[child_scaler_index]
-      : 0;
-    child_ids = child_ids ? child_ids : partition->sites;
+    child_ids  = child_scaler_index != PLL_SCALE_BUFFER_NONE
+                     ? partition->repeats->perscale_ids[child_scaler_index]
+                     : 0;
+    child_ids  = child_ids ? child_ids : partition->sites;
   }
   int retval = pll_core_likelihood_derivatives(partition->states,
                                                partition->sites,
@@ -410,9 +376,9 @@ PLL_EXPORT int pll_compute_likelihood_derivatives(pll_partition_t * partition,
                                                dd_f,
                                                partition->attributes);
 
-  free (freqs);
-  free (prop_invar);
-  free (eigenvals);
+  free(freqs);
+  free(prop_invar);
+  free(eigenvals);
 
   return retval;
 }

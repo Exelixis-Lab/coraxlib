@@ -21,13 +21,10 @@
 
 #include "pll.h"
 
-static int dlist_insert(pll_dlist_t ** dlist, void * data, int insert_end)
-{
-  if (!*dlist)
-  {
+static int dlist_insert(pll_dlist_t **dlist, void *data, int insert_end) {
+  if (!*dlist) {
     *dlist = (pll_dlist_t *)malloc(sizeof(pll_dlist_t));
-    if (!*dlist)
-    {
+    if (!*dlist) {
       pll_errno = PLL_ERROR_MEM_ALLOC;
       snprintf(pll_errmsg, 200, "Unable to allocate enough memory.");
       return PLL_FAILURE;
@@ -41,11 +38,11 @@ static int dlist_insert(pll_dlist_t ** dlist, void * data, int insert_end)
 
   /* go to the last element if we chose to append */
   if (insert_end)
-    for(; (*dlist)->next; dlist = &(*dlist)->next);
+    for (; (*dlist)->next; dlist = &(*dlist)->next)
+      ;
 
   (*dlist)->next = (pll_dlist_t *)malloc(sizeof(pll_dlist_t));
-  if (!(*dlist)->next)
-  {
+  if (!(*dlist)->next) {
     pll_errno = PLL_ERROR_MEM_ALLOC;
     snprintf(pll_errmsg, 200, "Unable to allocate enough memory.");
     return PLL_FAILURE;
@@ -56,29 +53,24 @@ static int dlist_insert(pll_dlist_t ** dlist, void * data, int insert_end)
   (*dlist)->next->prev = (*dlist);
 
   return PLL_SUCCESS;
-
 }
 
-PLL_EXPORT int pll_dlist_append(pll_dlist_t ** dlist, void * data)
-{
+PLL_EXPORT int pll_dlist_append(pll_dlist_t **dlist, void *data) {
   return dlist_insert(dlist, data, 1);
 }
 
-PLL_EXPORT int pll_dlist_prepend(pll_dlist_t ** dlist, void * data)
-{
+PLL_EXPORT int pll_dlist_prepend(pll_dlist_t **dlist, void *data) {
   return dlist_insert(dlist, data, 0);
 }
 
-PLL_EXPORT int pll_dlist_remove(pll_dlist_t ** dlist, void * data)
-{
-  for (; (*dlist) && (*dlist)->data != data; dlist = &((*dlist)->next));
+PLL_EXPORT int pll_dlist_remove(pll_dlist_t **dlist, void *data) {
+  for (; (*dlist) && (*dlist)->data != data; dlist = &((*dlist)->next))
+    ;
 
   if (!*dlist) return PLL_FAILURE;
 
-  if ((*dlist)->next)
-    (*dlist)->next->prev = (*dlist)->prev;
-  if ((*dlist)->prev)
-    (*dlist)->prev->next = (*dlist)->next;
+  if ((*dlist)->next) (*dlist)->next->prev = (*dlist)->prev;
+  if ((*dlist)->prev) (*dlist)->prev->next = (*dlist)->next;
 
   free(*dlist);
   *dlist = NULL;

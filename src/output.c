@@ -21,81 +21,74 @@
 
 #include "pll.h"
 
-static void unscale(double * prob, unsigned int times);
+static void unscale(double *prob, unsigned int times);
 
-PLL_EXPORT void pll_show_pmatrix(const pll_partition_t * partition,
-                                 unsigned int index,
-                                 unsigned int float_precision)
-{
-  unsigned int i,j,k;
-  double * pmatrix;
-  unsigned int states = partition->states;
+PLL_EXPORT void pll_show_pmatrix(const pll_partition_t *partition,
+                                 unsigned int           index,
+                                 unsigned int           float_precision) {
+  unsigned int i, j, k;
+  double *     pmatrix;
+  unsigned int states        = partition->states;
   unsigned int states_padded = partition->states_padded;
 
-  for (k = 0; k < partition->rate_cats; ++k)
-  {
-    pmatrix = partition->pmatrix[index] + k*states*states_padded;
-    for (i = 0; i < partition->states; ++i)
-    {
+  for (k = 0; k < partition->rate_cats; ++k) {
+    pmatrix = partition->pmatrix[index] + k * states * states_padded;
+    for (i = 0; i < partition->states; ++i) {
       for (j = 0; j < states; ++j)
-        printf("%+2.*f   ", float_precision, pmatrix[i*states_padded+j]);
+        printf("%+2.*f   ", float_precision, pmatrix[i * states_padded + j]);
       printf("\n");
     }
     printf("\n");
   }
 }
 
-static void unscale(double * prob, unsigned int times)
-{
+static void unscale(double *prob, unsigned int times) {
   unsigned int i;
 
-  for (i = 0; i < times; ++i)
-    *prob *= PLL_SCALE_THRESHOLD;
+  for (i = 0; i < times; ++i) *prob *= PLL_SCALE_THRESHOLD;
 }
 
-PLL_EXPORT void pll_show_clv(const pll_partition_t * partition,
-                             unsigned int clv_index,
-                             int scaler_index,
-                             unsigned int float_precision)
-{
-  unsigned int s,i,j,k;
+PLL_EXPORT void pll_show_clv(const pll_partition_t *partition,
+                             unsigned int           clv_index,
+                             int                    scaler_index,
+                             unsigned int           float_precision) {
+  unsigned int s, i, j, k;
 
-  double * clv = partition->clv[clv_index];
-  unsigned int * scaler = (scaler_index == PLL_SCALE_BUFFER_NONE) ?
-                          NULL : partition->scale_buffer[scaler_index];
-  unsigned int states = partition->states;
-  unsigned int states_padded = partition->states_padded;
-  unsigned int rates = partition->rate_cats;
-  double prob;
+  double *      clv           = partition->clv[clv_index];
+  unsigned int *scaler        = (scaler_index == PLL_SCALE_BUFFER_NONE)
+                                    ? NULL
+                                    : partition->scale_buffer[scaler_index];
+  unsigned int  states        = partition->states;
+  unsigned int  states_padded = partition->states_padded;
+  unsigned int  rates         = partition->rate_cats;
+  double        prob;
   unsigned int *site_id = 0;
-  if (pll_repeats_enabled(partition) && partition->repeats->pernode_ids[clv_index]) {
+  if (pll_repeats_enabled(partition)
+      && partition->repeats->pernode_ids[clv_index]) {
     site_id = partition->repeats->pernode_site_id[clv_index];
   }
 
-  if ((clv_index < partition->tips) &&
-      (partition->attributes & PLL_ATTRIB_PATTERN_TIP))
+  if ((clv_index < partition->tips)
+      && (partition->attributes & PLL_ATTRIB_PATTERN_TIP))
     return;
 
-  printf ("[ ");
-  for (s = 0; s < partition->sites; ++s)
-  {
+  printf("[ ");
+  for (s = 0; s < partition->sites; ++s) {
     i = site_id ? site_id[s] : s;
     printf("{");
-    for (j = 0; j < rates; ++j)
-    {
+    for (j = 0; j < rates; ++j) {
       printf("(");
-      for (k = 0; k < states-1; ++k)
-      {
-        prob = clv[i*rates*states_padded + j*states_padded + k];
+      for (k = 0; k < states - 1; ++k) {
+        prob = clv[i * rates * states_padded + j * states_padded + k];
         if (scaler) unscale(&prob, scaler[i]);
         printf("%.*f,", float_precision, prob);
       }
-      prob = clv[i*rates*states_padded + j*states_padded + k];
+      prob = clv[i * rates * states_padded + j * states_padded + k];
       if (scaler) unscale(&prob, scaler[i]);
       printf("%.*f)", float_precision, prob);
       if (j < rates - 1) printf(",");
     }
     printf("} ");
   }
-  printf ("]\n");
+  printf("]\n");
 }
