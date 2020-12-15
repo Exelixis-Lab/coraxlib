@@ -5,17 +5,12 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo 'Building..'
+            sh 'cmake -Bbuild -H. && cd build && make'
             }
         }
         stage('Test') {
             steps {
-                echo 'Testing..'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying....'
+                sh 'cd build && make test'
             }
         }
     }
