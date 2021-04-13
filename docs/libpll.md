@@ -56,7 +56,7 @@ Implementation in `libpll`
 Suppose we want to calculate the likelihood of the tree shown in the above image.  As a visual aid, we have colored the
 outer nodes blue and the inner nodes red.  Additionally, each node has been assigned a CLV buffer, where the results of
 computation would be stored. This is approximately the method that would naively be used for the Felsenstein
-algorithm[1], and normally we could traverse the tree in a post-order fashion, using the method above, to compute a
+algorithm[^1], and normally we could traverse the tree in a post-order fashion, using the method above, to compute a
 likelihood.  But, we can do a bit better than this.
 
 First, we plan on editing the tree, which might involve deleting old nodes and creating new nodes. Because we are
@@ -103,7 +103,7 @@ This is to say that any "global" parameter change will benefit from this represe
 3. Computes CLVs in the order of operations,
 4. And finally, computes the likelihood via the "edge" or "root" method.
 
-[1]: We are skipping over the probability matrix portion of likelihood calculation, mostly because it is handled
+[^1]: We are skipping over the probability matrix portion of likelihood calculation, mostly because it is handled
 analogously and just serves to complicated the matter here. Nonetheless, try to remember that each branch has a
 probability matrix associated with it.
 
