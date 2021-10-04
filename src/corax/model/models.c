@@ -20,6 +20,8 @@
 */
 
 #include "corax/corax.h"
+#include <cblas.h>
+#include <lapack.h>
 
 static int mytqli(double *d, double *e, const unsigned int n, double **z)
 {
@@ -221,8 +223,8 @@ void exmp_ss(double *A, size_t n, size_t lda, double t)
   }
 
   /* Perform the initial iteration outside of the loop 8*/
-  cblas_daxpy(matrix_size, c, X, 1, N);
-  cblas_daxpy(matrix_size, sign * c, X, 1, D);
+  cblas_daxpy(matrix_size, c, X, 1, N, 1);
+  cblas_daxpy(matrix_size, sign * c, X, 1, D, 1);
 
   /* Using fortran indexing, so a bunch of stuff is off by 1. Also, we did the
    * first loop already so we start at 2 (1 + fortan start).
@@ -265,8 +267,11 @@ void exmp_ss(double *A, size_t n, size_t lda, double t)
    * A = N * D^-1
    */
   {
-    int *ipiv = (int *)malloc(sizeof(int) * rows);
-    LAPACK_dgesv(CblasRowMajor, n, n, D, lda, ipiv, N, lda);
+    int *ipiv    = (int *)malloc(sizeof(int) * n);
+    int  info    = 0;
+    int  int_n   = n;
+    int  int_lda = lda;
+    LAPACK_dgesv(&int_n, &int_n, D, &int_lda, ipiv, N, &int_lda, &info);
     free(ipiv);
   }
 

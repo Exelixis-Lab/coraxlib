@@ -200,6 +200,11 @@ add_library(corax_obj OBJECT ${CORAX_SOURCES})
 set_property(TARGET corax_obj PROPERTY POSITION_INDEPENDENT_CODE 1)
 target_include_directories(corax_obj PRIVATE ${CORAX_INCLUDE_DIRS})
 
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+target_link_libraries(corax_obj PRIVATE BLAS::BLAS LAPACK::LAPACK)
+
+
 macro(add_corax_lib _target linkage)
     add_library(${_target} ${linkage} $<TARGET_OBJECTS:corax_obj>)
     set_target_properties(${_target} PROPERTIES OUTPUT_NAME "corax")
