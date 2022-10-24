@@ -31,6 +31,19 @@
 #include <x86intrin.h>
 #endif
 
+#if (defined(__aarch64__) && defined(HAVE_SSE2NEON))
+  #define SSE2NEON_PRECISE_MINMAX 1
+  #define SSE2NEON_PRECISE_DIV 1
+  #define SSE2NEON_PRECISE_SQRT 1
+  #include <corax/sse2neon.h>
+#endif
+
+#ifdef HAVE_SVE
+#ifdef __ARM_FEATURE_SVE
+#include <arm_sve.h>
+#endif /* __ARM_FEATURE_SVE */
+#endif
+
 /* platform specific */
 
 #if (!defined(__APPLE__) && !defined(__WIN32__) && !defined(__WIN64__))
@@ -88,6 +101,7 @@
 #define CORAX_ALIGNMENT_CPU 8
 #define CORAX_ALIGNMENT_SSE 16
 #define CORAX_ALIGNMENT_AVX 32
+#define CORAX_ALIGNMENT_SVE 64
 
 #define CORAX_LINEALLOC 2048
 

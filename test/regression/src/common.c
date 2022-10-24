@@ -55,6 +55,11 @@ unsigned int get_attributes(int argc, char **argv)
       /* avx2 vectorization */
       attributes |= CORAX_ATTRIB_ARCH_AVX2;
     }
+    else if (!strcmp(argv[i], "sve"))
+    {
+      /* sve vectorization */
+      attributes |= CORAX_ATTRIB_ARCH_SVE;
+    }
     else
     {
       printf("Unrecognised attribute: %s\n", argv[i]);

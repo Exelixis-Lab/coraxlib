@@ -1348,6 +1348,35 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
     states_padded = (states + 3) & 0xFFFFFFFC;
   }
 #endif
+#ifdef HAVE_SVE
+  if (attrib & CORAX_ATTRIB_ARCH_SVE && CORAX_HAS_CPU_FEATURE(sve_present))
+  {
+    
+     double lh = corax_core_edge_loglikelihood_ii_sve(states,
+                                                sites,
+                                                rate_cats,
+                                                clvp,
+                                                parent_scaler,
+                                                clvc,
+                                                child_scaler,
+                                                pmatrix,
+                                                frequencies,
+                                                rate_weights,
+                                                pattern_weights,
+                                                invar_proportion,
+                                                invar_indices,
+                                                freqs_indices,
+                                                persite_lnl,
+                                                attrib);
+    return lh;
+    /* this line is never called, but should we disable the else case above,
+       then states_padded must be set to this value */
+//    states_padded = (states + 3) & 0xFFFFFFFC;
+//    printf("SVE lh: %.6lf", lh);   
+  }
+#endif
+
+
 
   unsigned int  site_scalings;
   unsigned int *rate_scalings    = NULL;

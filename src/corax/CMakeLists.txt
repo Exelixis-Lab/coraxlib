@@ -12,6 +12,8 @@ endif()
 set (SSE_FLAGS "-msse3")
 set (AVX_FLAGS "-mavx")
 set (AVX2_FLAGS "-mfma -mavx2")
+set (SVE_FLAGS "-mcpu=a64fx")
+set (NEON_FLAGS "-march=armv8-a+fp+simd")
 
 # needed for coraxmodule files
 include_directories(${CORAX_INCLUDE_DIRS})
@@ -95,6 +97,10 @@ file(GLOB CORAX_AVX2_SOURCES ${CORAX_SRC_DIR_KERNEL_AVX2}/core_derivatives_avx2.
   ${CORAX_SRC_DIR_KERNEL_AVX2}/fast_parsimony_avx2.c
   )
 
+file(GLOB CORAX_SVE_SOURCES ${CORAX_SRC_DIR_KERNEL_SVE}/core_clv_sve.c
+  ${CORAX_SRC_DIR_KERNEL_SVE}/core_likelihood_sve.c
+  )
+
 # check that user did not disable simd
 if (NOT DEFINED ENABLE_SSE)
   SET(ENABLE_SSE "True")
@@ -105,6 +111,14 @@ endif ()
 if (NOT DEFINED ENABLE_AVX2)
   SET(ENABLE_AVX2 "True")
 endif ()
+
+if (NOT DEFINED ENABLE_SSE2NEON)
+  SET(ENABLE_SSE2NEON "True")
+endif ()
+if (NOT DEFINED ENABLE_SVE)
+	SET(ENABLE_SVE "True")
+endif ()
+
 
 # check simd installed 
 if (ENABLE_SSE)
@@ -145,6 +159,33 @@ if (ENABLE_AVX2)
 endif()
 
 
+if (ENABLE_SSE2NEON)
+  SET(_code " #include <sse2neon.h>
+  int main() {__m128d a = _mm_setzero_pd();  return 1;}")
+  SET(_file ${CMAKE_CURRENT_BINARY_DIR}/testsse2neon.c)
+  FILE(WRITE "${_file}" "${_code}")
+  TRY_COMPILE(SSE2NEON_COMPILED ${CMAKE_CURRENT_BINARY_DIR} ${_file}
+    COMPILE_DEFINITIONS "${NEON_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}")
+  if (NOT SSE2NEON_COMPILED)
+    message(STATUS "Disable sse2neon simd, because not supported")
+    set(ENABLE_SSE2NEON "False")
+  endif()
+endif()
+
+if (ENABLE_SVE)
+  SET(_code " #include <arm_sve.h>
+  int main() { svint32_t a, b;  b = svabs_s32_x(svptrue_b32(), a); return 1;}")
+  SET(_file ${CMAKE_CURRENT_BINARY_DIR}/testsve.c)
+  FILE(WRITE "${_file}" "${_code}")
+  TRY_COMPILE(SVE_COMPILED ${CMAKE_CURRENT_BINARY_DIR} ${_file}
+	  COMPILE_DEFINITIONS ${SVE_FLAGS})
+  if (NOT SVE_COMPILED)
+	  message(STATUS "Disable SVE simd, because not supported")
+    set(ENABLE_SVE "False")
+  endif()
+endif()
+
+
 # set simd flags
 if (ENABLE_SSE)
   add_definitions(-DHAVE_SSE3)
@@ -152,6 +193,13 @@ if (ENABLE_SSE)
   message(STATUS "SSE enabled. To disable it, run cmake with -DENABLE_SSE=false")
   set(CORAX_SOURCES ${CORAX_SOURCES} ${CORAX_SSE_SOURCES})
   SET_SOURCE_FILES_PROPERTIES( ${CORAX_SSE_SOURCES} PROPERTIES COMPILE_FLAGS ${SSE_FLAGS} )
+elseif (ENABLE_SSE2NEON)
+  # atm either SSE or SSE2NEON kernels can be built, since the share the same function and object names
+  add_definitions(-DHAVE_SSE3 -DHAVE_SSE2NEON)
+  set(SIMD_FLAGS "${SIMD_FLAGS} ${NEON_FLAGS}")
+  message(STATUS "SSE2NEON enabled. To disable it, run cmake with -DENABLE_SSE2NEON=false")
+  set(CORAX_SOURCES ${CORAX_SOURCES} ${CORAX_SSE_SOURCES})
+  SET_SOURCE_FILES_PROPERTIES( ${CORAX_SSE_SOURCES} PROPERTIES COMPILE_FLAGS ${NEON_FLAGS} )
 endif ()
 if (ENABLE_AVX)
   add_definitions(-DHAVE_AVX)
@@ -167,6 +215,15 @@ if (ENABLE_AVX2)
   set(CORAX_SOURCES ${CORAX_SOURCES} ${CORAX_AVX2_SOURCES})
   SET_SOURCE_FILES_PROPERTIES( ${CORAX_AVX2_SOURCES} PROPERTIES COMPILE_FLAGS ${AVX2_FLAGS} )
 endif ()
+
+if (ENABLE_SVE)
+  add_definitions(-DHAVE_SVE)
+  set(SIMD_FLAGS "${SIMD_FLAGS} ${SVE_FLAGS}")
+  message(STATUS "SVE enabled. To disable it, run cmake with -DENABLE_SVE=false")
+  set(CORAX_SOURCES ${CORAX_SOURCES} ${CORAX_SVE_SOURCES})
+  SET_SOURCE_FILES_PROPERTIES( ${CORAX_SVE_SOURCES} PROPERTIES COMPILE_FLAGS ${SVE_FLAGS} )
+endif ()
+
 
 if (ENABLE_SSE OR ENABLE_AVX OR ENABLE_AVX2)
   add_definitions(-DHAVE_X86INTRIN_H)

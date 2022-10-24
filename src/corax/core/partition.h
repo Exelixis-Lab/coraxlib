@@ -20,23 +20,26 @@
 #define CORAX_ATTRIB_ARCH_AVX2 (1 << 2)
 /** Flag specifying only AVX512 SIMD operations */
 #define CORAX_ATTRIB_ARCH_AVX512 (1 << 3)
+/** Flag specifying only ARM SVE SIMD operations */
+#define CORAX_ATTRIB_ARCH_SVE (1 << 4)
+
 /** Mask for the CPU architecture attributes */
-#define CORAX_ATTRIB_ARCH_MASK 0xF
+#define CORAX_ATTRIB_ARCH_MASK 0x1F
 
 /**
  * Flag which indicates the use of the pattern tip optimization. Mutually
  * exclusive with the `CORAX_ATTRIB_SITE_REPEATS` flag.
  */
-#define CORAX_ATTRIB_PATTERN_TIP (1 << 4)
+#define CORAX_ATTRIB_PATTERN_TIP (1 << 5)
 
 /* ascertainment bias correction */
-#define CORAX_ATTRIB_AB_LEWIS (1 << 5)
-#define CORAX_ATTRIB_AB_FELSENSTEIN (2 << 5)
-#define CORAX_ATTRIB_AB_STAMATAKIS (3 << 5)
-#define CORAX_ATTRIB_AB_MASK (7 << 5)
-#define CORAX_ATTRIB_AB_FLAG (1 << 8)
+#define CORAX_ATTRIB_AB_LEWIS (1 << 6)
+#define CORAX_ATTRIB_AB_FELSENSTEIN (2 << 6)
+#define CORAX_ATTRIB_AB_STAMATAKIS (3 << 6)
+#define CORAX_ATTRIB_AB_MASK (7 << 6)
+#define CORAX_ATTRIB_AB_FLAG (1 << 9)
 
-#define CORAX_ATTRIB_RATE_SCALERS (1 << 9)
+#define CORAX_ATTRIB_RATE_SCALERS (1 << 10)
 
 /* site repeats */
 
@@ -44,12 +47,12 @@
  * Flag indicating the use of the site repeats optimization. Mutually exclusive
  * with the `CORAX_ATTRIB_PATTERN_TIP` flag.
  */
-#define CORAX_ATTRIB_SITE_REPEATS (1 << 10)
+#define CORAX_ATTRIB_SITE_REPEATS (1 << 11)
 
-#define CORAX_ATTRIB_NONREV (1 << 11)
+#define CORAX_ATTRIB_NONREV (1 << 12)
 
 /** Mask for all the attributes currently defined */
-#define CORAX_ATTRIB_MASK ((1 << 12) - 1)
+#define CORAX_ATTRIB_MASK ((1 << 13) - 1)
 
 /** @} */
 

@@ -20,5 +20,8 @@
 #include "corax/kernel/kernel_avx2.h"
 #endif
 
+#ifdef HAVE_SVE
+#include "corax/kernel/kernel_sve.h"
+#endif
 
 #endif /* CORAX_KERNEL_H_ */

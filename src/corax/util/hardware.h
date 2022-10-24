@@ -27,6 +27,7 @@ typedef struct corax_hardware_s
   int popcnt_present;
   int avx_present;
   int avx2_present;
+  int sve_present;
 
   /* TODO: add chip,core,mem info */
 } corax_hardware_t;

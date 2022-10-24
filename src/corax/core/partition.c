@@ -446,6 +446,18 @@ CORAX_EXPORT corax_partition_t *
   }
 #endif
 
+#ifdef HAVE_SVE
+  if (attributes & CORAX_ATTRIB_ARCH_SVE && CORAX_HAS_CPU_FEATURE(sve_present))
+  {
+    partition->alignment     = CORAX_ALIGNMENT_SVE;
+    partition->states_padded = states;
+
+//    partition->states_padded = (states + 3) & 0xFFFFFFFC;
+//    partition->states_padded = (states + 7) & 0xFFFFFFF8;
+  }
+#endif
+
+
   unsigned int states_padded = partition->states_padded;
 
   /* initialize properties */

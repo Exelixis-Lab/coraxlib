@@ -634,6 +634,25 @@ CORAX_EXPORT void corax_core_update_clv_ii(unsigned int        states,
 
   unsigned int span = states * rate_cats;
 
+#ifdef HAVE_SVE
+  if (attrib & CORAX_ATTRIB_ARCH_SVE && CORAX_HAS_CPU_FEATURE(sve_present))
+  {
+    corax_core_update_clv_ii_sve(states,
+                                 sites,
+                                 rate_cats,
+                                 parent_clv,
+                                 parent_scaler,
+                                 left_clv,
+                                 right_clv,
+                                 left_matrix,
+                                 right_matrix,
+                                 left_scaler,
+                                 right_scaler,
+                                 attrib);
+    return;
+  }
+#endif
+
 #ifdef HAVE_SSE3
   if (attrib & CORAX_ATTRIB_ARCH_SSE && CORAX_HAS_CPU_FEATURE(sse3_present))
   {
