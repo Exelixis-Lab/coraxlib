@@ -18,6 +18,7 @@
  *        Mathematical Software,
  */
 #include "lbfgsb.h"
+#include "math.h"
 
 static int c__1 = 1;
 
@@ -25,12 +26,18 @@ int dpofa(double *a, int *lda, int *n, int *
 	info)
 {
     /* System generated locals */
-    int a_dim1, a_offset, i__1, i__2, i__3;
+    int a_dim1 = 0;
+    int a_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
+    int i__3 = 0;
 
     /* Local variables */
-    int j, k;
-    double s, t;
-    int jm1;
+    int j = 0;
+    int k = 0;
+    double s = NAN;
+    double t = NAN;
+    int jm1 = 0;
 
 /*
     dpofa factors a double precision symmetric positive definite 
@@ -122,11 +129,16 @@ int dtrsl(double *t, int *ldt, int *n,
 	double *b, int *job, int *info)
 {
     /* System generated locals */
-    int t_dim1, t_offset, i__1, i__2;
+    int t_dim1 = 0;
+    int t_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
 
     /* Local variables */
-    int j, jj, case__;
-    double temp;
+    int j = 0;
+    int jj = 0;
+    int case__ = 0;
+    double temp = NAN;
     /*
     extern double ddot(int *, double *, int *, double *, 
 	    int *);

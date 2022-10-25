@@ -149,22 +149,26 @@ static const struct random_poly_info random_poly_info = {
    for default usage relies on values produced by this routine.  */
 int corax_srandom_r(unsigned int seed, struct corax_random_data *buf)
 {
-  int      type;
-  int32_t *state;
-  long int i;
-  int32_t  word;
-  int32_t *dst;
-  int      kc;
+  int      type = 0;
+  int32_t *state = NULL;
+  long int i = 0;
+  int32_t  word = 0;
+  int32_t *dst = NULL;
+  int      kc = 0;
 
-  if (buf == NULL) goto fail;
+  if (buf == NULL) { goto fail;
+}
   type = buf->rand_type;
-  if ((unsigned int)type >= MAX_TYPES) goto fail;
+  if ((unsigned int)type >= MAX_TYPES) { goto fail;
+}
 
   state = buf->state;
   /* We must make sure the seed is not 0.  Take arbitrarily 1 in this case.  */
-  if (seed == 0) seed = 1;
+  if (seed == 0) { seed = 1;
+}
   state[0] = (int32_t)seed;
-  if (type == TYPE_0) goto done;
+  if (type == TYPE_0) { goto done;
+}
 
   dst  = state;
   word = (int32_t)seed;
@@ -177,7 +181,8 @@ int corax_srandom_r(unsigned int seed, struct corax_random_data *buf)
     long int hi = word / 127773;
     long int lo = word % 127773;
     word        = (int32_t)16807 * lo - 2836 * hi;
-    if (word < 0) word += 2147483647;
+    if (word < 0) { word += 2147483647;
+}
     *++dst = word;
   }
 
@@ -186,7 +191,7 @@ int corax_srandom_r(unsigned int seed, struct corax_random_data *buf)
   kc *= 10;
   while (--kc >= 0)
   {
-    int32_t discard;
+    int32_t discard = 0;
     (void)corax_random_r(buf, &discard);
   }
 
@@ -213,29 +218,33 @@ int corax_initstate_r(unsigned int              seed,
                       size_t                    n,
                       struct corax_random_data *buf)
 {
-  if (buf == NULL) goto fail;
+  if (buf == NULL) { goto fail;
+}
 
   int32_t *old_state = buf->state;
   if (old_state != NULL)
   {
     int old_type = buf->rand_type;
-    if (old_type == TYPE_0)
+    if (old_type == TYPE_0) {
       old_state[-1] = TYPE_0;
-    else
+    } else {
       old_state[-1] = (int32_t)(MAX_TYPES * (buf->rptr - old_state)) + old_type;
+}
   }
 
-  int type;
-  if (n >= BREAK_3)
+  int type = 0;
+  if (n >= BREAK_3) {
     type = n < BREAK_4 ? TYPE_3 : TYPE_4;
-  else if (n < BREAK_1)
+  } else if (n < BREAK_1)
   {
-    if (n < BREAK_0) goto fail;
+    if (n < BREAK_0) { goto fail;
+}
 
     type = TYPE_0;
   }
-  else
+  else {
     type = n < BREAK_2 ? TYPE_1 : TYPE_2;
+}
 
   int degree     = random_poly_info.degrees[type];
   int separation = random_poly_info.seps[type];
@@ -252,8 +261,9 @@ int corax_initstate_r(unsigned int              seed,
   corax_srandom_r(seed, buf);
 
   state[-1] = TYPE_0;
-  if (type != TYPE_0)
+  if (type != TYPE_0) {
     state[-1] = (int32_t)(buf->rptr - state) * MAX_TYPES + type;
+}
 
   return 0;
 
@@ -275,23 +285,26 @@ fail:
 int corax_setstate_r(char *arg_state, struct corax_random_data *buf)
 {
   int32_t *new_state = 1 + (int32_t *)arg_state;
-  int      type;
-  int      old_type;
-  int32_t *old_state;
-  int      degree;
-  int      separation;
+  int      type = 0;
+  int      old_type = 0;
+  int32_t *old_state = NULL;
+  int      degree = 0;
+  int      separation = 0;
 
-  if (arg_state == NULL || buf == NULL) goto fail;
+  if (arg_state == NULL || buf == NULL) { goto fail;
+}
 
   old_type  = buf->rand_type;
   old_state = buf->state;
-  if (old_type == TYPE_0)
+  if (old_type == TYPE_0) {
     old_state[-1] = TYPE_0;
-  else
+  } else {
     old_state[-1] = (int32_t)(MAX_TYPES * (buf->rptr - old_state)) + old_type;
+}
 
   type = new_state[-1] % MAX_TYPES;
-  if (type < TYPE_0 || type > TYPE_4) goto fail;
+  if (type < TYPE_0 || type > TYPE_4) { goto fail;
+}
 
   buf->rand_deg = degree = random_poly_info.degrees[type];
   buf->rand_sep = separation = random_poly_info.seps[type];
@@ -328,9 +341,10 @@ fail:
 
 int corax_random_r(struct corax_random_data *buf, int32_t *result)
 {
-  int32_t *state;
+  int32_t *state = NULL;
 
-  if (buf == NULL || result == NULL) goto fail;
+  if (buf == NULL || result == NULL) { goto fail;
+}
 
   state = buf->state;
 
@@ -346,7 +360,7 @@ int corax_random_r(struct corax_random_data *buf, int32_t *result)
     int32_t *fptr    = buf->fptr;
     int32_t *rptr    = buf->rptr;
     int32_t *end_ptr = buf->end_ptr;
-    int32_t  val;
+    int32_t  val = 0;
 
     val = *fptr += *rptr;
     /* Chucking least random bit.  */
@@ -360,7 +374,8 @@ int corax_random_r(struct corax_random_data *buf, int32_t *result)
     else
     {
       ++rptr;
-      if (rptr >= end_ptr) rptr = state;
+      if (rptr >= end_ptr) { rptr = state;
+}
     }
     buf->fptr = fptr;
     buf->rptr = rptr;
@@ -388,7 +403,7 @@ CORAX_EXPORT corax_random_state *corax_random_create(unsigned int seed)
 /* return a random integer r, 0 <= r < maxval */
 CORAX_EXPORT int corax_random_getint(corax_random_state *rstate, int maxval)
 {
-  int32_t r;
+  int32_t r = 0;
   corax_random_r(&rstate->rdata, &r);
   return r % maxval;
 }
@@ -397,7 +412,8 @@ CORAX_EXPORT void corax_random_destroy(corax_random_state *rstate)
 {
   if (rstate)
   {
-    if (rstate->state_buf) free(rstate->state_buf);
+    if (rstate->state_buf) { free(rstate->state_buf);
+}
     free(rstate);
   }
 }

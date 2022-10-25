@@ -142,7 +142,7 @@ extern "C"
   CORAX_EXPORT double corax_core_edge_loglikelihood_repeats_generic_avx(
       unsigned int         states,
       unsigned int         sites,
-      const unsigned int   child_sites,
+      unsigned int   child_sites,
       unsigned int         rate_cats,
       const double *       parent_clv,
       const unsigned int * parent_scaler,
@@ -164,7 +164,7 @@ extern "C"
   CORAX_EXPORT double corax_core_edge_loglikelihood_repeats_4x4_avx(
       unsigned int         states,
       unsigned int         sites,
-      const unsigned int   child_sites,
+      unsigned int   child_sites,
       unsigned int         rate_cats,
       const double *       parent_clv,
       const unsigned int * parent_scaler,
@@ -186,7 +186,7 @@ extern "C"
   CORAX_EXPORT double corax_core_edge_loglikelihood_repeatsbclv_4x4_avx(
       unsigned int         states,
       unsigned int         sites,
-      const unsigned int   child_sites,
+      unsigned int   child_sites,
       unsigned int         rate_cats,
       const double *       parent_clv,
       const unsigned int * parent_scaler,

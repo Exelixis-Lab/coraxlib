@@ -125,9 +125,11 @@ const int GT_MODELS_COUNT = sizeof(gt_model_list) / sizeof(corax_subst_model_t);
 
 static int get_model_index(const char *model_name)
 {
-  int i;
-  for (i = 0; i < GT_MODELS_COUNT; ++i)
-    if (strcasecmp(model_name, gt_model_list[i].name) == 0) return i;
+  int i = 0;
+  for (i = 0; i < GT_MODELS_COUNT; ++i) {
+    if (strcasecmp(model_name, gt_model_list[i].name) == 0) { return i;
+}
+}
 
   /* model not found*/
   return -1;
@@ -148,7 +150,7 @@ CORAX_EXPORT char **corax_util_model_names_genotype()
 {
   char **names = calloc(GT_MODELS_COUNT, sizeof(char *));
 
-  int i;
+  int i = 0;
   for (i = 0; i < GT_MODELS_COUNT; ++i)
   {
     const char *model_name = gt_model_list[i].name;
@@ -171,19 +173,19 @@ CORAX_EXPORT int corax_util_model_exists_genotype(const char *model_name)
 CORAX_EXPORT int corax_util_model_exists_genotype10(const char *model_name)
 {
   int idx = get_model_index(model_name);
-  if (idx >= 0)
+  if (idx >= 0) {
     return gt_model_list[idx].states == 10 ? 1 : 0;
-  else
-    return 0;
+}
+      return 0;
 }
 
 CORAX_EXPORT int corax_util_model_exists_genotype16(const char *model_name)
 {
   int idx = get_model_index(model_name);
-  if (idx >= 0)
+  if (idx >= 0) {
     return gt_model_list[idx].states == 16 ? 1 : 0;
-  else
-    return 0;
+}
+      return 0;
 }
 
 /**
@@ -203,13 +205,12 @@ CORAX_EXPORT corax_subst_model_t *
   {
     return corax_util_model_clone(&gt_model_list[model_index]);
   }
-  else
-  {
-    corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
+  
+      corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
                     "Genotype model not found: %s",
                     model_name);
     return NULL;
-  }
+ 
 }
 
 /**
@@ -223,7 +224,7 @@ CORAX_EXPORT corax_subst_model_t *
  * @return CORAX_SUCCESS on success, CORAX_FAILURE on error (check corax_errmsg
  * for details)
  */
-CORAX_EXPORT int corax_util_model_set_genotype(corax_partition_t *partition,
+CORAX_EXPORT static int corax_util_model_set_genotype(corax_partition_t *partition,
                                                const char *       model_name,
                                                int                model_freqs)
 {
@@ -237,11 +238,10 @@ CORAX_EXPORT int corax_util_model_set_genotype(corax_partition_t *partition,
     }
     return CORAX_SUCCESS;
   }
-  else
-  {
-    corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
+  
+      corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
                     "Genotype model not found: %s",
                     model_name);
     return CORAX_FAILURE;
-  }
+ 
 }

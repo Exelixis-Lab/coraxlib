@@ -6,7 +6,7 @@ CORAX_EXPORT int corax_update_prob_matrices(corax_partition_t * partition,
                                             const double *      branch_lengths,
                                             unsigned int        count)
 {
-  unsigned int n;
+  unsigned int n = 0;
 
 #ifdef CORAX_NONREV
   if (partition->attributes & CORAX_ATTRIB_NONREV)
@@ -30,8 +30,9 @@ CORAX_EXPORT int corax_update_prob_matrices(corax_partition_t * partition,
   {
     if (!partition->eigen_decomp_valid[params_indices[n]])
     {
-      if (!corax_update_eigen(partition, params_indices[n]))
+      if (!corax_update_eigen(partition, params_indices[n])) {
         return CORAX_FAILURE;
+}
     }
   }
 

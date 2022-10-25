@@ -39,15 +39,17 @@ bitv_hashtable_t *hash_init(unsigned int n, unsigned int bit_count)
     return NULL;
   }
 
-  unsigned int table_size, i,
-      init_table_size = sizeof(init_table) / sizeof(init_table[0]),
-      maxSize         = (unsigned int)-1;
+  unsigned int table_size = 0;
+  unsigned int i = 0;
+  unsigned int init_table_size = sizeof(init_table) / sizeof(init_table[0]);
+  unsigned int maxSize         = (unsigned int)-1;
 
   assert(n <= maxSize);
 
   i = 0;
 
-  while (init_table[i] < n && i < init_table_size) ++i;
+  while (init_table[i] < n && i < init_table_size) { ++i;
+}
 
   assert(i < init_table_size);
 
@@ -75,23 +77,26 @@ bitv_hashtable_t *hash_init(unsigned int n, unsigned int bit_count)
 
 void hash_destroy_entry(bitv_hash_entry_t *e)
 {
-  if (e->bit_vector) free(e->bit_vector);
+  if (e->bit_vector) { free(e->bit_vector);
+}
 
-  if (e->tree_vector) free(e->tree_vector);
+  if (e->tree_vector) { free(e->tree_vector);
+}
 
   free(e);
 }
 
 void hash_destroy(bitv_hashtable_t *h)
 {
-  unsigned int i, entry_count = 0;
+  unsigned int i = 0;
+  unsigned int entry_count = 0;
 
   for (i = 0; i < h->table_size; ++i)
   {
     if (h->table[i] != NULL)
     {
       bitv_hash_entry_t *e = h->table[i];
-      bitv_hash_entry_t *previous;
+      bitv_hash_entry_t *previous = NULL;
 
       do {
         previous = e;
@@ -125,7 +130,7 @@ bitv_hash_entry_t *entry_init(double support)
 hash_key_t hash_get_key(corax_split_t s, int len)
 {
   hash_key_t h = 0;
-  int        i;
+  int        i = 0;
 
   for (i = 0; i < len; ++i)
   {
@@ -163,9 +168,12 @@ bitv_hash_entry_t *hash_update(corax_split_t     bit_vector,
 
       /* check for identity of bipartitions */
 
-      if (e->key == key)
-        for (i = 0; i < h->bitv_len; ++i)
-          if (bit_vector[i] != e->bit_vector[i]) break;
+      if (e->key == key) {
+        for (i = 0; i < h->bitv_len; ++i) {
+          if (bit_vector[i] != e->bit_vector[i]) { break;
+}
+}
+}
 
       if (i == h->bitv_len)
       {
@@ -188,11 +196,12 @@ bitv_hash_entry_t *hash_insert(corax_split_t     bit_vector,
                                double            support,
                                unsigned int      position)
 {
-  bitv_hash_entry_t *e;
+  bitv_hash_entry_t *e = NULL;
 
   /* search for this split in hashtable, and increment its support if found */
   e = hash_update(bit_vector, h, key, support, position);
-  if (e) return e;
+  if (e) { return e;
+}
 
   /* if not found -> add new split to the hashtable */
   if (key == HASH_KEY_UNDEF)
@@ -230,7 +239,7 @@ void hash_remove(bitv_hashtable_t *  h,
 
 void hash_print(bitv_hashtable_t *h)
 {
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < h->table_size; ++i)
   {
     bitv_hash_entry_t *e = h->table[i];
@@ -248,7 +257,7 @@ void bitv_normalize(corax_split_t bitv, unsigned int bit_count)
   unsigned int split_size   = sizeof(corax_split_base_t) * 8;
   unsigned int split_offset = bit_count % split_size;
   unsigned int split_len    = bitv_length(bit_count);
-  unsigned int i;
+  unsigned int i = 0;
 
   int normalized = bitv_is_normalized(bitv);
 
@@ -278,7 +287,8 @@ int bitv_compare(corax_split_t v1, corax_split_t v2, unsigned int bitv_len)
 {
   for (unsigned int i = 0; i < bitv_len; ++i)
   {
-    if (v1[i] != v2[i]) return (int)(v1[i] > v2[i] ? 1 : -1);
+    if (v1[i] != v2[i]) { return (int)(v1[i] > v2[i] ? 1 : -1);
+}
   }
   return 0;
 }
@@ -288,9 +298,10 @@ inline unsigned int bitv_popcount(const corax_split_t bitv,
                                   unsigned int        bitv_len)
 {
   unsigned int setb = 0;
-  unsigned int i;
+  unsigned int i = 0;
 
-  if (!bitv_len) bitv_len = bitv_length(bit_count);
+  if (!bitv_len) { bitv_len = bitv_length(bit_count);
+}
 
   for (i = 0; i < bitv_len; ++i)
   {
@@ -323,15 +334,17 @@ string_hashtable_t *string_hash_init(unsigned int n, unsigned int max_labels)
       (string_hashtable_t *)malloc(sizeof(string_hashtable_t));
   assert(h);
 
-  unsigned int table_size, i,
-      prime_table_length = sizeof(init_table) / sizeof(hash_key_t),
-      max_size           = (hash_key_t)-1;
+  unsigned int table_size = 0;
+  unsigned int i = 0;
+  unsigned int prime_table_length = sizeof(init_table) / sizeof(hash_key_t);
+  unsigned int max_size           = (hash_key_t)-1;
 
   assert(n <= max_size);
 
   i = 0;
 
-  while (init_table[i] < n && i < prime_table_length) ++i;
+  while (init_table[i] < n && i < prime_table_length) { ++i;
+}
 
   assert(i < prime_table_length);
 
@@ -348,20 +361,22 @@ string_hashtable_t *string_hash_init(unsigned int n, unsigned int max_labels)
 
 void string_hash_destroy(string_hashtable_t *h)
 {
-  unsigned int entry_count = 0, i;
+  unsigned int entry_count = 0;
+  unsigned int i = 0;
 
   for (i = 0; i < h->table_size; ++i)
   {
     if (h->table[i] != NULL)
     {
       string_hash_entry_t *e = h->table[i];
-      string_hash_entry_t *previous;
+      string_hash_entry_t *previous = NULL;
 
       do {
         previous = e;
         e        = e->next;
 
-        if (previous->word) free(previous->word);
+        if (previous->word) { free(previous->word);
+}
 
         free(previous);
         ++entry_count;
@@ -380,7 +395,8 @@ hash_key_t string_hash_get_key(const char *s)
 {
   hash_key_t h = 0;
 
-  for (; *s; ++s) h = 31 * h + (unsigned int)*s;
+  for (; *s; ++s) { h = 31 * h + (unsigned int)*s;
+}
 
   return h;
 }
@@ -392,7 +408,8 @@ int string_hash_insert(const char *s, string_hashtable_t *h, int node_number)
 
   for (; p != NULL; p = p->next)
   {
-    if (strcmp(s, p->word) == 0) return CORAX_FAILURE;
+    if (strcmp(s, p->word) == 0) { return CORAX_FAILURE;
+}
   }
 
   p = (string_hash_entry_t *)malloc(sizeof(string_hash_entry_t));
@@ -417,7 +434,8 @@ int string_hash_lookup(char *s, string_hashtable_t *h)
 
   for (; p != NULL; p = p->next)
   {
-    if (strcmp(s, p->word) == 0) return p->node_number;
+    if (strcmp(s, p->word) == 0) { return p->node_number;
+}
   }
 
   return -1;

@@ -6,8 +6,8 @@ corax_utree_create_pars_buildops(corax_unode_t *const *trav_buffer,
                                  corax_pars_buildop_t *ops,
                                  unsigned int *        ops_count)
 {
-  const corax_unode_t *node;
-  unsigned int         i;
+  const corax_unode_t *node = NULL;
+  unsigned int         i = 0;
 
   *ops_count = 0;
 
@@ -42,7 +42,7 @@ corax_utree_t *corax_utree_create_parsimony(unsigned int         taxon_count,
                                             unsigned int         random_seed,
                                             unsigned int *       score)
 {
-  size_t         i;
+  size_t         i = 0;
   corax_utree_t *tree = NULL;
 
   corax_partition_t *partition = corax_partition_create(taxon_count,
@@ -62,11 +62,13 @@ corax_utree_t *corax_utree_create_parsimony(unsigned int         taxon_count,
   }
 
   /* set pattern weights and free the weights array */
-  if (site_weights) corax_set_pattern_weights(partition, site_weights);
+  if (site_weights) { corax_set_pattern_weights(partition, site_weights);
+}
 
   /* find sequences in hash table and link them with the corresponding taxa */
-  for (i = 0; i < taxon_count; ++i)
+  for (i = 0; i < taxon_count; ++i) {
     corax_set_tip_states(partition, i, map, sequences[i]);
+}
 
   tree = corax_utree_create_parsimony_multipart(
       taxon_count, names, 1, &partition, random_seed, score);
@@ -93,7 +95,7 @@ corax_utree_create_parsimony_multipart(unsigned int       taxon_count,
                                        unsigned int *            score)
 {
   corax_utree_t *tree = NULL;
-  unsigned int   i;
+  unsigned int   i = 0;
 
   corax_parsimony_t **parsimony = (corax_parsimony_t **)calloc(
       partition_count, sizeof(corax_parsimony_t *));
@@ -127,14 +129,16 @@ corax_utree_create_parsimony_multipart(unsigned int       taxon_count,
     /* set default branch lengths */
     corax_utree_set_length_recursive(tree, CORAX_TREE_DEFAULT_BRANCH_LENGTH, 0);
   }
-  else
+  else {
     assert(corax_errno);
+}
 
 cleanup:
   /* destroy parsimony */
   for (i = 0; i < partition_count; ++i)
   {
-    if (parsimony[i]) corax_parsimony_destroy(parsimony[i]);
+    if (parsimony[i]) { corax_parsimony_destroy(parsimony[i]);
+}
   }
 
   free(parsimony);
@@ -152,7 +156,7 @@ CORAX_EXPORT corax_utree_t * corax_utree_resolve_parsimony_multipart(const corax
                                                                   unsigned int * score)
 {
   int retval = CORAX_FAILURE;
-  unsigned int i;
+  unsigned int i = 0;
 
   corax_utree_t * tree = NULL;
 
@@ -180,14 +184,15 @@ CORAX_EXPORT corax_utree_t * corax_utree_resolve_parsimony_multipart(const corax
   /* first, resolve multifurcations randomly */
   tree = corax_utree_random_resolve_multi(multi_tree, random_seed, clv_index_map);
 
-  if (!tree)
+  if (!tree) {
     goto cleanup;
+}
 
   /* if constraint tree was not fully resolved, apply SPR moves to improve parsimony score */
   if (!multi_tree->binary && max_spr_rounds)
   {
     unsigned int spr_round = 0;
-    unsigned int best_score;
+    unsigned int best_score = 0;
 
     *score = ~0;
     do
@@ -201,8 +206,9 @@ CORAX_EXPORT corax_utree_t * corax_utree_resolve_parsimony_multipart(const corax
     }
     while (retval && spr_round < max_spr_rounds && *score < best_score);
   }
-  else
+  else {
     retval = CORAX_SUCCESS;
+}
 
   if (retval)
   {
@@ -216,21 +222,24 @@ CORAX_EXPORT corax_utree_t * corax_utree_resolve_parsimony_multipart(const corax
                                       CORAX_TREE_DEFAULT_BRANCH_LENGTH,
                                       0);
   }
-  else
+  else {
     assert(corax_errno);
+}
 
   cleanup:
     /* destroy parsimony */
     for (i = 0; i < partition_count; ++i)
     {
-      if (parsimony[i])
+      if (parsimony[i]) {
         corax_parsimony_destroy(parsimony[i]);
+}
     }
 
     free(parsimony);
 
-    if (!retval && tree)
+    if (!retval && tree) {
       corax_utree_destroy(tree, NULL);
+}
 
   return tree;
 }
@@ -245,7 +254,7 @@ CORAX_EXPORT int corax_utree_extend_parsimony_multipart(corax_utree_t * tree,
                                                         unsigned int * score)
 {
   int retval = CORAX_FAILURE;
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int total_tip_count = tree->tip_count + taxon_count;
 
   corax_parsimony_t ** parsimony =
@@ -288,15 +297,17 @@ CORAX_EXPORT int corax_utree_extend_parsimony_multipart(corax_utree_t * tree,
                                       CORAX_TREE_DEFAULT_BRANCH_LENGTH,
                                       0);
   }
-  else
+  else {
     assert(corax_errno);
+}
 
 cleanup:
   /* destroy parsimony */
   for (i = 0; i < partition_count; ++i)
   {
-    if (parsimony[i])
+    if (parsimony[i]) {
       corax_parsimony_destroy(parsimony[i]);
+}
   }
 
   free(parsimony);

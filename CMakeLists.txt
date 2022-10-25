@@ -97,10 +97,10 @@ endif ()
 
 # Build the tests if requested.
 if (CORAX_BUILD_TESTS)
-    add_subdirectory(test)
-    if(CORAX_BUILD_DIFFICULTY_PREDICTION)
-        add_subdirectory(lib/difficulty_prediction/test)
-    endif()
+#    add_subdirectory(test)
+#    if(CORAX_BUILD_DIFFICULTY_PREDICTION)
+#        add_subdirectory(lib/difficulty_prediction/test)
+#    endif()
 endif (CORAX_BUILD_TESTS)
 
 # Build the benchmarks if requested.

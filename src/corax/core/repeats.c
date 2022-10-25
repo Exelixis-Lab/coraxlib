@@ -26,7 +26,8 @@ const unsigned int EMPTY_ELEMENT = (unsigned int)-1;
 // map in charmap each char to a unique char identifier, according to map
 static void repeats_fill_charmap(const corax_state_t *map, char *charmap)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
   char         maxChar = 0;
   for (i = 0; i < CORAX_ASCII_SIZE; ++i)
   {
@@ -38,7 +39,8 @@ static void repeats_fill_charmap(const corax_state_t *map, char *charmap)
         break;
       }
     }
-    if (!charmap[i]) charmap[i] = ++maxChar;
+    if (!charmap[i]) { charmap[i] = ++maxChar;
+}
   }
 }
 
@@ -50,7 +52,8 @@ CORAX_EXPORT int corax_repeats_enabled(const corax_partition_t *partition)
 CORAX_EXPORT void corax_resize_repeats_lookup(corax_partition_t *partition,
                                               unsigned int       size)
 {
-  if (!size) return;
+  if (!size) { return;
+}
   partition->repeats->lookup_buffer_size = size;
   free(partition->repeats->lookup_buffer);
   partition->repeats->lookup_buffer = malloc(size * sizeof(unsigned int));
@@ -83,8 +86,9 @@ CORAX_EXPORT unsigned int *corax_get_site_id(const corax_partition_t *partition,
 {
   unsigned int *site_id = 0;
   if (corax_repeats_enabled(partition)
-      && partition->repeats->pernode_ids[clv_index])
+      && partition->repeats->pernode_ids[clv_index]) {
     site_id = partition->repeats->pernode_site_id[clv_index];
+}
   return site_id;
 }
 
@@ -93,8 +97,9 @@ CORAX_EXPORT unsigned int *corax_get_id_site(const corax_partition_t *partition,
 {
   unsigned int *id_site = 0;
   if (corax_repeats_enabled(partition)
-      && partition->repeats->pernode_ids[clv_index])
+      && partition->repeats->pernode_ids[clv_index]) {
     id_site = partition->repeats->pernode_id_site[clv_index];
+}
   return id_site;
 }
 
@@ -115,7 +120,7 @@ CORAX_EXPORT int corax_repeats_initialize(corax_partition_t *partition)
 {
   unsigned int sites_alloc =
       (unsigned int)partition->asc_additional_sites + partition->sites;
-  unsigned int i;
+  unsigned int i = 0;
   partition->repeats = malloc(sizeof(corax_repeats_t));
   if (!partition->repeats)
   {
@@ -179,10 +184,11 @@ CORAX_EXPORT int corax_update_repeats_tips(corax_partition_t *  partition,
                                            const corax_state_t *map,
                                            const char *         sequence)
 {
-  if (!partition->repeats->lookup_buffer)
+  if (!partition->repeats->lookup_buffer) {
     corax_resize_repeats_lookup(partition, CORAX_REPEATS_LOOKUP_SIZE);
+}
 
-  unsigned int     s;
+  unsigned int     s = 0;
   corax_repeats_t *repeats = partition->repeats;
   unsigned int **  id_site = repeats->pernode_id_site;
   unsigned int     additional_sites =
@@ -244,7 +250,8 @@ CORAX_EXPORT void corax_default_reallocate_repeats(corax_partition_t *partition,
                                                    unsigned int sites_to_alloc)
 {
   corax_repeats_t *repeats = partition->repeats;
-  if (sites_to_alloc == repeats->pernode_allocated_clvs[parent]) return;
+  if (sites_to_alloc == repeats->pernode_allocated_clvs[parent]) { return;
+}
   repeats->pernode_allocated_clvs[parent] = sites_to_alloc;
   unsigned int **id_site                  = repeats->pernode_id_site;
   // reallocate clvs
@@ -265,8 +272,9 @@ CORAX_EXPORT void corax_default_reallocate_repeats(corax_partition_t *partition,
   if (CORAX_SCALE_BUFFER_NONE != scaler_index)
   {
     unsigned int scaler_size = sites_to_alloc;
-    if (partition->attributes & CORAX_ATTRIB_RATE_SCALERS)
+    if (partition->attributes & CORAX_ATTRIB_RATE_SCALERS) {
       scaler_size *= partition->rate_cats;
+}
     free(partition->scale_buffer[scaler_index]);
     partition->scale_buffer[scaler_index] =
         calloc(scaler_size, sizeof(unsigned int));
@@ -282,8 +290,9 @@ CORAX_EXPORT void corax_default_reallocate_repeats(corax_partition_t *partition,
 CORAX_EXPORT void corax_update_repeats(corax_partition_t *      partition,
                                        const corax_operation_t *op)
 {
-  if (!partition->repeats->lookup_buffer)
+  if (!partition->repeats->lookup_buffer) {
     corax_resize_repeats_lookup(partition, CORAX_REPEATS_LOOKUP_SIZE);
+}
 
   corax_repeats_t *   repeats        = partition->repeats;
   unsigned int        left           = op->child1_clv_index;
@@ -300,16 +309,17 @@ CORAX_EXPORT void corax_update_repeats(corax_partition_t *      partition,
   unsigned int        curr_id        = 0;
   unsigned int        additional_sites =
       partition->asc_bias_alloc ? partition->states : 0;
-  unsigned int sites_to_alloc;
-  unsigned int s;
+  unsigned int sites_to_alloc = 0;
+  unsigned int s = 0;
   unsigned int ids = 0;
   // in case site repeats is activated but not used for this node
   if (!partition->repeats->enable_repeats(partition, left, right))
   {
     sites_to_alloc               = partition->sites + additional_sites;
     repeats->pernode_ids[parent] = 0;
-    if (op->parent_scaler_index != CORAX_SCALE_BUFFER_NONE)
+    if (op->parent_scaler_index != CORAX_SCALE_BUFFER_NONE) {
       repeats->perscale_ids[op->parent_scaler_index] = 0;
+}
   }
   else
   {
@@ -333,8 +343,9 @@ CORAX_EXPORT void corax_update_repeats(corax_partition_t *      partition,
       site_id_parent[s + partition->sites] = ids + s;
     }
     repeats->pernode_ids[parent] = ids;
-    if (op->parent_scaler_index != CORAX_SCALE_BUFFER_NONE)
+    if (op->parent_scaler_index != CORAX_SCALE_BUFFER_NONE) {
       repeats->perscale_ids[op->parent_scaler_index] = ids;
+}
     sites_to_alloc = ids + additional_sites;
   }
 
@@ -346,8 +357,9 @@ CORAX_EXPORT void corax_update_repeats(corax_partition_t *      partition,
   if (sites_to_alloc >= partition->sites + additional_sites)
   {
     repeats->pernode_ids[parent] = 0;
-    if (op->parent_scaler_index != CORAX_SCALE_BUFFER_NONE)
+    if (op->parent_scaler_index != CORAX_SCALE_BUFFER_NONE) {
       repeats->perscale_ids[op->parent_scaler_index] = 0;
+}
   }
 
   // set id to site lookups
@@ -364,7 +376,8 @@ CORAX_EXPORT void corax_update_repeats(corax_partition_t *      partition,
 
 CORAX_EXPORT void corax_disable_bclv(corax_partition_t *partition)
 {
-  if (!corax_repeats_enabled(partition)) return;
+  if (!corax_repeats_enabled(partition)) { return;
+}
   corax_aligned_free(partition->repeats->bclv_buffer);
   partition->repeats->bclv_buffer = 0;
 }
@@ -392,7 +405,7 @@ corax_fill_parent_scaler_repeats(unsigned int        sites,
     return;
   }
 
-  unsigned int i;
+  unsigned int i = 0;
   if (!psites)
   {
     memset(parent_scaler, 0, sizeof(unsigned int) * sites);
@@ -400,22 +413,26 @@ corax_fill_parent_scaler_repeats(unsigned int        sites,
     {
       if (lids)
       {
-        for (i = 0; i < sites; ++i) parent_scaler[i] += left_scaler[lids[i]];
+        for (i = 0; i < sites; ++i) { parent_scaler[i] += left_scaler[lids[i]];
+}
       }
       else
       {
-        for (i = 0; i < sites; ++i) parent_scaler[i] += left_scaler[i];
+        for (i = 0; i < sites; ++i) { parent_scaler[i] += left_scaler[i];
+}
       }
     }
     if (right_scaler)
     {
       if (rids)
       {
-        for (i = 0; i < sites; ++i) parent_scaler[i] += right_scaler[rids[i]];
+        for (i = 0; i < sites; ++i) { parent_scaler[i] += right_scaler[rids[i]];
+}
       }
       else
       {
-        for (i = 0; i < sites; ++i) parent_scaler[i] += right_scaler[i];
+        for (i = 0; i < sites; ++i) { parent_scaler[i] += right_scaler[i];
+}
       }
     }
   }
@@ -423,19 +440,22 @@ corax_fill_parent_scaler_repeats(unsigned int        sites,
   {
     if (left_scaler && right_scaler)
     {
-      for (i = 0; i < sites; ++i)
+      for (i = 0; i < sites; ++i) {
         parent_scaler[i] =
             left_scaler[lids[psites[i]]] + right_scaler[rids[psites[i]]];
+}
     }
     else if (left_scaler)
     {
-      for (i = 0; i < sites; ++i)
+      for (i = 0; i < sites; ++i) {
         parent_scaler[i] = left_scaler[lids[psites[i]]];
+}
     }
     else
     {
-      for (i = 0; i < sites; ++i)
+      for (i = 0; i < sites; ++i) {
         parent_scaler[i] = right_scaler[rids[psites[i]]];
+}
     }
   }
 }
@@ -468,7 +488,8 @@ corax_fill_parent_scaler_repeats_per_rate(unsigned int        sites,
     return;
   }
 
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
   if (!psites)
   {
     memset(parent_scaler, 0, total_cpy_size);
@@ -476,10 +497,11 @@ corax_fill_parent_scaler_repeats_per_rate(unsigned int        sites,
     {
       if (lids)
       {
-        for (i = 0; i < sites; ++i)
+        for (i = 0; i < sites; ++i) {
           memcpy(&parent_scaler[i * rates],
                  &left_scaler[lids[i] * rates],
                  cpy_size);
+}
       }
       else
       {
@@ -490,13 +512,16 @@ corax_fill_parent_scaler_repeats_per_rate(unsigned int        sites,
     {
       if (rids)
       {
-        for (i = 0; i < sites; ++i)
-          for (j = 0; j < rates; ++j)
+        for (i = 0; i < sites; ++i) {
+          for (j = 0; j < rates; ++j) {
             parent_scaler[i * rates + j] += right_scaler[rids[i] * rates + j];
+}
+}
       }
       else
       {
-        for (i = 0; i < total_size; ++i) parent_scaler[i] += right_scaler[i];
+        for (i = 0; i < total_size; ++i) { parent_scaler[i] += right_scaler[i];
+}
       }
     }
   }
@@ -504,25 +529,29 @@ corax_fill_parent_scaler_repeats_per_rate(unsigned int        sites,
   {
     if (left_scaler && right_scaler)
     {
-      for (i = 0; i < sites; ++i)
-        for (j = 0; j < rates; ++j)
+      for (i = 0; i < sites; ++i) {
+        for (j = 0; j < rates; ++j) {
           parent_scaler[i * rates + j] =
               left_scaler[lids[psites[i]] * rates + j]
               + right_scaler[rids[psites[i]] * rates + j];
+}
+}
     }
     else if (left_scaler)
     {
-      for (i = 0; i < sites; ++i)
+      for (i = 0; i < sites; ++i) {
         memcpy(&parent_scaler[i * rates],
                &left_scaler[lids[psites[i]] * rates],
                cpy_size);
+}
     }
     else
     {
-      for (i = 0; i < sites; ++i)
+      for (i = 0; i < sites; ++i) {
         memcpy(&parent_scaler[i * rates],
                &right_scaler[rids[psites[i]] * rates],
                cpy_size);
+}
     }
   }
 }

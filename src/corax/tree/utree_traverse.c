@@ -4,11 +4,12 @@ CORAX_EXPORT int corax_utree_every(corax_utree_t *tree,
                                    int (*cb)(const corax_utree_t *,
                                              const corax_unode_t *))
 {
-  unsigned int i;
+  unsigned int i = 0;
   int          rc = 1;
 
-  for (i = 0; i < tree->tip_count + tree->inner_count; ++i)
+  for (i = 0; i < tree->tip_count + tree->inner_count; ++i) {
     rc &= cb(tree, tree->nodes[i]);
+}
 
   return (rc ? CORAX_SUCCESS : CORAX_FAILURE);
 }
@@ -17,11 +18,12 @@ CORAX_EXPORT int corax_utree_every_const(const corax_utree_t *tree,
                                          int (*cb)(const corax_utree_t *,
                                                    const corax_unode_t *))
 {
-  unsigned int i;
+  unsigned int i = 0;
   int          rc = 1;
 
-  for (i = 0; i < tree->tip_count + tree->inner_count; ++i)
+  for (i = 0; i < tree->tip_count + tree->inner_count; ++i) {
     rc &= cb(tree, tree->nodes[i]);
+}
 
   return (rc ? CORAX_SUCCESS : CORAX_FAILURE);
 }
@@ -32,7 +34,8 @@ static void utree_traverse_recursive(corax_unode_t *node,
                                      unsigned int   *index,
                                      corax_unode_t **outbuffer)
 {
-  if (!cbtrav(node)) return;
+  if (!cbtrav(node)) { return;
+}
 
   if (traversal == CORAX_TREE_TRAVERSE_PREORDER)
   {
@@ -64,7 +67,8 @@ static void utree_traverse_recursive_const(const corax_unode_t *node,
                                            unsigned int         *index,
                                            corax_unode_t const **outbuffer)
 {
-  if (!cbtrav(node)) return;
+  if (!cbtrav(node)) { return;
+}
 
   if (traversal == CORAX_TREE_TRAVERSE_PREORDER)
   {
@@ -96,7 +100,8 @@ CORAX_EXPORT int corax_utree_traverse_subtree(corax_unode_t *root,
                                               unsigned int   *trav_size)
 {
   *trav_size = 0;
-  if (!root->next) return CORAX_FAILURE;
+  if (!root->next) { return CORAX_FAILURE;
+}
 
   if (traversal == CORAX_TREE_TRAVERSE_POSTORDER
       || traversal == CORAX_TREE_TRAVERSE_PREORDER)
@@ -131,7 +136,8 @@ CORAX_EXPORT int corax_utree_traverse(corax_unode_t *root,
                                       unsigned int   *trav_size)
 {
   *trav_size = 0;
-  if (!root->next) return CORAX_FAILURE;
+  if (!root->next) { return CORAX_FAILURE;
+}
 
   if (traversal == CORAX_TREE_TRAVERSE_POSTORDER
       || traversal == CORAX_TREE_TRAVERSE_PREORDER)
@@ -170,7 +176,8 @@ corax_utree_traverse_const(const corax_unode_t *root,
                            unsigned int         *trav_size)
 {
   *trav_size = 0;
-  if (!root->next) return CORAX_FAILURE;
+  if (!root->next) { return CORAX_FAILURE;
+}
 
   if (traversal == CORAX_TREE_TRAVERSE_POSTORDER
       || traversal == CORAX_TREE_TRAVERSE_PREORDER)
@@ -210,12 +217,15 @@ static int utree_traverse_apply(corax_unode_t *node,
   int            retval     = 1;
   corax_unode_t *child_tree = 0;
 
-  if (cb_pre_trav && !cb_pre_trav(node, data)) return CORAX_FAILURE;
+  if (cb_pre_trav && !cb_pre_trav(node, data)) { return CORAX_FAILURE;
+}
 
   if (CORAX_UTREE_IS_TIP(node))
   {
-    if (cb_in_trav) retval &= cb_in_trav(node, data);
-    if (cb_post_trav) retval &= cb_post_trav(node, data);
+    if (cb_in_trav) { retval &= cb_in_trav(node, data);
+}
+    if (cb_post_trav) { retval &= cb_post_trav(node, data);
+}
     return retval;
   }
 
@@ -225,13 +235,15 @@ static int utree_traverse_apply(corax_unode_t *node,
     retval &= utree_traverse_apply(
         child_tree->back, cb_pre_trav, cb_in_trav, cb_post_trav, data);
 
-    if (cb_in_trav && child_tree->next != node && !cb_in_trav(child_tree, data))
+    if (cb_in_trav && child_tree->next != node && !cb_in_trav(child_tree, data)) {
       return CORAX_FAILURE;
+}
 
     child_tree = child_tree->next;
   }
 
-  if (cb_post_trav) retval &= cb_post_trav(node, data);
+  if (cb_post_trav) { retval &= cb_post_trav(node, data);
+}
 
   return retval;
 }
@@ -247,7 +259,8 @@ corax_utree_traverse_apply(corax_unode_t *root,
 
   assert(root);
 
-  if (CORAX_UTREE_IS_TIP(root)) return CORAX_FAILURE;
+  if (CORAX_UTREE_IS_TIP(root)) { return CORAX_FAILURE;
+}
 
   retval &= utree_traverse_apply(
       root->back, cb_pre_trav, cb_in_trav, cb_post_trav, data);
@@ -270,7 +283,8 @@ static void utree_nodes_at_dist(corax_unode_t  *node,
     *index            = *index + 1;
   }
 
-  if (depth >= max_distance || !(node->next)) return;
+  if (depth >= max_distance || !(node->next)) { return;
+}
 
   utree_nodes_at_dist(node->next->back,
                       outbuffer,

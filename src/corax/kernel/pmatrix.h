@@ -11,7 +11,7 @@ extern "C"
   /**
    * Update the probability matrices of partition.
    *
-   * @param params_index Index of the parameters to use, as in rate categories.
+   * @param params_indices Index of the parameters to use, as in rate categories.
    *
    * @param matrix_indices An array of indices into the `prob_matrices` in
    * `corax_partition_t`. These are the locations in which the matrices will be
@@ -27,7 +27,7 @@ extern "C"
    */
   CORAX_EXPORT int
   corax_update_prob_matrices(corax_partition_t * partition,
-                             const unsigned int *params_index,
+                             const unsigned int *params_indices,
                              const unsigned int *matrix_indices,
                              const double *      branch_lengths,
                              unsigned int        count);

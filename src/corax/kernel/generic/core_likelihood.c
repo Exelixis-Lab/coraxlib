@@ -20,6 +20,7 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 #include <limits.h>
 
 CORAX_EXPORT double
@@ -37,14 +38,18 @@ corax_core_root_loglikelihood(unsigned int         states,
                               double *             persite_lnl,
                               unsigned int         attrib)
 {
-  unsigned int  i, j, k;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
   double        logl  = 0;
   const double *freqs = NULL;
 
   double prop_invar = 0;
 
-  double term, term_r;
-  double site_lk, inv_site_lk;
+  double term = NAN;
+  double term_r = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int states_padded = states;
 
@@ -65,9 +70,8 @@ corax_core_root_loglikelihood(unsigned int         states,
                                                    freqs_indices,
                                                    persite_lnl);
     }
-    else
-    {
-      return corax_core_root_loglikelihood_sse(states,
+    
+          return corax_core_root_loglikelihood_sse(states,
                                                sites,
                                                rate_cats,
                                                clv,
@@ -79,7 +83,7 @@ corax_core_root_loglikelihood(unsigned int         states,
                                                invar_indices,
                                                freqs_indices,
                                                persite_lnl);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 1) & 0xFFFFFFFE;
@@ -102,9 +106,8 @@ corax_core_root_loglikelihood(unsigned int         states,
                                                    freqs_indices,
                                                    persite_lnl);
     }
-    else
-    {
-      return corax_core_root_loglikelihood_avx(states,
+    
+          return corax_core_root_loglikelihood_avx(states,
                                                sites,
                                                rate_cats,
                                                clv,
@@ -116,7 +119,7 @@ corax_core_root_loglikelihood(unsigned int         states,
                                                invar_indices,
                                                freqs_indices,
                                                persite_lnl);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 3) & 0xFFFFFFFC;
@@ -139,9 +142,8 @@ corax_core_root_loglikelihood(unsigned int         states,
                                                    freqs_indices,
                                                    persite_lnl);
     }
-    else
-    {
-      return corax_core_root_loglikelihood_avx2(states,
+    
+          return corax_core_root_loglikelihood_avx2(states,
                                                 sites,
                                                 rate_cats,
                                                 clv,
@@ -153,7 +155,7 @@ corax_core_root_loglikelihood(unsigned int         states,
                                                 invar_indices,
                                                 freqs_indices,
                                                 persite_lnl);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 3) & 0xFFFFFFFC;
@@ -190,19 +192,21 @@ corax_core_root_loglikelihood(unsigned int         states,
 
     /* compute site log-likelihood and scale if necessary */
     site_lk = log(site_lk);
-    if (scaler && scaler[i]) site_lk += scaler[i] * log(CORAX_SCALE_THRESHOLD);
+    if (scaler && scaler[i]) { site_lk += scaler[i] * log(CORAX_SCALE_THRESHOLD);
+}
 
     site_lk *= pattern_weights[i];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[i] = site_lk;
+    if (persite_lnl) { persite_lnl[i] = site_lk;
+}
 
     logl += site_lk;
   }
   return logl;
 }
 
-CORAX_EXPORT double corax_core_root_loglikelihood_repeats_generic(
+CORAX_EXPORT static double corax_core_root_loglikelihood_repeats_generic(
     unsigned int         states,
     unsigned int         sites,
     unsigned int         rate_cats,
@@ -217,14 +221,18 @@ CORAX_EXPORT double corax_core_root_loglikelihood_repeats_generic(
     const unsigned int * freqs_indices,
     double *             persite_lnl)
 {
-  unsigned int  i, j, k;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
   double        logl  = 0;
   const double *freqs = NULL;
 
   double prop_invar = 0;
 
-  double term, term_r;
-  double site_lk, inv_site_lk;
+  double term = NAN;
+  double term_r = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int states_padded = states;
   unsigned int span          = states_padded * rate_cats;
@@ -261,13 +269,15 @@ CORAX_EXPORT double corax_core_root_loglikelihood_repeats_generic(
 
     /* compute site log-likelihood and scale if necessary */
     site_lk = log(site_lk);
-    if (scaler && scaler[id])
+    if (scaler && scaler[id]) {
       site_lk += scaler[id] * log(CORAX_SCALE_THRESHOLD);
+}
 
     site_lk *= pattern_weights[i];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[i] = site_lk;
+    if (persite_lnl) { persite_lnl[i] = site_lk;
+}
 
     logl += site_lk;
   }
@@ -355,18 +365,25 @@ double corax_core_edge_loglikelihood_ti_4x4(unsigned int         sites,
                                             double *            persite_lnl,
                                             unsigned int        attrib)
 {
-  unsigned int n, i, j, k;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl = 0;
 
   const double *clvp       = parent_clv;
   double        prop_invar = 0;
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, termb, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double termb = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
-  unsigned int cstate;
+  unsigned int cstate = 0;
 
   unsigned int states        = 4;
   unsigned int states_padded = states;
@@ -429,7 +446,7 @@ double corax_core_edge_loglikelihood_ti_4x4(unsigned int         sites,
   }
 #endif
 
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -470,7 +487,8 @@ double corax_core_edge_loglikelihood_ti_4x4(unsigned int         sites,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -497,7 +515,8 @@ double corax_core_edge_loglikelihood_ti_4x4(unsigned int         sites,
         cstate = (unsigned int)(*tipchars);
         for (k = 0; k < states; ++k)
         {
-          if (cstate & 1) termb += pmat[k];
+          if (cstate & 1) { termb += pmat[k];
+}
           cstate >>= 1;
         }
         terma_r += clvp[j] * freqs[j] * termb;
@@ -555,14 +574,16 @@ double corax_core_edge_loglikelihood_ti_4x4(unsigned int         sites,
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
 
     tipchars++;
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }
@@ -586,18 +607,25 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
                                         double *             persite_lnl,
                                         unsigned int         attrib)
 {
-  unsigned int n, i, j, k;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl = 0;
 
   const double *clvp       = parent_clv;
   double        prop_invar = 0;
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, termb, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double termb = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
-  corax_state_t cstate;
+  corax_state_t cstate = 0;
 
   unsigned int states_padded = states;
 
@@ -621,9 +649,8 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
                                                       persite_lnl,
                                                       attrib);
     }
-    else
-    {
-      return corax_core_edge_loglikelihood_ti_sse(states,
+    
+          return corax_core_edge_loglikelihood_ti_sse(states,
                                                   sites,
                                                   rate_cats,
                                                   parent_clv,
@@ -639,7 +666,7 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
                                                   freqs_indices,
                                                   persite_lnl,
                                                   attrib);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 1) & 0xFFFFFFFE;
@@ -665,7 +692,7 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
                                                       persite_lnl,
                                                       attrib);
     }
-    else if (states == 20)
+    if (states == 20)
     {
       return corax_core_edge_loglikelihood_ti_20x20_avx(sites,
                                                         rate_cats,
@@ -728,7 +755,7 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
                                                       persite_lnl,
                                                       attrib);
     }
-    else if (states == 20)
+    if (states == 20)
     {
       return corax_core_edge_loglikelihood_ti_20x20_avx2(sites,
                                                          rate_cats,
@@ -772,7 +799,7 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
   }
 #endif
 
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -809,7 +836,8 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -839,7 +867,8 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
         cstate = tipmap[(unsigned int)(*tipchars)];
         for (k = 0; k < states; ++k)
         {
-          if (cstate & 1) termb += pmat[k];
+          if (cstate & 1) { termb += pmat[k];
+}
           cstate >>= 1;
         }
         terma_r += clvp[j] * freqs[j] * termb;
@@ -897,14 +926,16 @@ double corax_core_edge_loglikelihood_ti(unsigned int         states,
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
 
     tipchars++;
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }
@@ -962,11 +993,12 @@ corax_core_edge_loglikelihood_repeats(unsigned int         states,
     core_edge_loglikelihood = corax_core_edge_loglikelihood_repeats_generic_avx;
     if (states == 4)
     {
-      if (use_bclv)
+      if (use_bclv) {
         core_edge_loglikelihood =
             corax_core_edge_loglikelihood_repeatsbclv_4x4_avx;
-      else
+      } else {
         core_edge_loglikelihood = corax_core_edge_loglikelihood_repeats_4x4_avx;
+}
     }
   }
 #endif
@@ -1031,18 +1063,25 @@ double corax_core_edge_loglikelihood_repeats_generic(
 {
   CORAX_UNUSED(child_sites);
   CORAX_UNUSED(bclv);
-  unsigned int n, i, j, k;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl = 0;
 
   double        prop_invar = 0;
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, termb, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double termb = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int  span = states * rate_cats;
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -1085,7 +1124,8 @@ double corax_core_edge_loglikelihood_repeats_generic(
             (parent_scaler) ? parent_scaler[pid * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[cid * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -1171,12 +1211,14 @@ double corax_core_edge_loglikelihood_repeats_generic(
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }
@@ -1199,17 +1241,24 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                         double *             persite_lnl,
                                         unsigned int         attrib)
 {
-  unsigned int n, i, j, k;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl = 0;
 
   const double *clvp       = parent_clv;
   const double *clvc       = child_clv;
   double        prop_invar = 0;
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, termb, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double termb = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
   /* TODO: We need states_padded in the AVX/SSE implementations
    */
@@ -1236,9 +1285,8 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                                       persite_lnl,
                                                       attrib);
     }
-    else
-    {
-      return corax_core_edge_loglikelihood_ii_sse(states,
+    
+          return corax_core_edge_loglikelihood_ii_sse(states,
                                                   sites,
                                                   rate_cats,
                                                   clvp,
@@ -1254,7 +1302,7 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                                   freqs_indices,
                                                   persite_lnl,
                                                   attrib);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 1) & 0xFFFFFFFE;
@@ -1281,9 +1329,8 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                                       persite_lnl,
                                                       attrib);
     }
-    else
-    {
-      return corax_core_edge_loglikelihood_ii_avx(states,
+    
+          return corax_core_edge_loglikelihood_ii_avx(states,
                                                   sites,
                                                   rate_cats,
                                                   clvp,
@@ -1299,7 +1346,7 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                                   freqs_indices,
                                                   persite_lnl,
                                                   attrib);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 3) & 0xFFFFFFFC;
@@ -1326,9 +1373,8 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                                       persite_lnl,
                                                       attrib);
     }
-    else
-    {
-      return corax_core_edge_loglikelihood_ii_avx2(states,
+    
+          return corax_core_edge_loglikelihood_ii_avx2(states,
                                                    sites,
                                                    rate_cats,
                                                    clvp,
@@ -1344,14 +1390,14 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
                                                    freqs_indices,
                                                    persite_lnl,
                                                    attrib);
-    }
+   
     /* this line is never called, but should we disable the else case above,
        then states_padded must be set to this value */
     states_padded = (states + 3) & 0xFFFFFFFC;
   }
 #endif
 
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -1390,7 +1436,8 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -1476,12 +1523,14 @@ double corax_core_edge_loglikelihood_ii(unsigned int         states,
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }

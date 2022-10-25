@@ -27,40 +27,52 @@ static void dealloc_partition_data(corax_partition_t *partition);
 
 static void dealloc_partition_data(corax_partition_t *partition)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
-  if (!partition) return;
+  if (!partition) { return;
+}
 
   free(partition->rates);
   free(partition->rate_weights);
   free(partition->eigen_decomp_valid);
-  if (partition->prop_invar) free(partition->prop_invar);
-  if (partition->invariant) free(partition->invariant);
-  if (!partition->pattern_weights) free(partition->pattern_weights);
+  if (partition->prop_invar) { free(partition->prop_invar);
+}
+  if (partition->invariant) { free(partition->invariant);
+}
+  if (!partition->pattern_weights) { free(partition->pattern_weights);
+}
 
-  if (partition->scale_buffer)
-    for (i = 0; i < partition->scale_buffers; ++i)
+  if (partition->scale_buffer) {
+    for (i = 0; i < partition->scale_buffers; ++i) {
       free(partition->scale_buffer[i]);
+}
+}
   free(partition->scale_buffer);
 
-  if (partition->tipchars)
-    for (i = 0; i < partition->tips; ++i)
+  if (partition->tipchars) {
+    for (i = 0; i < partition->tips; ++i) {
       corax_aligned_free(partition->tipchars[i]);
+}
+}
   free(partition->tipchars);
 
-  if (partition->ttlookup) corax_aligned_free(partition->ttlookup);
+  if (partition->ttlookup) { corax_aligned_free(partition->ttlookup);
+}
 
-  if (partition->charmap) free(partition->charmap);
+  if (partition->charmap) { free(partition->charmap);
+}
 
-  if (partition->tipmap) free(partition->tipmap);
+  if (partition->tipmap) { free(partition->tipmap);
+}
 
   if (partition->clv)
   {
     unsigned int start = (partition->attributes & CORAX_ATTRIB_PATTERN_TIP)
                              ? partition->tips
                              : 0;
-    for (i = start; i < partition->clv_buffers + partition->tips; ++i)
+    for (i = start; i < partition->clv_buffers + partition->tips; ++i) {
       corax_aligned_free(partition->clv[i]);
+}
   }
   free(partition->clv);
 
@@ -71,32 +83,43 @@ static void dealloc_partition_data(corax_partition_t *partition)
   }
   free(partition->pmatrix);
 
-  if (partition->subst_params)
-    for (i = 0; i < partition->rate_matrices; ++i)
+  if (partition->subst_params) {
+    for (i = 0; i < partition->rate_matrices; ++i) {
       corax_aligned_free(partition->subst_params[i]);
+}
+}
   free(partition->subst_params);
 
-  if (partition->eigenvecs)
-    for (i = 0; i < partition->rate_matrices; ++i)
+  if (partition->eigenvecs) {
+    for (i = 0; i < partition->rate_matrices; ++i) {
       corax_aligned_free(partition->eigenvecs[i]);
+}
+}
   free(partition->eigenvecs);
 
-  if (partition->inv_eigenvecs)
-    for (i = 0; i < partition->rate_matrices; ++i)
+  if (partition->inv_eigenvecs) {
+    for (i = 0; i < partition->rate_matrices; ++i) {
       corax_aligned_free(partition->inv_eigenvecs[i]);
+}
+}
   free(partition->inv_eigenvecs);
 
-  if (partition->eigenvals)
-    for (i = 0; i < partition->rate_matrices; ++i)
+  if (partition->eigenvals) {
+    for (i = 0; i < partition->rate_matrices; ++i) {
       corax_aligned_free(partition->eigenvals[i]);
+}
+}
   free(partition->eigenvals);
 
-  if (partition->frequencies)
-    for (i = 0; i < partition->rate_matrices; ++i)
+  if (partition->frequencies) {
+    for (i = 0; i < partition->rate_matrices; ++i) {
       corax_aligned_free(partition->frequencies[i]);
+}
+}
   free(partition->frequencies);
 
-  if (partition->pattern_weights) free(partition->pattern_weights);
+  if (partition->pattern_weights) { free(partition->pattern_weights);
+}
 
   if (partition->repeats)
   {
@@ -125,7 +148,9 @@ static void dealloc_partition_data(corax_partition_t *partition)
 static int update_charmap(corax_partition_t *  partition,
                           const corax_state_t *map)
 {
-  unsigned int  i, j, k;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
   unsigned int  new_states_count = 0;
   corax_state_t mapcopy[CORAX_ASCII_SIZE];
 
@@ -133,7 +158,8 @@ static int update_charmap(corax_partition_t *  partition,
 
   /* find maximum value in charmap table */
   k = 0;
-  while (partition->tipmap[k]) ++k;
+  while (partition->tipmap[k]) { ++k;
+}
 
   /* compute the number of new states in the map */
   for (i = 0; i < CORAX_ASCII_SIZE; ++i)
@@ -141,18 +167,23 @@ static int update_charmap(corax_partition_t *  partition,
     if (mapcopy[i])
     {
       /* check whether state map[i] already exists in the tipmap */
-      for (j = 0; j < k; ++j)
-        if (mapcopy[i] == partition->tipmap[j]) break;
+      for (j = 0; j < k; ++j) {
+        if (mapcopy[i] == partition->tipmap[j]) { break;
+}
+}
 
       /* if it does not exist */
       if (j == k)
       {
         /* check whether it is the first time we find it */
-        for (j = 0; j < i; ++j)
-          if (mapcopy[j] == mapcopy[i]) break;
+        for (j = 0; j < i; ++j) {
+          if (mapcopy[j] == mapcopy[i]) { break;
+}
+}
 
         /* if first time, increase number of new states */
-        if (j == i) new_states_count++;
+        if (j == i) { new_states_count++;
+}
       }
     }
   }
@@ -177,8 +208,10 @@ static int update_charmap(corax_partition_t *  partition,
       unsigned int code = 0;
 
       /* check whether state map[i] already exists in the tipmap */
-      for (j = 0; j < k; ++j)
-        if (mapcopy[i] == partition->tipmap[j]) break;
+      for (j = 0; j < k; ++j) {
+        if (mapcopy[i] == partition->tipmap[j]) { break;
+}
+}
 
       if (j == k)
       {
@@ -216,13 +249,15 @@ static int update_charmap(corax_partition_t *  partition,
     {
       for (k = 0, i = 0; partition->tipmap[i]; ++i)
       {
-        if (partition->tipmap[i] > k) k = (unsigned int)partition->tipmap[i];
+        if (partition->tipmap[i] > k) { k = (unsigned int)partition->tipmap[i];
+}
       }
 
       partition->maxstates = k + 1;
     }
-    else
+    else {
       partition->maxstates += new_states_count;
+}
 
     unsigned int l2_maxstates = (unsigned int)ceil(log2(partition->maxstates));
 
@@ -233,8 +268,9 @@ static int update_charmap(corax_partition_t *  partition,
     /* for AVX we do not need to reallocate ttlookup as it has fixed size */
     if ((partition->states == 4)
         && (partition->attributes & CORAX_ATTRIB_ARCH_AVX)
-        && CORAX_HAS_CPU_FEATURE(avx_present))
+        && CORAX_HAS_CPU_FEATURE(avx_present)) {
       return CORAX_SUCCESS;
+}
 
     free(partition->ttlookup);
     partition->ttlookup =
@@ -261,7 +297,9 @@ static int update_charmap(corax_partition_t *  partition,
 static int create_charmap(corax_partition_t *  partition,
                           const corax_state_t *usermap)
 {
-  unsigned int  i, j, k = 0;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
   corax_state_t m = 0;
   corax_state_t map[CORAX_ASCII_SIZE];
 
@@ -296,7 +334,8 @@ static int create_charmap(corax_partition_t *  partition,
   {
     if (map[i])
     {
-      if (map[i] > m) m = map[i];
+      if (map[i] > m) { m = map[i];
+}
 
       partition->charmap[i] = (unsigned char)k;
       partition->tipmap[k]  = map[i];
@@ -315,7 +354,8 @@ static int create_charmap(corax_partition_t *  partition,
   /* For all state settings for which remapping will not be done, we need to
      increment maxstates by one to account for a fictive state 0 which will
      never be used */
-  if (partition->states == 4) k = (unsigned int)m + 1;
+  if (partition->states == 4) { k = (unsigned int)m + 1;
+}
 
   /* set maximum number of states (including ambiguities), its logarithm,
      and the logarithm of states */
@@ -392,8 +432,8 @@ CORAX_EXPORT corax_partition_t *
                                     unsigned int scale_buffers,
                                     unsigned int attributes)
 {
-  unsigned int i;
-  unsigned int sites_alloc;
+  unsigned int i = 0;
+  unsigned int sites_alloc = 0;
 
   // Multiple specified ARCHs is no problem, we will autoselect the best available later.
   // "best" is defined as AVX2 > AVX > SSE3
@@ -575,9 +615,10 @@ CORAX_EXPORT corax_partition_t *
                     "Unable to allocate enough memory for p-matrix.");
     return CORAX_FAILURE;
   }
-  for (i = 1; i < partition->prob_matrices; ++i)
+  for (i = 1; i < partition->prob_matrices; ++i) {
     partition->pmatrix[i] =
         partition->pmatrix[i - 1] + states * states_padded * rate_cats;
+}
 
   /* zero-out p-matrices to avoid valgrind warnings when using odd number of
      states with vectorized code */
@@ -747,8 +788,9 @@ CORAX_EXPORT corax_partition_t *
   if (partition->rate_weights)
   {
     /* initialize to 1/n_rates */
-    for (i = 0; i < partition->rate_cats; ++i)
+    for (i = 0; i < partition->rate_cats; ++i) {
       partition->rate_weights[i] = 1.0 / partition->rate_cats;
+}
   }
   else
   {
@@ -781,9 +823,11 @@ CORAX_EXPORT corax_partition_t *
         "Unable to allocate enough memory for site pattern weights.");
     return CORAX_FAILURE;
   }
-  for (i = 0; i < partition->sites; ++i) partition->pattern_weights[i] = 1;
+  for (i = 0; i < partition->sites; ++i) { partition->pattern_weights[i] = 1;
+}
   /* additional positions if asc_bias is set are initialized to zero */
-  for (i = sites; i < sites_alloc; ++i) partition->pattern_weights[i] = 0;
+  for (i = sites; i < sites_alloc; ++i) { partition->pattern_weights[i] = 0;
+}
 
   /* scale_buffer */
   partition->scale_buffer =
@@ -836,8 +880,8 @@ static int set_tipchars_4x4(corax_partition_t *  partition,
                             const corax_state_t *map,
                             const char *         sequence)
 {
-  corax_state_t c;
-  unsigned int  i;
+  corax_state_t c = 0;
+  unsigned int  i = 0;
 
   /* iterate through sites */
   for (i = 0; i < partition->sites; ++i)
@@ -874,8 +918,8 @@ static int set_tipchars(corax_partition_t *  partition,
                         const corax_state_t *map,
                         const char *         sequence)
 {
-  corax_state_t  c;
-  unsigned int   i;
+  corax_state_t  c = 0;
+  unsigned int   i = 0;
   unsigned char *tipchars = partition->tipchars[tip_index];
 
   /* iterate through sites */
@@ -922,8 +966,9 @@ static int set_tipclv(corax_partition_t *  partition,
                       const corax_state_t *map,
                       const char *         sequence)
 {
-  corax_state_t c;
-  unsigned int  i, j;
+  corax_state_t c = 0;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
   double *      tipclv = partition->clv[tip_index];
 
   corax_repeats_t *repeats     = partition->repeats;
@@ -989,13 +1034,14 @@ CORAX_EXPORT int corax_set_tip_states(corax_partition_t *  partition,
                                       const corax_state_t *map,
                                       const char *         sequence)
 {
-  int rc;
+  int rc = 0;
 
   if (corax_repeats_enabled(partition))
   {
     if (CORAX_FAILURE
-        == corax_update_repeats_tips(partition, tip_index, map, sequence))
+        == corax_update_repeats_tips(partition, tip_index, map, sequence)) {
       return CORAX_FAILURE;
+}
   }
   if (partition->attributes & CORAX_ATTRIB_PATTERN_TIP)
   {
@@ -1010,13 +1056,15 @@ CORAX_EXPORT int corax_set_tip_states(corax_partition_t *  partition,
       }
     }
 
-    if (partition->states == 4)
+    if (partition->states == 4) {
       rc = set_tipchars_4x4(partition, tip_index, map, sequence);
-    else
+    } else {
       rc = set_tipchars(partition, tip_index, map, sequence);
+}
   }
-  else
+  else {
     rc = set_tipclv(partition, tip_index, map, sequence);
+}
 
   return rc;
 }
@@ -1027,7 +1075,9 @@ CORAX_EXPORT int corax_set_tip_clv(corax_partition_t *partition,
                                    const double *     clv,
                                    int                padding)
 {
-  unsigned int i, j, k;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
 
   if (partition->attributes & CORAX_ATTRIB_PATTERN_TIP)
   {
@@ -1071,22 +1121,23 @@ CORAX_EXPORT int corax_set_tip_clv(corax_partition_t *partition,
 CORAX_EXPORT void corax_set_pattern_weights(corax_partition_t * partition,
                                             const unsigned int *pattern_weights)
 {
-  unsigned int i;
+  unsigned int i = 0;
   memcpy(partition->pattern_weights,
          pattern_weights,
          sizeof(unsigned int) * partition->sites);
 
   /* recompute the sum of weights */
   partition->pattern_weight_sum = 0;
-  for (i = 0; i < partition->sites; ++i)
+  for (i = 0; i < partition->sites; ++i) {
     partition->pattern_weight_sum += pattern_weights[i];
+}
 }
 
 CORAX_EXPORT void corax_set_frequencies(corax_partition_t *partition,
                                         unsigned int       freqs_index,
                                         const double *     frequencies)
 {
-  unsigned int i;
+  unsigned int i = 0;
   double       sum = 0.;
 
   memcpy(partition->frequencies[freqs_index],
@@ -1094,13 +1145,15 @@ CORAX_EXPORT void corax_set_frequencies(corax_partition_t *partition,
          partition->states * sizeof(double));
 
   /* make sure frequencies sum up to 1.0 */
-  for (i = 0; i < partition->states; ++i)
+  for (i = 0; i < partition->states; ++i) {
     sum += partition->frequencies[freqs_index][i];
+}
 
   if (fabs(sum - 1.0) > CORAX_MISC_EPSILON)
   {
-    for (i = 0; i < partition->states; ++i)
+    for (i = 0; i < partition->states; ++i) {
       partition->frequencies[freqs_index][i] /= sum;
+}
   }
 
   partition->eigen_decomp_valid[freqs_index] = 0;
@@ -1137,7 +1190,7 @@ CORAX_EXPORT void corax_set_subst_params(corax_partition_t *partition,
 CORAX_EXPORT int corax_set_asc_bias_type(corax_partition_t *partition,
                                          int                asc_bias_type)
 {
-  unsigned int i;
+  unsigned int i = 0;
   int          prop_invar    = 0;
   int          asc_bias_attr = asc_bias_type & CORAX_ATTRIB_AB_MASK;
 
@@ -1153,8 +1206,9 @@ CORAX_EXPORT int corax_set_asc_bias_type(corax_partition_t *partition,
   }
 
   /* check that there is no proportion of invariant sites */
-  for (i = 0; i < partition->rate_matrices; ++i)
+  for (i = 0; i < partition->rate_matrices; ++i) {
     prop_invar |= (partition->prop_invar[i] > 0);
+}
   if (asc_bias_type != 0 && prop_invar)
   {
     corax_set_error(
@@ -1195,20 +1249,22 @@ CORAX_EXPORT void corax_fill_parent_scaler(unsigned int        scaler_size,
                                            const unsigned int *left_scaler,
                                            const unsigned int *right_scaler)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
-  if (!left_scaler && !right_scaler)
+  if (!left_scaler && !right_scaler) {
     memset(parent_scaler, 0, sizeof(unsigned int) * scaler_size);
-  else if (left_scaler && right_scaler)
+  } else if (left_scaler && right_scaler)
   {
     memcpy(parent_scaler, left_scaler, sizeof(unsigned int) * scaler_size);
-    for (i = 0; i < scaler_size; ++i) parent_scaler[i] += right_scaler[i];
+    for (i = 0; i < scaler_size; ++i) { parent_scaler[i] += right_scaler[i];
+}
   }
   else
   {
-    if (left_scaler)
+    if (left_scaler) {
       memcpy(parent_scaler, left_scaler, sizeof(unsigned int) * scaler_size);
-    else
+    } else {
       memcpy(parent_scaler, right_scaler, sizeof(unsigned int) * scaler_size);
+}
   }
 }

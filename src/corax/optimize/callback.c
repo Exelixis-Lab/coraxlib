@@ -21,6 +21,7 @@
 
 #include "callback.h"
 #include "corax/corax.h"
+#include "math.h"
 
 double target_freqs_func(void *p, double *x)
 {
@@ -35,8 +36,9 @@ double target_freqs_func(void *p, double *x)
   double *             freqs            = partition->frequencies[params_index];
   double               sum_ratios       = 1.0;
 
-  unsigned int i, cur_index;
-  double       score;
+  unsigned int i = 0;
+  unsigned int cur_index = 0;
+  double       score = NAN;
 
   /* update frequencies */
   for (i = 0; i < (states - 1); ++i)
@@ -72,7 +74,9 @@ double target_subst_params_func(void *p, double *x)
 {
   struct algo_subst_params *params = (struct algo_subst_params *)p;
 
-  unsigned int       i, j, k;
+  unsigned int       i = 0;
+  unsigned int       j = 0;
+  unsigned int       k = 0;
   corax_partition_t *  partition         = params->partition;
   corax_unode_t *      root              = params->tree;
   const unsigned int * params_indices    = params->params_indices;
@@ -146,11 +150,12 @@ double target_pinv_func(void *p, double x)
   corax_partition_t *    partition      = params->partition;
   corax_unode_t *        root           = params->tree;
   const unsigned int *   params_indices = params->params_indices;
-  unsigned int           i;
+  unsigned int           i = 0;
 
   /* update proportion of invariant sites */
-  for (i = 0; i < partition->rate_cats; ++i)
+  for (i = 0; i < partition->rate_cats; ++i) {
     corax_update_invariant_sites_proportion(partition, params_indices[i], x);
+}
 
   /* compute negative score */
   double score = -1
@@ -168,7 +173,7 @@ double target_alpha_pinv_func(void *p, double *x)
   corax_partition_t *    partition      = params->partition;
   corax_unode_t *        root           = params->tree;
   const unsigned int *   params_indices = params->params_indices;
-  unsigned int           i;
+  unsigned int           i = 0;
 
   /* update rate categories */
   if (!corax_compute_gamma_cats(
@@ -178,8 +183,9 @@ double target_alpha_pinv_func(void *p, double *x)
   }
 
   /* update proportion of invariant sites */
-  for (i = 0; i < partition->rate_cats; ++i)
+  for (i = 0; i < partition->rate_cats; ++i) {
     corax_update_invariant_sites_proportion(partition, params_indices[i], x[1]);
+}
 
   /* compute negative score */
   double score = -1
@@ -223,14 +229,17 @@ double target_weights_func(void *p, double *x)
   double             sum_ratios         = 1.0;
 
   double *     weights = partition->rate_weights;
-  unsigned int i, cur_weight;
-  double       score;
+  unsigned int i = 0;
+  unsigned int cur_weight = 0;
+  double       score = NAN;
 
-  for (i = 0; i < (n_weights - 1); ++i) sum_ratios += x[i];
+  for (i = 0; i < (n_weights - 1); ++i) { sum_ratios += x[i];
+}
 
   cur_weight = 0;
-  for (i = 0; i < (n_weights); ++i)
+  for (i = 0; i < (n_weights); ++i) {
     if (i != fixed_weight_state) { weights[i] = x[cur_weight++] / sum_ratios; }
+}
   weights[fixed_weight_state] = 1.0 / sum_ratios;
 
   /* update weights */
@@ -286,7 +295,8 @@ target_func_onedim_treeinfo(void *p, double *x, double *fx, int *converged)
   /* any partitions which have not converged yet? */
   double unconverged_flag = 0.;
 
-  unsigned int i, j = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     corax_partition_t *partition = treeinfo->partitions[i];
@@ -304,7 +314,8 @@ target_func_onedim_treeinfo(void *p, double *x, double *fx, int *converged)
 
       /* if x=NULL, function was called solely to check convergence
        * -> no update of parameter values & LH computation */
-      if (x) param_setter(treeinfo, i, &x[j], 1);
+      if (x) { param_setter(treeinfo, i, &x[j], 1);
+}
 
       j++;
     }
@@ -313,7 +324,8 @@ target_func_onedim_treeinfo(void *p, double *x, double *fx, int *converged)
   assert(j == num_parts);
 
   /* compute negative score */
-  if (x) score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (x) { score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   //  printf("score: %lf\n", score);
 
@@ -321,9 +333,11 @@ target_func_onedim_treeinfo(void *p, double *x, double *fx, int *converged)
   if (fx)
   {
     j = 0;
-    for (i = 0; i < treeinfo->partition_count; ++i)
-      if (treeinfo->params_to_optimize[i] & param_to_optimize)
+    for (i = 0; i < treeinfo->partition_count; ++i) {
+      if (treeinfo->params_to_optimize[i] & param_to_optimize) {
         fx[j++] = -1 * treeinfo->partition_loglh[i];
+}
+}
   }
 
   if (converged)
@@ -355,7 +369,8 @@ target_func_multidim_treeinfo(void *p, double **x, double *fx, int *converged)
   /* any partitions which have not converged yet? */
   double unconverged_flag = 0.;
 
-  size_t i, j;
+  size_t i = 0;
+  size_t j = 0;
   size_t part = 0;
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
@@ -417,16 +432,19 @@ target_func_multidim_treeinfo(void *p, double **x, double *fx, int *converged)
         double       sum_ratios         = 1.0;
 
         double *     weights = partition->rate_weights;
-        unsigned int i, cur_weight;
+        unsigned int i = 0;
+        unsigned int cur_weight = 0;
 
-        for (i = 0; i < (n_weights - 1); ++i) sum_ratios += x[part][i];
+        for (i = 0; i < (n_weights - 1); ++i) { sum_ratios += x[part][i];
+}
 
         cur_weight = 0;
-        for (i = 0; i < (n_weights); ++i)
+        for (i = 0; i < (n_weights); ++i) {
           if (i != fixed_weight_state)
           {
             weights[i] = x[part][cur_weight++] / sum_ratios;
           }
+}
         weights[fixed_weight_state] = 1.0 / sum_ratios;
         break;
       }
@@ -439,7 +457,8 @@ target_func_multidim_treeinfo(void *p, double **x, double *fx, int *converged)
   }
 
   /* compute negative score */
-  if (x) score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (x) { score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   /* copy per-partition likelihood to the output array */
   if (fx)
@@ -448,8 +467,9 @@ target_func_multidim_treeinfo(void *p, double **x, double *fx, int *converged)
     for (i = 0; i < treeinfo->partition_count; ++i)
     {
       if ((treeinfo->params_to_optimize[i] & params_to_optimize)
-          == params_to_optimize)
+          == params_to_optimize) {
         fx[j++] = -1 * treeinfo->partition_loglh[i];
+}
     }
   }
 
@@ -482,7 +502,8 @@ target_subst_params_func_multi(void *p, double **x, double *fx, int *converged)
   /* any partitions which have not converged yet? */
   double unconverged_flag = 0.;
 
-  size_t i, j;
+  size_t i = 0;
+  size_t j = 0;
   size_t part = 0;
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
@@ -515,7 +536,8 @@ target_subst_params_func_multi(void *p, double **x, double *fx, int *converged)
       if (symmetries)
       {
         /* assign values to the substitution rates */
-        size_t l, k = 0;
+        size_t l = 0;
+        size_t k = 0;
         for (l = 0; l <= subst_free_params[part]; ++l)
         {
           double next_value = (l == (unsigned int)symmetries[subst_params - 1])
@@ -544,15 +566,18 @@ target_subst_params_func_multi(void *p, double **x, double *fx, int *converged)
   }
 
   /* compute negative score */
-  if (x) score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (x) { score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   /* copy per-partition likelihood to the output array */
   if (fx)
   {
     j = 0;
-    for (i = 0; i < treeinfo->partition_count; ++i)
-      if (treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES)
+    for (i = 0; i < treeinfo->partition_count; ++i) {
+      if (treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES) {
         fx[j++] = -1 * treeinfo->partition_loglh[i];
+}
+}
   }
 
   if (converged)
@@ -583,7 +608,8 @@ double target_freqs_func_multi(void *p, double **x, double *fx, int *converged)
   /* any partitions which have not converged yet? */
   double unconverged_flag = 0.;
 
-  size_t i, j;
+  size_t i = 0;
+  size_t j = 0;
   size_t part = 0;
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
@@ -612,7 +638,7 @@ double target_freqs_func_multi(void *p, double **x, double *fx, int *converged)
 
       unsigned int fixed      = fixed_freq_state[part];
       double       sum_ratios = 1.0;
-      unsigned int cur_index;
+      unsigned int cur_index = 0;
 
       /* update frequencies */
       for (j = 0; j < (states - 1); ++j)
@@ -650,15 +676,18 @@ double target_freqs_func_multi(void *p, double **x, double *fx, int *converged)
   }
 
   /* compute negative score */
-  if (x) score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (x) { score = -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   /* copy per-partition likelihood to the output array */
   if (fx)
   {
     j = 0;
-    for (i = 0; i < treeinfo->partition_count; ++i)
-      if (treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_FREQUENCIES)
+    for (i = 0; i < treeinfo->partition_count; ++i) {
+      if (treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_FREQUENCIES) {
         fx[j++] = -1 * treeinfo->partition_loglh[i];
+}
+}
   }
 
   if (converged)

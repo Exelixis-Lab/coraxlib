@@ -70,7 +70,7 @@ extern "C"
                                         const double *             clv,
                                         const unsigned int *       site_id,
                                         const unsigned int *       scaler,
-                                        const double *const *const frequencies,
+                                        const double *const *frequencies,
                                         const double *             rate_weights,
                                         const unsigned int *pattern_weights,
                                         const double *      invar_proportion,
@@ -82,7 +82,7 @@ extern "C"
   CORAX_EXPORT double
   corax_core_edge_loglikelihood_repeats(unsigned int         states,
                                         unsigned int         sites,
-                                        const unsigned int   child_sites,
+                                        unsigned int   child_sites,
                                         unsigned int         rate_cats,
                                         const double *       parent_clv,
                                         const unsigned int * parent_scaler,
@@ -104,7 +104,7 @@ extern "C"
   CORAX_EXPORT double corax_core_edge_loglikelihood_repeats_generic(
       unsigned int         states,
       unsigned int         sites,
-      const unsigned int   child_sites,
+      unsigned int   child_sites,
       unsigned int         rate_cats,
       const double *       parent_clv,
       const unsigned int * parent_scaler,

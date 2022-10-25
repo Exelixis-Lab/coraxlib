@@ -398,26 +398,26 @@ public:
 private:
   std::string _name;
   DataType _data_type;
-  unsigned int _num_states;
+  unsigned int _num_states{};
 
   std::string _custom_states;
   std::string _custom_gaps;
-  bool _custom_case_sensitive;
+  bool _custom_case_sensitive{};
   std::shared_ptr<corax_state_t> _custom_charmap;
   mutable std::vector<std::string> _state_names;
   mutable StateNameMap _full_state_namemap;
 
-  unsigned int _rate_het;
-  unsigned int _num_ratecats;
-  unsigned int _num_submodels;
+  unsigned int _rate_het{};
+  unsigned int _num_ratecats{};
+  unsigned int _num_submodels{};
   std::vector<double> _ratecat_rates;
   std::vector<double> _ratecat_weights;
   std::vector<unsigned int> _ratecat_submodels;
-  int _gamma_mode;
+  int _gamma_mode{};
 
-  double _alpha;
-  double _pinv;
-  double _brlen_scaler;
+  double _alpha{};
+  double _pinv{};
+  double _brlen_scaler{};
 
   AscBiasCorrection _ascbias_type;
   std::vector<corax_weight_t> _ascbias_weights;

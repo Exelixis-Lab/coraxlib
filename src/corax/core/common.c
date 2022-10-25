@@ -8,7 +8,7 @@ __thread char corax_errmsg[200] = {0};
 /**
  * @brief Set corax error (corax_errno and corax_errmsg)
  *
- * @param[in] errno the error code
+ * @param[in] _errno the error code
  * @param[in] errmsg_fmt formatted error message
  */
 __attribute__((format(printf, 2, 3))) void
@@ -36,12 +36,13 @@ void corax_reset_error()
 
 CORAX_EXPORT void *corax_aligned_alloc(size_t size, size_t alignment)
 {
-  void *mem;
+  void *mem = NULL;
 
 #if (defined(__WIN32__) || defined(__WIN64__))
   mem = _aligned_malloc(size, alignment);
 #else
-  if (posix_memalign(&mem, alignment, size)) mem = NULL;
+  if (posix_memalign(&mem, alignment, size)) { mem = NULL;
+}
 #endif
 
   return mem;

@@ -20,6 +20,7 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 
 #ifdef CORAX_NONREV
 #include <cblas.h>
@@ -199,16 +200,20 @@ CORAX_EXPORT int corax_core_update_pmatrix(double            **pmatrix,
                                            unsigned int        count,
                                            unsigned int        attrib)
 {
-  unsigned int i, n, j, k, m;
+  unsigned int i = 0;
+  unsigned int n = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int m = 0;
   unsigned int states_padded = states;
-  double      *expd;
-  double      *temp;
+  double      *expd = NULL;
+  double      *temp = NULL;
 
-  double  pinvar;
-  double *evecs;
-  double *inv_evecs;
-  double *evals;
-  double *pmat;
+  double  pinvar = NAN;
+  double *evecs = NULL;
+  double *inv_evecs = NULL;
+  double *evals = NULL;
+  double *pmat = NULL;
 
 #ifdef HAVE_SSE3
   if (attrib & CORAX_ATTRIB_ARCH_SSE && CORAX_HAS_CPU_FEATURE(sse3_present))
@@ -227,7 +232,7 @@ CORAX_EXPORT int corax_core_update_pmatrix(double            **pmatrix,
                                                inv_eigenvecs,
                                                count);
     }
-    else if (states == 20)
+    if (states == 20)
     {
       return corax_core_update_pmatrix_20x20_sse(pmatrix,
                                                  rate_cats,
@@ -325,8 +330,10 @@ CORAX_EXPORT int corax_core_update_pmatrix(double            **pmatrix,
 
   if (!expd || !temp)
   {
-    if (expd) free(expd);
-    if (temp) free(temp);
+    if (expd) { free(expd);
+}
+    if (temp) { free(temp);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
@@ -357,19 +364,23 @@ CORAX_EXPORT int corax_core_update_pmatrix(double            **pmatrix,
         /* exponentiate eigenvalues */
         if (pinvar > CORAX_MISC_EPSILON)
         {
-          for (j = 0; j < states; ++j)
+          for (j = 0; j < states; ++j) {
             expd[j] =
                 expm1(evals[j] * rates[n] * branch_lengths[i] / (1.0 - pinvar));
+}
         }
         else
         {
-          for (j = 0; j < states; ++j)
+          for (j = 0; j < states; ++j) {
             expd[j] = expm1(evals[j] * rates[n] * branch_lengths[i]);
+}
         }
 
-        for (j = 0; j < states; ++j)
-          for (k = 0; k < states; ++k)
+        for (j = 0; j < states; ++j) {
+          for (k = 0; k < states; ++k) {
             temp[j * states + k] = inv_evecs[j * states_padded + k] * expd[k];
+}
+}
 
         for (j = 0; j < states; ++j)
         {
@@ -388,9 +399,11 @@ CORAX_EXPORT int corax_core_update_pmatrix(double            **pmatrix,
       {
         /* if branch length is zero then set the p-matrix to identity matrix
          */
-        for (j = 0; j < states; ++j)
-          for (k = 0; k < states; ++k)
+        for (j = 0; j < states; ++j) {
+          for (k = 0; k < states; ++k) {
             pmat[j * states_padded + k] = (j == k) ? 1 : 0;
+}
+}
       }
 
 #ifdef DEBUG

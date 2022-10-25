@@ -95,7 +95,7 @@ extern "C"
                                     const double *      rate_weights,
                                     const unsigned int *parent_scaler,
                                     const unsigned int *child_scaler,
-                                    unsigned int        parent_ids,
+                                    unsigned int        parent_sites,
                                     unsigned int        child_ids,
                                     const int *         invariant,
                                     const unsigned int *pattern_weights,

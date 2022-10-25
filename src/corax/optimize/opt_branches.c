@@ -21,6 +21,7 @@
 
 #include "opt_branches.h"
 #include "corax/corax_kernel.h"
+#include "math.h"
 
 
 #define BETTER_LL_TRESHOLD 1e-13
@@ -63,7 +64,7 @@ static void update_clvs_and_scalers(corax_partition_t **partitions,
                                     corax_unode_t *     left_child)
 {
   corax_operation_t op;
-  size_t            p;
+  size_t            p = 0;
 
   /* set CLV */
   op.parent_clv_index    = parent->clv_index;
@@ -78,7 +79,8 @@ static void update_clvs_and_scalers(corax_partition_t **partitions,
   for (p = 0; p < partition_count; ++p)
   {
     /* skip remote partitions */
-    if (!partitions[p]) continue;
+    if (!partitions[p]) { continue;
+}
 
     corax_update_clvs(partitions[p], &op, 1);
   }
@@ -90,13 +92,20 @@ static int recomp_iterative(corax_newton_tree_params_t *params,
                             double *                    loglikelihood_score,
                             int                         keep_update)
 {
-  corax_unode_t *tr_p, *tr_q, *tr_z;
-  double         xmin, /* min branch length */
-      xguess,          /* initial guess */
-      xmax,            /* max branch length */
-      xtol,            /* tolerance */
-      xres,            /* optimal found branch length */
-      xorig;           /* original branch length before optimization */
+  corax_unode_t *tr_p = NULL;
+  corax_unode_t *tr_q = NULL;
+  corax_unode_t *tr_z = NULL;
+  double         xmin = NAN;
+  double         /* min branch length */
+      xguess = NAN;
+  double         /* initial guess */
+      xmax = NAN;
+  double         /* max branch length */
+      xtol = NAN;
+  double         /* tolerance */
+      xres = NAN;
+  double         /* optimal found branch length */
+      xorig = NAN;           /* original branch length before optimization */
 
   tr_p  = params->tree;
   tr_q  = params->tree->next;
@@ -120,7 +129,8 @@ static int recomp_iterative(corax_newton_tree_params_t *params,
   xmax   = params->branch_length_max;
   xtol   = params->tolerance;
   xguess = tr_p->length;
-  if (xguess < xmin || xguess > xmax) xguess = CORAX_OPT_DEFAULT_BRANCH_LEN;
+  if (xguess < xmin || xguess > xmax) { xguess = CORAX_OPT_DEFAULT_BRANCH_LEN;
+}
 
   xres = corax_opt_minimize_newton(xmin,
                                    xguess,
@@ -130,7 +140,8 @@ static int recomp_iterative(corax_newton_tree_params_t *params,
                                    params,
                                    utree_derivative_func);
 
-  if (corax_errno) return CORAX_FAILURE;
+  if (corax_errno) { return CORAX_FAILURE;
+}
 
   /* update branch length in the tree structure */
   tr_p->length = tr_p->back->length = xres;
@@ -200,8 +211,9 @@ static int recomp_iterative(corax_newton_tree_params_t *params,
     memcpy(&params_cpy, params, sizeof(corax_newton_tree_params_t));
     params_cpy.tree = tr_q->back;
     if (!recomp_iterative(
-            &params_cpy, radius - 1, loglikelihood_score, keep_update))
+            &params_cpy, radius - 1, loglikelihood_score, keep_update)) {
       return CORAX_FAILURE;
+}
 
     /* update children 'Z'
      * CLV at P is recomputed with children P->back and Q->back
@@ -212,8 +224,9 @@ static int recomp_iterative(corax_newton_tree_params_t *params,
     /* eval */
     params_cpy.tree = tr_z->back;
     if (!recomp_iterative(
-            &params_cpy, radius - 1, loglikelihood_score, keep_update))
+            &params_cpy, radius - 1, loglikelihood_score, keep_update)) {
       return CORAX_FAILURE;
+}
 
     /* reset to initial state
      * CLV at P is recomputed with children Q->back and Z->back
@@ -233,23 +246,27 @@ static void utree_derivative_func_multi(void *  parameters,
 {
   corax_newton_tree_params_multi_t *params =
       (corax_newton_tree_params_multi_t *)parameters;
-  size_t p;
+  size_t p = 0;
   int    unlinked = (params->brlen_linkage == CORAX_BRLEN_UNLINKED) ? 1 : 0;
 
   if (unlinked)
   {
-    for (p = 0; p < params->partition_count; ++p) df[p] = ddf[p] = 0;
+    for (p = 0; p < params->partition_count; ++p) { df[p] = ddf[p] = 0;
+}
   }
-  else
+  else {
     *df = *ddf = 0;
+}
 
   /* simply iterate over partitions and add up the derivatives */
   for (p = 0; p < params->partition_count; ++p)
   {
     /* skip remote partitions */
-    if (!params->partitions[p]) continue;
+    if (!params->partitions[p]) { continue;
+}
 
-    double p_df, p_ddf;
+    double p_df = NAN;
+    double p_ddf = NAN;
     double s       = params->brlen_scalers ? params->brlen_scalers[p] : 1.;
     double p_brlen = s * (unlinked ? proposal[p] : proposal[0]);
     corax_compute_likelihood_derivatives(params->partitions[p],
@@ -305,17 +322,19 @@ static void update_prob_matrices(corax_partition_t **partitions,
                                  double *            brlen_scalers,
                                  corax_unode_t *     node)
 {
-  unsigned int p;
+  unsigned int p = 0;
   unsigned int m = node->pmatrix_index;
 
   for (p = 0; p < partition_count; ++p)
   {
     /* skip remote partitions */
-    if (!partitions[p]) continue;
+    if (!partitions[p]) { continue;
+}
 
     double p_brlen = brlen_buffers ? brlen_buffers[p][m] : node->length;
 
-    if (brlen_scalers) p_brlen *= brlen_scalers[p];
+    if (brlen_scalers) { p_brlen *= brlen_scalers[p];
+}
 
     corax_update_prob_matrices(
         partitions[p], params_indices[p], &m, &p_brlen, 1);
@@ -328,25 +347,29 @@ static int allocate_buffers(corax_newton_tree_params_multi_t *params)
   {
     params->precomp_buffers =
         (double **)calloc(params->partition_count, sizeof(double *));
-    if (!params->precomp_buffers) return CORAX_FAILURE;
+    if (!params->precomp_buffers) { return CORAX_FAILURE;
+}
 
     for (unsigned int p = 0; p < params->partition_count; ++p)
     {
       const corax_partition_t *partition = params->partitions[p];
 
       /* skip remote partitions */
-      if (!partition) continue;
+      if (!partition) { continue;
+}
 
       unsigned int sites_alloc = partition->sites;
-      if (partition->attributes & CORAX_ATTRIB_AB_FLAG)
+      if (partition->attributes & CORAX_ATTRIB_AB_FLAG) {
         sites_alloc += partition->states;
+}
 
       params->precomp_buffers[p] = (double *)corax_aligned_alloc(
           sites_alloc * partition->rate_cats * partition->states_padded
               * sizeof(double),
           partition->alignment);
 
-      if (!params->precomp_buffers[p]) return CORAX_FAILURE;
+      if (!params->precomp_buffers[p]) { return CORAX_FAILURE;
+}
     }
   }
 
@@ -355,7 +378,8 @@ static int allocate_buffers(corax_newton_tree_params_multi_t *params)
   {
     params->brlen_buffers =
         (double **)calloc(params->partition_count, sizeof(double *));
-    if (!params->brlen_buffers) return CORAX_FAILURE;
+    if (!params->brlen_buffers) { return CORAX_FAILURE;
+}
 
     // not very elegant...
     unsigned int branch_count = 0;
@@ -373,7 +397,8 @@ static int allocate_buffers(corax_newton_tree_params_multi_t *params)
 
     params->brlen_buffers[0] = (double *)calloc(branch_count, sizeof(double));
 
-    if (!params->brlen_buffers[0]) return CORAX_FAILURE;
+    if (!params->brlen_buffers[0]) { return CORAX_FAILURE;
+}
   }
 
   if (params->brlen_linkage == CORAX_BRLEN_UNLINKED)
@@ -383,8 +408,9 @@ static int allocate_buffers(corax_newton_tree_params_multi_t *params)
         (double *)calloc(params->partition_count, sizeof(double));
     params->brlen_guess =
         (double *)calloc(params->partition_count, sizeof(double));
-    if (!params->converged || !params->brlen_orig || !params->brlen_guess)
+    if (!params->converged || !params->brlen_orig || !params->brlen_guess) {
       return CORAX_FAILURE;
+}
   }
 
   return CORAX_SUCCESS;
@@ -423,11 +449,12 @@ static double compute_edge_loglikelihood_multi(
   CORAX_UNUSED(persite_lnl);
   double total_loglh = 0.;
 
-  size_t p;
+  size_t p = 0;
   for (p = 0; p < partition_count; ++p)
   {
     /* skip remote partitions */
-    if (!partitions[p]) continue;
+    if (!partitions[p]) { continue;
+}
 
     total_loglh += corax_compute_edge_loglikelihood(partitions[p],
                                                     parent_clv_index,
@@ -439,8 +466,9 @@ static double compute_edge_loglikelihood_multi(
                                                     NULL);
   }
 
-  if (parallel_reduce_cb)
+  if (parallel_reduce_cb) {
     parallel_reduce_cb(parallel_context, &total_loglh, 1, CORAX_REDUCE_SUM);
+}
 
   return total_loglh;
 }
@@ -451,20 +479,27 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
                                   double *loglikelihood_score,
                                   int     keep_update)
 {
-  corax_unode_t *tr_p, *tr_q, *tr_z;
-  unsigned int   p;
-  int            retval;
-  unsigned int   xnum;
-  double         xmin, /* min branch length */
-      xorig_linked,    /* original branch length before optimization (linked) */
-      xguess_linked,   /* initial guess (linked) */
-      xmax,            /* max branch length */
-      xtol;            /* tolerance */
+  corax_unode_t *tr_p = NULL;
+  corax_unode_t *tr_q = NULL;
+  corax_unode_t *tr_z = NULL;
+  unsigned int   p = 0;
+  int            retval = 0;
+  unsigned int   xnum = 0;
+  double         xmin = NAN;
+  double         /* min branch length */
+      xorig_linked = NAN;
+  double         /* original branch length before optimization (linked) */
+      xguess_linked = NAN;
+  double         /* initial guess (linked) */
+      xmax = NAN;
+  double         /* max branch length */
+      xtol = NAN;            /* tolerance */
 
-  double *xorig, /* original branch length before optimization */
-      *xguess;   /* initial guess / current branch length value */
+  double *xorig = NULL;
+  double /* original branch length before optimization */
+      *xguess = NULL;   /* initial guess / current branch length value */
 
-  unsigned int pmatrix_index;
+  unsigned int pmatrix_index = 0;
 
   int unlinked     = params->brlen_linkage == CORAX_BRLEN_UNLINKED ? 1 : 0;
   int apply_change = 0;
@@ -506,7 +541,8 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
   }
 
   /* reset convergence flags */
-  if (params->converged) memset(params->converged, 0, xnum * sizeof(int));
+  if (params->converged) { memset(params->converged, 0, xnum * sizeof(int));
+}
 
   /* check branch length integrity */
   assert(d_equals(tr_p->length, tr_p->back->length));
@@ -515,7 +551,8 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
   for (p = 0; p < params->partition_count; ++p)
   {
     /* skip remote partitions */
-    if (!params->partitions[p]) continue;
+    if (!params->partitions[p]) { continue;
+}
 
     corax_update_sumtable(params->partitions[p],
                           tr_p->clv_index,
@@ -579,7 +616,8 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
       for (p = 0; p < xnum; ++p)
       {
         // NR converged for this partition -> skip it
-        if (params->converged && params->converged[p]) continue;
+        if (params->converged && params->converged[p]) { continue;
+}
 
         DBG("[%u] NR failed to converge after %d iterations: branch %3u - %3u "
             "(old: %.12f, new: %.12f)\n",
@@ -590,13 +628,15 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
             xorig[p],
             xguess[p]);
 
-        if (!check_loglh_improvement(params->opt_method)) xguess[p] = xorig[p];
+        if (!check_loglh_improvement(params->opt_method)) { xguess[p] = xorig[p];
+}
       }
 
       corax_reset_error();
     }
-    else
+    else {
       return CORAX_FAILURE;
+}
   }
 
   /* update branch length in the buffer and/or in the tree structure */
@@ -615,16 +655,19 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
     }
 
     // ignore small changes in BL
-    if (fabs(xguess[p] - xorig[p]) < 1e-10) continue;
+    if (fabs(xguess[p] - xorig[p]) < 1e-10) { continue;
+}
 
     apply_change = 1;
-    if (params->brlen_buffers[p])
+    if (params->brlen_buffers[p]) {
       params->brlen_buffers[p][pmatrix_index] = xguess[p];
+}
   }
 
   if (apply_change)
   {
-    if (!unlinked) tr_p->length = tr_p->back->length = xguess[0];
+    if (!unlinked) { tr_p->length = tr_p->back->length = xguess[0];
+}
 
     /* update pmatrix for the new branch length */
     if (keep_update)
@@ -680,10 +723,12 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
         /* reset branch length */
         for (p = 0; p < xnum; ++p)
         {
-          if (params->brlen_buffers[p])
+          if (params->brlen_buffers[p]) {
             params->brlen_buffers[p][pmatrix_index] = xorig[p];
+}
         }
-        if (!unlinked) tr_p->length = tr_p->back->length = xorig[0];
+        if (!unlinked) { tr_p->length = tr_p->back->length = xorig[0];
+}
 
         update_prob_matrices(params->partitions,
                              params->partition_count,
@@ -736,8 +781,9 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
     memcpy(&params_cpy, params, sizeof(corax_newton_tree_params_multi_t));
     params_cpy.tree = tr_q->back;
     if (!recomp_iterative_multi(
-            &params_cpy, radius - 1, loglikelihood_score, keep_update))
+            &params_cpy, radius - 1, loglikelihood_score, keep_update)) {
       return CORAX_FAILURE;
+}
 
     /* update children 'Z'
      * CLV at P is recomputed with children P->back and Q->back
@@ -749,8 +795,9 @@ static int recomp_iterative_multi(corax_newton_tree_params_multi_t *params,
     /* eval */
     params_cpy.tree = tr_z->back;
     if (!recomp_iterative_multi(
-            &params_cpy, radius - 1, loglikelihood_score, keep_update))
+            &params_cpy, radius - 1, loglikelihood_score, keep_update)) {
       return CORAX_FAILURE;
+}
 
     /* reset to initial state
      * CLV at P is recomputed with children Q->back and Z->back
@@ -810,9 +857,10 @@ corax_opt_optimize_branch_lengths_local(corax_partition_t * partition,
                                         int                 radius,
                                         int                 keep_update)
 {
-  unsigned int iters;
-  double       loglikelihood = 0.0, new_loglikelihood;
-  unsigned int sites_alloc;
+  unsigned int iters = 0;
+  double       loglikelihood = 0.0;
+  double       new_loglikelihood = NAN;
+  unsigned int sites_alloc = 0;
 
   /*
    * preconditions:
@@ -856,8 +904,9 @@ corax_opt_optimize_branch_lengths_local(corax_partition_t * partition,
 
   /* allocate the sumtable */
   sites_alloc = partition->sites;
-  if (partition->attributes & CORAX_ATTRIB_AB_FLAG)
+  if (partition->attributes & CORAX_ATTRIB_AB_FLAG) {
     sites_alloc += partition->states;
+}
 
   if ((params.sumtable = (double *)corax_aligned_alloc(
            sites_alloc * partition->rate_cats * partition->states_padded
@@ -917,15 +966,16 @@ corax_opt_optimize_branch_lengths_local(corax_partition_t * partition,
       iters--;
 
       /* check convergence */
-      if (fabs(new_loglikelihood - loglikelihood) < tolerance) iters = 0;
+      if (fabs(new_loglikelihood - loglikelihood) < tolerance) { iters = 0;
+}
 
       loglikelihood = new_loglikelihood;
     }
     else
     {
-      if (check_loglh_improvement(params.opt_method))
+      if (check_loglh_improvement(params.opt_method)) {
         assert(new_loglikelihood - loglikelihood > new_loglikelihood * 1e-14);
-      else
+      } else
       {
         corax_set_error(
             CORAX_OPT_ERROR_NEWTON_WORSE_LK,
@@ -971,7 +1021,7 @@ corax_opt_optimize_branch_lengths_iterative(corax_partition_t * partition,
                                             int    smoothings,
                                             int    keep_update)
 {
-  double loglikelihood;
+  double loglikelihood = NAN;
   loglikelihood =
       corax_opt_optimize_branch_lengths_local(partition,
                                               tree,
@@ -1062,9 +1112,10 @@ CORAX_EXPORT double corax_opt_optimize_branch_lengths_local_multi(
     void *              parallel_context,
     void (*parallel_reduce_cb)(void *, double *, size_t, int))
 {
-  unsigned int iters;
-  double       loglikelihood = 0.0, new_loglikelihood;
-  size_t       p;
+  unsigned int iters = 0;
+  double       loglikelihood = 0.0;
+  double       new_loglikelihood = NAN;
+  size_t       p = 0;
   double       result = (double)CORAX_FAILURE;
 
   corax_reset_error();
@@ -1205,16 +1256,17 @@ CORAX_EXPORT double corax_opt_optimize_branch_lengths_local_multi(
       iters--;
 
       /* check convergence */
-      if (fabs(new_loglikelihood - loglikelihood) < lh_epsilon) iters = 0;
+      if (fabs(new_loglikelihood - loglikelihood) < lh_epsilon) { iters = 0;
+}
 
       loglikelihood = new_loglikelihood;
     }
     else
     {
-      if (params.opt_method == CORAX_OPT_BLO_NEWTON_SAFE)
+      if (params.opt_method == CORAX_OPT_BLO_NEWTON_SAFE) {
         assert(new_loglikelihood - loglikelihood
                > new_loglikelihood * BETTER_LL_TRESHOLD);
-      else if (opt_method == CORAX_OPT_BLO_NEWTON_FALLBACK)
+      } else if (opt_method == CORAX_OPT_BLO_NEWTON_FALLBACK)
       {
         // reset branch lengths
         params.opt_method = CORAX_OPT_BLO_NEWTON_SAFE;
@@ -1240,7 +1292,8 @@ cleanup:
   {
     for (p = 0; p < partition_count; ++p)
     {
-      if (params.precomp_buffers[p]) free(params.precomp_buffers[p]);
+      if (params.precomp_buffers[p]) { free(params.precomp_buffers[p]);
+}
     }
     corax_aligned_free(params.precomp_buffers);
   }
@@ -1251,11 +1304,14 @@ cleanup:
     free(params.brlen_buffers);
   }
 
-  if (params.converged) free(params.converged);
+  if (params.converged) { free(params.converged);
+}
 
-  if (params.brlen_guess) free(params.brlen_guess);
+  if (params.brlen_guess) { free(params.brlen_guess);
+}
 
-  if (params.brlen_orig) free(params.brlen_orig);
+  if (params.brlen_orig) { free(params.brlen_orig);
+}
 
   return result;
 } /* corax_opt_optimize_branch_lengths_local */
@@ -1279,9 +1335,10 @@ CORAX_EXPORT double corax_opt_optimize_branch_lengths_local_multi_quartet(
     void *              parallel_context,
     void (*parallel_reduce_cb)(void *, double *, size_t, int))
 {
-  unsigned int iters;
-  double       loglikelihood = 0.0, new_loglikelihood;
-  size_t       p;
+  unsigned int iters = 0;
+  double       loglikelihood = 0.0;
+  double       new_loglikelihood = NAN;
+  size_t       p = 0;
   double       result = (double)CORAX_FAILURE;
 
   int radius = 1;
@@ -1424,16 +1481,17 @@ CORAX_EXPORT double corax_opt_optimize_branch_lengths_local_multi_quartet(
       iters--;
 
       /* check convergence */
-      if (fabs(new_loglikelihood - loglikelihood) < lh_epsilon) iters = 0;
+      if (fabs(new_loglikelihood - loglikelihood) < lh_epsilon) { iters = 0;
+}
 
       loglikelihood = new_loglikelihood;
     }
     else
     {
-      if (params.opt_method == CORAX_OPT_BLO_NEWTON_SAFE)
+      if (params.opt_method == CORAX_OPT_BLO_NEWTON_SAFE) {
         assert(new_loglikelihood - loglikelihood
                > new_loglikelihood * BETTER_LL_TRESHOLD);
-      else if (opt_method == CORAX_OPT_BLO_NEWTON_FALLBACK)
+      } else if (opt_method == CORAX_OPT_BLO_NEWTON_FALLBACK)
       {
         // reset branch lengths
         params.opt_method = CORAX_OPT_BLO_NEWTON_SAFE;
@@ -1459,7 +1517,8 @@ cleanup:
   {
     for (p = 0; p < partition_count; ++p)
     {
-      if (params.precomp_buffers[p]) free(params.precomp_buffers[p]);
+      if (params.precomp_buffers[p]) { free(params.precomp_buffers[p]);
+}
     }
     corax_aligned_free(params.precomp_buffers);
   }
@@ -1470,11 +1529,14 @@ cleanup:
     free(params.brlen_buffers);
   }
 
-  if (params.converged) free(params.converged);
+  if (params.converged) { free(params.converged);
+}
 
-  if (params.brlen_guess) free(params.brlen_guess);
+  if (params.brlen_guess) { free(params.brlen_guess);
+}
 
-  if (params.brlen_orig) free(params.brlen_orig);
+  if (params.brlen_orig) { free(params.brlen_orig);
+}
 
   return result;
 } /* corax_opt_optimize_branch_lengths_local_multi_quartet */

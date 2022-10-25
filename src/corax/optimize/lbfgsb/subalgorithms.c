@@ -18,6 +18,7 @@
  *        Mathematical Software,
  */
 #include "lbfgsb.h"
+#include "math.h"
 
 static int c__1 = 1;
 static int c__11 = 11;
@@ -38,7 +39,8 @@ int active (int *n, double *l, double *u, int *nbd, double *x, int *iwhere,
             int *iprint, logical *prjctd, logical *cnstnd, logical *boxed)
 {
   CORAX_UNUSED(iprint);
-  int i, nbdd;
+  int i = 0;
+  int nbdd = 0;
 
   nbdd = 0;
   *prjctd = FALSE_;
@@ -152,11 +154,16 @@ int bmv (int *m, double *sy, double *wt, int *col, double *v, double *p,
          int *info)
 {
   /* System generated locals */
-  int sy_dim1, sy_offset, wt_dim1, wt_offset;
+  int sy_dim1 = 0;
+  int sy_offset = 0;
+  int wt_dim1 = 0;
+  int wt_offset = 0;
 
   /* Local variables */
-  int i, k, i2;
-  double sum;
+  int i = 0;
+  int k = 0;
+  int i2 = 0;
+  double sum = NAN;
 
   /* Parameter adjustments */
   wt_dim1 = *m;
@@ -245,30 +252,51 @@ int cauchy(int *n, double *x, double *l,
     CORAX_UNUSED(iprint);
 
     /* System generated locals */
-    int wy_dim1, wy_offset, ws_dim1, ws_offset, sy_dim1, sy_offset,
-	    wt_dim1, wt_offset, i__1, i__2;
-    double d__1;
+    int wy_dim1 = 0;
+    int wy_offset = 0;
+    int ws_dim1 = 0;
+    int ws_offset = 0;
+    int sy_dim1 = 0;
+    int sy_offset = 0;
+    int wt_dim1 = 0;
+    int wt_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
+    double d__1 = NAN;
 
 
     /* Local variables */
-    int i, j;
-    double f1, f2, dt, tj, tl, tu, tj0;
-    int ibp;
-    double dtm;
-    double wmc, wmp, wmw;
-    int col2;
-    double dibp;
-    int iter;
-    double zibp, tsum, dibp2;
-    logical bnded;
-    double neggi;
-    int nfree;
-    double bkmin;
-    int nleft;
-    double f2_org__;
-    int nbreak, ibkmin;
-    int pointr;
-    logical xlower, xupper;
+    int i = 0;
+    int j = 0;
+    double f1 = NAN;
+    double f2 = NAN;
+    double dt = NAN;
+    double tj = NAN;
+    double tl = NAN;
+    double tu = NAN;
+    double tj0 = NAN;
+    int ibp = 0;
+    double dtm = NAN;
+    double wmc = NAN;
+    double wmp = NAN;
+    double wmw = NAN;
+    int col2 = 0;
+    double dibp = NAN;
+    int iter = 0;
+    double zibp = NAN;
+    double tsum = NAN;
+    double dibp2 = NAN;
+    logical bnded = 0;
+    double neggi = NAN;
+    int nfree = 0;
+    double bkmin = NAN;
+    int nleft = 0;
+    double f2_org__ = NAN;
+    int nbreak = 0;
+    int ibkmin = 0;
+    int pointr = 0;
+    logical xlower = 0;
+    logical xupper = 0;
 
     tu = tl = 0.0;
 
@@ -601,12 +629,23 @@ int cmprlb(int *n, int *m, double *x,
 	int *nfree, logical *cnstnd, int *info)
 {
     /* System generated locals */
-    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset,
-	    wt_dim1, wt_offset, i__1, i__2;
+    int ws_dim1 = 0;
+    int ws_offset = 0;
+    int wy_dim1 = 0;
+    int wy_offset = 0;
+    int sy_dim1 = 0;
+    int sy_offset = 0;
+    int wt_dim1 = 0;
+    int wt_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
 
-    int i, j, k;
-    double a1, a2;
-    int pointr;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    double a1 = NAN;
+    double a2 = NAN;
+    int pointr = 0;
 
 /*     ************ */
     /* Parameter adjustments */
@@ -677,14 +716,43 @@ int formk(int *n, int *nsub, int *ind, int *
 	int *head, int *info)
 {
     /* System generated locals */
-    int wn_dim1, wn_offset, wn1_dim1, wn1_offset, ws_dim1, ws_offset,
-	    wy_dim1, wy_offset, sy_dim1, sy_offset, i__1, i__2, i__3;
+    int wn_dim1 = 0;
+    int wn_offset = 0;
+    int wn1_dim1 = 0;
+    int wn1_offset = 0;
+    int ws_dim1 = 0;
+    int ws_offset = 0;
+    int wy_dim1 = 0;
+    int wy_offset = 0;
+    int sy_dim1 = 0;
+    int sy_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
+    int i__3 = 0;
 
     /* Local variables */
-    int i__, k, k1, m2, is, js, iy, jy, is1, js1, col2, dend, pend;
-    int upcl;
-    double temp1, temp2, temp3, temp4;
-    int ipntr, jpntr, dbegin, pbegin;
+    int i__ = 0;
+    int k = 0;
+    int k1 = 0;
+    int m2 = 0;
+    int is = 0;
+    int js = 0;
+    int iy = 0;
+    int jy = 0;
+    int is1 = 0;
+    int js1 = 0;
+    int col2 = 0;
+    int dend = 0;
+    int pend = 0;
+    int upcl = 0;
+    double temp1 = NAN;
+    double temp2 = NAN;
+    double temp3 = NAN;
+    double temp4 = NAN;
+    int ipntr = 0;
+    int jpntr = 0;
+    int dbegin = 0;
+    int pbegin = 0;
 /*     ************ */
 
 /*     Subroutine formk */
@@ -1058,12 +1126,22 @@ int formt(int *m, double *wt, double *sy,
 	double *ss, int *col, double *theta, int *info)
 {
     /* System generated locals */
-    int wt_dim1, wt_offset, sy_dim1, sy_offset, ss_dim1, ss_offset, i__1,
-	    i__2, i__3;
+    int wt_dim1 = 0;
+    int wt_offset = 0;
+    int sy_dim1 = 0;
+    int sy_offset = 0;
+    int ss_dim1 = 0;
+    int ss_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
+    int i__3 = 0;
 
     /* Local variables */
-    int i__, j, k, k1;
-    double ddum;
+    int i__ = 0;
+    int j = 0;
+    int k = 0;
+    int k1 = 0;
+    double ddum = NAN;
 
 /*     ************ */
 
@@ -1149,10 +1227,12 @@ int freev(int *n, int *nfree, int *index,
 {
     CORAX_UNUSED(iprint);
     /* System generated locals */
-    int i__1;
+    int i__1 = 0;
 
     /* Local variables */
-    int i__, k, iact;
+    int i__ = 0;
+    int k = 0;
+    int iact = 0;
 
 
 /*     ************ */
@@ -1256,12 +1336,16 @@ int freev(int *n, int *nfree, int *index,
 int hpsolb (int *n, double *t, int *iorder, int *iheap)
 {
     /* System generated locals */
-    int i__1;
+    int i__1 = 0;
 
     /* Local variables */
-    int i__, j, k;
-    double out, ddum;
-    int indxin, indxou;
+    int i__ = 0;
+    int j = 0;
+    int k = 0;
+    double out = NAN;
+    double ddum = NAN;
+    int indxin = 0;
+    int indxou = 0;
 
 /*     ************ */
 
@@ -1377,12 +1461,20 @@ int matupd(int *n, int *m, double *ws,
 	double *stp, double *dtd)
 {
     /* System generated locals */
-    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset,
-	    ss_dim1, ss_offset, i__1, i__2;
+    int ws_dim1 = 0;
+    int ws_offset = 0;
+    int wy_dim1 = 0;
+    int wy_offset = 0;
+    int sy_dim1 = 0;
+    int sy_offset = 0;
+    int ss_dim1 = 0;
+    int ss_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
 
     /* Local variables */
-    int j;
-    int pointr;
+    int j = 0;
+    int pointr = 0;
 
 /*     ************ */
 
@@ -1484,12 +1576,13 @@ int projgr(int *n, double *l, double *u,
         int *nbd, double *x, double *g, double *sbgnrm)
 {
     /* System generated locals */
-    int i__1;
-    double d__1, d__2;
+    int i__1 = 0;
+    double d__1 = NAN;
+    double d__2 = NAN;
 
     /* Local variables */
-    int i__;
-    double gi;
+    int i__ = 0;
+    double gi = NAN;
 
 /*     ************ */
 
@@ -1538,7 +1631,7 @@ int projgr(int *n, double *l, double *u,
             }
         }
         /* Computing MAX */
-        d__1 = *sbgnrm, d__2 = abs(gi);
+        (void)(d__1 = *sbgnrm), d__2 = abs(gi);
         *sbgnrm = max(d__1,d__2);
         /* L15: */
     }
@@ -1565,18 +1658,33 @@ int subsm(int *n, int *m, int *nsub, int *
     CORAX_UNUSED(iprint);
 
     /* System generated locals */
-    int ws_dim1, ws_offset, wy_dim1, wy_offset, wn_dim1, wn_offset, i__1,
-	    i__2;
-    double d__1, d__2;
+    int ws_dim1 = 0;
+    int ws_offset = 0;
+    int wy_dim1 = 0;
+    int wy_offset = 0;
+    int wn_dim1 = 0;
+    int wn_offset = 0;
+    int i__1 = 0;
+    int i__2 = 0;
+    double d__1 = NAN;
+    double d__2 = NAN;
 
     /* Local variables */
-    int i__, j, k, m2;
-    double dk;
-    int js, jy;
-    double xk;
-    int ibd, col2;
-    double dd_p__, temp1, temp2, alpha;
-    int pointr;
+    int i__ = 0;
+    int j = 0;
+    int k = 0;
+    int m2 = 0;
+    double dk = NAN;
+    int js = 0;
+    int jy = 0;
+    double xk = NAN;
+    int ibd = 0;
+    int col2 = 0;
+    double dd_p__ = NAN;
+    double temp1 = NAN;
+    double temp2 = NAN;
+    double alpha = NAN;
+    int pointr = 0;
 
 /*     ********************************************************************** */
 
@@ -1839,7 +1947,7 @@ int subsm(int *n, int *m, int *nsub, int *
             if (nbd[k] == 1) {
                 /* lower bounds only */
                 /* Computing MAX */
-                d__1 = l[k], d__2 = xk + dk;
+                (void)(d__1 = l[k]), d__2 = xk + dk;
                 x[k] = max(d__1,d__2);
                 if (x[k] == l[k]) {
                     *iword = 1;
@@ -1849,7 +1957,7 @@ int subsm(int *n, int *m, int *nsub, int *
                 if (nbd[k] == 2) {
                     /* upper and lower bounds */
                     /* Computing MAX */
-                    d__1 = l[k], d__2 = xk + dk;
+                    (void)(d__1 = l[k]), d__2 = xk + dk;
                     xk = max(d__1,d__2);
                     /* Computing MIN */
                     d__1 = u[k];
@@ -1862,7 +1970,7 @@ int subsm(int *n, int *m, int *nsub, int *
                     if (nbd[k] == 3) {
                         /* upper bounds only */
                         /* Computing MIN */
-                        d__1 = u[k], d__2 = xk + dk;
+                        (void)(d__1 = u[k]), d__2 = xk + dk;
                         x[k] = min(d__1,d__2);
                         if (x[k] == u[k]) {
                             *iword = 1;

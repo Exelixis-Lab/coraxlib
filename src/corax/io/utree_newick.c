@@ -6,7 +6,7 @@ static char *newick_utree_recurse(const corax_unode_t *root,
                                   char *(*cb_serialize)(const corax_unode_t *),
                                   int level)
 {
-  char *newick;
+  char *newick = NULL;
   int   size_alloced = 0;
   assert(root != NULL);
   if (!root->next)
@@ -66,8 +66,9 @@ static char *newick_utree_recurse(const corax_unode_t *root,
       }
       free(cur_newick);
     }
-    else
+    else {
       newick = cur_newick;
+}
   }
 
   if (size_alloced < 0)
@@ -80,19 +81,21 @@ static char *newick_utree_recurse(const corax_unode_t *root,
   return newick;
 }
 
-char *utree_export_newick(const corax_unode_t *root,
+static char *utree_export_newick(const corax_unode_t *root,
                           int                  export_rooted,
                           double               root_brlen,
                           char *(*cb_serialize)(const corax_unode_t *))
 {
-  char *newick;
-  char *subtree1;
-  char *subtree2;
-  int   size_alloced;
+  char *newick = NULL;
+  char *subtree1 = NULL;
+  char *subtree2 = NULL;
+  int   size_alloced = 0;
 
-  if (!root) return NULL;
+  if (!root) { return NULL;
+}
 
-  if (!root->next) root = root->back;
+  if (!root->next) { root = root->back;
+}
 
   if (export_rooted)
   {

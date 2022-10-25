@@ -11,7 +11,7 @@
 
 #include "corax/corax_core.h"
 
-#define CORAX_UTREE_IS_TIP(node) (node->next == NULL)
+#define CORAX_UTREE_IS_TIP(node) ((node)->next == NULL)
 
 /**
  * A structure that is a fundamental element of `corax_utree_t`. It contains a
@@ -140,7 +140,7 @@ extern "C"
   CORAX_EXPORT void corax_utree_destroy(corax_utree_t *tree,
                                         void (*cb_destroy)(void *));
 
-  CORAX_EXPORT void corax_utree_reset_template_indices(corax_unode_t *node,
+  CORAX_EXPORT void corax_utree_reset_template_indices(corax_unode_t *root,
                                                        unsigned int   tip_count);
 
   CORAX_EXPORT void corax_utree_graph_destroy(corax_unode_t *root,
@@ -209,7 +209,7 @@ extern "C"
                                 unsigned int *              matrix_count,
                                 unsigned int *              ops_count);
 
-  CORAX_EXPORT int corax_utree_check_integrity(const corax_utree_t *root);
+  CORAX_EXPORT int corax_utree_check_integrity(const corax_utree_t *tree);
 
   CORAX_EXPORT corax_unode_t *corax_utree_graph_clone(const corax_unode_t *root);
 
@@ -217,9 +217,9 @@ extern "C"
    * Clone a tree. This is a semi-deep copy. The fields `label` and the pointers
    * `next` and `back` are deep copied, but the data field is shallowly copied.
    *
-   * @param root The tree to clone.
+   * @param tree The tree to clone.
    */
-  CORAX_EXPORT corax_utree_t *corax_utree_clone(const corax_utree_t *root);
+  CORAX_EXPORT corax_utree_t *corax_utree_clone(const corax_utree_t *tree);
 
   CORAX_EXPORT int corax_utree_set_clv_minimal(corax_unode_t *root,
                                                unsigned int   tip_count);

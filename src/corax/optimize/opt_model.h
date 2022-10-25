@@ -95,7 +95,7 @@ CORAX_EXPORT double corax_algo_opt_rates_weights(corax_partition_t *  partition,
                                                  int                  scale_branches);
 
 CORAX_EXPORT double corax_algo_opt_brlen_scaler(corax_partition_t *  partition,
-                                                corax_unode_t *      tree,
+                                                corax_unode_t *      root,
                                                 const unsigned int * params_indices,
                                                 double *             scaler,
                                                 double               min_scaler,

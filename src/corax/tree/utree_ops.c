@@ -1,16 +1,17 @@
 #include "utree_ops.h"
 #include "corax/corax.h"
+#include "math.h"
 
 static corax_unode_t *unode_prev(corax_unode_t *node)
 {
   if (node->next)
   {
     corax_unode_t *prev = node;
-    while (prev->next != node) prev = prev->next;
+    while (prev->next != node) { prev = prev->next;
+}
     return prev;
   }
-  else
-    return NULL;
+      return NULL;
 }
 
 /* This function removes a branch between lnode and lnode->back by
@@ -30,7 +31,8 @@ static int remove_branch(corax_unode_t *lnode)
   corax_unode_t *rnode = lnode->back;
 
   /* can only remove a branch between two inner nodes */
-  if (!lnode->next || !rnode->next) return CORAX_FAILURE;
+  if (!lnode->next || !rnode->next) { return CORAX_FAILURE;
+}
 
   corax_unode_t *lnode_prev = unode_prev(lnode);
   corax_unode_t *lnode_next = lnode->next;
@@ -60,7 +62,7 @@ static int remove_branch(corax_unode_t *lnode)
 
 static char *default_support_fmt(double support)
 {
-  char *sup_str;
+  char *sup_str = NULL;
   int   size_alloced = asprintf(&sup_str, "%lf", support);
 
   return size_alloced >= 0 ? sup_str : NULL;
@@ -76,19 +78,22 @@ CORAX_EXPORT void corax_utree_set_length_recursive(corax_utree_t *tree,
                                                    int            missing_only)
 {
   /* set branch lengths */
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int tip_count   = tree->tip_count;
   unsigned int inner_count = tree->inner_count;
   for (i = 0; i < tip_count + inner_count; ++i)
   {
     corax_unode_t *node = tree->nodes[i];
-    if (!node->length || !missing_only) corax_utree_set_length(node, length);
+    if (!node->length || !missing_only) { corax_utree_set_length(node, length);
+}
     if (node->next)
     {
-      if (!node->next->length || !missing_only)
+      if (!node->next->length || !missing_only) {
         corax_utree_set_length(node->next, length);
-      if (!node->next->next->length || !missing_only)
+}
+      if (!node->next->next->length || !missing_only) {
         corax_utree_set_length(node->next->next, length);
+}
     }
   }
 }
@@ -97,7 +102,7 @@ CORAX_EXPORT void corax_utree_scale_branches(corax_utree_t *tree,
                                              double branch_length_scaler)
 {
   /* scale branch lengths */
-  unsigned int    i;
+  unsigned int    i = 0;
   unsigned int    tip_count   = tree->tip_count;
   unsigned int    inner_count = tree->inner_count;
   corax_unode_t **nodes       = tree->nodes;
@@ -113,7 +118,7 @@ CORAX_EXPORT void corax_utree_scale_branches(corax_utree_t *tree,
 CORAX_EXPORT void corax_utree_scale_branches_all(corax_unode_t *root,
                                                  double branch_length_scaler)
 {
-  double root_length;
+  double root_length = NAN;
 
   /* scale all branches in a tree */
   corax_utree_scale_subtree_branches(root, branch_length_scaler);
@@ -177,7 +182,8 @@ CORAX_EXPORT int corax_utree_collapse_branches(corax_utree_t *tree,
     corax_unode_t *node = tree->nodes[i];
 
     /* this node has been removed in a previous iteration -> skip */
-    if (!node) continue;
+    if (!node) { continue;
+}
 
     assert(!CORAX_UTREE_IS_TIP(node));
 
@@ -186,14 +192,16 @@ CORAX_EXPORT int corax_utree_collapse_branches(corax_utree_t *tree,
       corax_unode_t *anode = node->back;
       if (CORAX_UTREE_IS_TIP(anode) || node->length > brlen_cutoff)
       {
-        if (!start_node) start_node = node;
+        if (!start_node) { start_node = node;
+}
         node = node->next;
       }
       else
       {
         /* remove branch and merge adjacent inner nodes */
         corax_unode_t *prev = unode_prev(node);
-        if (tree->vroot == node || tree->vroot == anode) tree->vroot = prev;
+        if (tree->vroot == node || tree->vroot == anode) { tree->vroot = prev;
+}
 
         /* find out position of to-be-removed node in the tree->nodes array,
          * and earmark it for deletion by setting respective entry to NULL */
@@ -218,7 +226,8 @@ CORAX_EXPORT int corax_utree_collapse_branches(corax_utree_t *tree,
     for (unsigned int i = tip_count; i < node_count; ++i)
     {
       corax_unode_t *node = tree->nodes[i];
-      if (node) tree->nodes[idx++] = node;
+      if (node) { tree->nodes[idx++] = node;
+}
     }
     assert(idx == new_node_count);
 
@@ -249,7 +258,8 @@ CORAX_EXPORT corax_unode_t *corax_utree_unroot_inplace(corax_unode_t *root)
     corax_unode_t *left  = root->back;
     corax_unode_t *right = root->next->back;
 
-    if (root->label) free(root->label);
+    if (root->label) { free(root->label);
+}
     free(root->next);
     free(root);
 
@@ -262,8 +272,7 @@ CORAX_EXPORT corax_unode_t *corax_utree_unroot_inplace(corax_unode_t *root)
 
     return left->next ? left : right;
   }
-  else
-    return root;
+      return root;
 }
 
 CORAX_EXPORT int corax_utree_root_inplace(corax_utree_t *tree)
@@ -275,8 +284,9 @@ CORAX_EXPORT int corax_utree_root_inplace(corax_utree_t *tree)
   }
 
   /* check if tree is already rooted */
-  if (tree->vroot->next && tree->vroot->next->next == tree->vroot)
+  if (tree->vroot->next && tree->vroot->next->next == tree->vroot) {
     return CORAX_SUCCESS;
+}
 
   corax_unode_t *root       = tree->vroot;
   corax_unode_t *root_back  = root->back;
@@ -332,8 +342,8 @@ CORAX_EXPORT int corax_utree_outgroup_root(corax_utree_t *tree,
   corax_unode_t **split_to_node_map = NULL;
   corax_split_t * tree_splits       = NULL;
   corax_unode_t * new_root          = NULL;
-  unsigned int    tip_count;
-  unsigned int    split_count;
+  unsigned int    tip_count = 0;
+  unsigned int    split_count = 0;
 
   if (!tree || !outgroup_tip_ids || !outgroup_size)
   {
@@ -387,7 +397,8 @@ CORAX_EXPORT int corax_utree_outgroup_root(corax_utree_t *tree,
     // check if this split is in the tree
     int root_idx =
         corax_utree_split_find(tree_splits, outgroup_split, tip_count);
-    if (root_idx >= 0) new_root = split_to_node_map[root_idx];
+    if (root_idx >= 0) { new_root = split_to_node_map[root_idx];
+}
 
     corax_utree_split_destroy(tree_splits);
     free(split_to_node_map);
@@ -398,10 +409,10 @@ CORAX_EXPORT int corax_utree_outgroup_root(corax_utree_t *tree,
   if (new_root)
   {
     tree->vroot = new_root;
-    if (add_root_node)
+    if (add_root_node) {
       return corax_utree_root_inplace(tree);
-    else
-      return CORAX_SUCCESS;
+}
+          return CORAX_SUCCESS;
   }
   else
   {
@@ -431,7 +442,8 @@ CORAX_EXPORT int corax_utree_draw_support(const corax_utree_t *ref_tree,
     /* this has to be an inner node! */
     assert(node->next);
 
-    if (node->label) free(node->label);
+    if (node->label) { free(node->label);
+}
 
     node->label = node->next->label = node->next->next->label =
         cb_serialize ? cb_serialize(support[i])
@@ -475,8 +487,8 @@ static int cb_serialize(corax_unode_t *tree, void *data)
 CORAX_EXPORT corax_unode_t *corax_utree_serialize(corax_unode_t *tree,
                                                   unsigned int   tip_count)
 {
-  unsigned int         node_count;
-  corax_unode_t *      serialized_tree;
+  unsigned int         node_count = 0;
+  corax_unode_t *      serialized_tree = NULL;
   struct serial_tree_s data;
 
   node_count = 2 * tip_count - 2;
@@ -490,7 +502,8 @@ CORAX_EXPORT corax_unode_t *corax_utree_serialize(corax_unode_t *tree,
   data.max_nodes       = node_count;
 
   /* if tree is a tip, move to its back position */
-  if (CORAX_UTREE_IS_TIP(tree)) tree = tree->back;
+  if (CORAX_UTREE_IS_TIP(tree)) { tree = tree->back;
+}
 
   /* apply callback function to serialize */
   corax_utree_traverse_apply(tree, NULL, NULL, cb_serialize, &data);
@@ -510,10 +523,12 @@ CORAX_EXPORT corax_unode_t *corax_utree_serialize(corax_unode_t *tree,
 CORAX_EXPORT corax_utree_t *corax_utree_expand(corax_unode_t *serialized_tree,
                                                unsigned int   tip_count)
 {
-  unsigned int    i, node_count, next_node_index;
-  corax_unode_t **tree_stack;
-  corax_unode_t * tree;
-  unsigned int    tree_stack_top;
+  unsigned int    i = 0;
+  unsigned int    node_count = 0;
+  unsigned int    next_node_index = 0;
+  corax_unode_t **tree_stack = NULL;
+  corax_unode_t * tree = NULL;
+  unsigned int    tree_stack_top = 0;
 
   corax_reset_error();
 
@@ -533,7 +548,10 @@ CORAX_EXPORT corax_utree_t *corax_utree_expand(corax_unode_t *serialized_tree,
     if (t_s.next)
     {
       /* build inner node and connect */
-      corax_unode_t *t_cr, *t_r, *t_cl, *t_l;
+      corax_unode_t *t_cr = NULL;
+      corax_unode_t *t_r = NULL;
+      corax_unode_t *t_cl = NULL;
+      corax_unode_t *t_l = NULL;
       t   = corax_utree_create_node(t_s.clv_index,
                                   t_s.scaler_index,
                                   0,  /* label */

@@ -48,15 +48,17 @@ CORAX_EXPORT unsigned int
 corax_count_invariant_sites(const corax_partition_t *partition,
                             unsigned int *           state_inv_count)
 {
-  unsigned int  i, j, k;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
   unsigned int  invariant_count = 0;
   unsigned int  tips            = partition->tips;
   unsigned int  sites           = partition->sites;
   unsigned int  states          = partition->states;
   corax_state_t gap_state       = 0;
-  corax_state_t cur_state;
+  corax_state_t cur_state = 0;
   int *         invariant = partition->invariant;
-  double *      tipclv;
+  double *      tipclv = NULL;
 
   /* gap state has always all bits set to one */
   for (i = 0; i < states; ++i)
@@ -65,8 +67,9 @@ corax_count_invariant_sites(const corax_partition_t *partition,
     gap_state |= 1;
   }
 
-  if (state_inv_count)
+  if (state_inv_count) {
     memset(state_inv_count, 0, states * sizeof(unsigned int));
+}
 
   if (invariant)
   {
@@ -82,7 +85,8 @@ corax_count_invariant_sites(const corax_partition_t *partition,
 
         /* increase the counter and per-state count */
         invariant_count += partition->pattern_weights[i];
-        if (state_inv_count) state_inv_count[cur_state]++;
+        if (state_inv_count) { state_inv_count[cur_state]++;
+}
       }
     }
   }
@@ -101,7 +105,8 @@ corax_count_invariant_sites(const corax_partition_t *partition,
         if (CORAX_STATE_POPCNT(cur_state) == 1)
         {
           invariant_count += partition->pattern_weights[j];
-          if (state_inv_count) state_inv_count[CORAX_STATE_CTZ(cur_state)]++;
+          if (state_inv_count) { state_inv_count[CORAX_STATE_CTZ(cur_state)]++;
+}
         }
       }
     }
@@ -134,7 +139,8 @@ corax_count_invariant_sites(const corax_partition_t *partition,
         if (CORAX_STATE_POPCNT(state) == 1)
         {
           invariant_count += partition->pattern_weights[j];
-          if (state_inv_count) state_inv_count[CORAX_STATE_CTZ(state)]++;
+          if (state_inv_count) { state_inv_count[CORAX_STATE_CTZ(state)]++;
+}
         }
       }
     }
@@ -144,16 +150,18 @@ corax_count_invariant_sites(const corax_partition_t *partition,
 
 CORAX_EXPORT int corax_update_invariant_sites(corax_partition_t *partition)
 {
-  unsigned int   i, j, k;
-  corax_state_t  state;
+  unsigned int   i = 0;
+  unsigned int   j = 0;
+  unsigned int   k = 0;
+  corax_state_t  state = 0;
   unsigned int   states        = partition->states;
   unsigned int   states_padded = partition->states_padded;
   unsigned int   sites         = partition->sites;
   unsigned int   tips          = partition->tips;
   unsigned int   rate_cats     = partition->rate_cats;
   corax_state_t  gap_state     = 0;
-  corax_state_t *invariant;
-  double *       tipclv;
+  corax_state_t *invariant = NULL;
+  double *       tipclv = NULL;
 
   /* gap state has always all bits set to one */
   for (i = 0; i < states; ++i)
@@ -179,7 +187,8 @@ CORAX_EXPORT int corax_update_invariant_sites(corax_partition_t *partition)
   }
 
   /* initialize all elements to the gap state */
-  for (i = 0; i < partition->sites; ++i) invariant[i] = gap_state;
+  for (i = 0; i < partition->sites; ++i) { invariant[i] = gap_state;
+}
 
   /* depending on the attribute flag, fill each element of the invariant array
      with the bitwise AND of gap and all states in the corresponding site */
@@ -187,21 +196,23 @@ CORAX_EXPORT int corax_update_invariant_sites(corax_partition_t *partition)
   {
     if (states == 4)
     {
-      for (i = 0; i < tips; ++i)
+      for (i = 0; i < tips; ++i) {
         for (j = 0; j < sites; ++j)
         {
           state = (unsigned int)(partition->tipchars[i][j]);
           invariant[j] &= state;
         }
+}
     }
     else
     {
-      for (i = 0; i < tips; ++i)
+      for (i = 0; i < tips; ++i) {
         for (j = 0; j < sites; ++j)
         {
           state = partition->tipmap[(int)(partition->tipchars[i][j])];
           invariant[j] &= state;
         }
+}
     }
   }
   else
@@ -232,10 +243,11 @@ CORAX_EXPORT int corax_update_invariant_sites(corax_partition_t *partition)
      index in invariant to the frequency index of the basecall, otherwise -1 */
   for (i = 0; i < partition->sites; ++i)
   {
-    if (invariant[i] == 0 || CORAX_STATE_POPCNT(invariant[i]) > 1)
+    if (invariant[i] == 0 || CORAX_STATE_POPCNT(invariant[i]) > 1) {
       partition->invariant[i] = -1;
-    else
+    } else {
       partition->invariant[i] = CORAX_STATE_CTZ(invariant[i]);
+}
   }
 
   free(invariant);

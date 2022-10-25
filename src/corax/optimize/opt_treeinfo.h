@@ -72,7 +72,7 @@ corax_algo_opt_onedim_treeinfo_custom(corax_treeinfo_t     *treeinfo,
    * These functions more or less have the same arguments and optimize their
    * particular parameter. They all use similar algorithms.
    *
-   * @param bfgs_factor: A value that should be greater than 0. An opaque
+   * @param bfgs_factor A value that should be greater than 0. An opaque
    * quantity, but typical values are 1e12 for inaccurate but fast searches, or
    * 1e1 for a more complete and slow search.
    *
@@ -155,7 +155,7 @@ corax_algo_opt_onedim_treeinfo_custom(corax_treeinfo_t     *treeinfo,
    * - CORAX_OPT_BLO_NEWTON_OLDFAST
    * - CORAX_OPT_BLO_NEWTON_OLDSAFE
    *
-   * @param smoothings: Maximum number of iterations for branch length
+   * @param smoothings Maximum number of iterations for branch length
    * optimization. Negative = no limit (iterate until LH improvement < epsilon)
    *
    * @param epsilon Likelihood threshold to terminate the optimization. Also known

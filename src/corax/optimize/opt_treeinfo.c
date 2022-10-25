@@ -22,6 +22,7 @@
 #include "opt_treeinfo.h"
 #include "callback.h"
 #include "corax/corax.h"
+#include "math.h"
 #include "opt_branches.h"
 #include "opt_model.h"
 
@@ -53,7 +54,7 @@ static void fill_rates(double *     rates,
                        double       max_rate,
                        unsigned int n_rates)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   assert(min_rate > 1e-4 && max_rate > min_rate);
 
@@ -63,12 +64,13 @@ static void fill_rates(double *     rates,
     lb[i] = min_rate;
     ub[i] = max_rate;
 
-    if (rates[i] < min_rate)
+    if (rates[i] < min_rate) {
       x[i] = min_rate;
-    else if (rates[i] > max_rate)
+    } else if (rates[i] > max_rate) {
       x[i] = max_rate;
-    else
+    } else {
       x[i] = rates[i];
+}
   }
 }
 
@@ -80,7 +82,8 @@ static void fill_weights(double *      weights,
                          double *      ub,
                          unsigned int  n_weights)
 {
-  unsigned int i, cur_index = 0;
+  unsigned int i = 0;
+  unsigned int cur_index = 0;
 
   *fixed_weight_index = n_weights;
   for (i = 0; i < n_weights; ++i)
@@ -104,12 +107,13 @@ static void fill_weights(double *      weights,
       double r      = weights[i] / weights[*fixed_weight_index];
       lb[cur_index] = CORAX_ALGO_MIN_WEIGHT_RATIO;
       ub[cur_index] = CORAX_ALGO_MAX_WEIGHT_RATIO;
-      if (r < lb[cur_index])
+      if (r < lb[cur_index]) {
         x[cur_index] = lb[cur_index];
-      else if (r > ub[cur_index])
+      } else if (r > ub[cur_index]) {
         x[cur_index] = ub[cur_index];
-      else
+      } else {
         x[cur_index] = r;
+}
 
       cur_index++;
     }
@@ -122,7 +126,8 @@ static int treeinfo_get_alpha(const corax_treeinfo_t *treeinfo,
                               unsigned int            param_count)
 {
   CORAX_UNUSED(param_count);
-  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+  if (part_num >= treeinfo->partition_count) { return CORAX_FAILURE;
+}
 
   param_vals[0] = treeinfo->alphas[part_num];
   return CORAX_SUCCESS;
@@ -134,7 +139,8 @@ static int treeinfo_set_alpha(corax_treeinfo_t *treeinfo,
                               unsigned int      param_count)
 {
   CORAX_UNUSED(param_count);
-  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+  if (part_num >= treeinfo->partition_count) { return CORAX_FAILURE;
+}
 
   treeinfo->alphas[part_num] = param_vals[0];
 
@@ -144,8 +150,9 @@ static int treeinfo_set_alpha(corax_treeinfo_t *treeinfo,
   if (!corax_compute_gamma_cats(treeinfo->alphas[part_num],
                                 partition->rate_cats,
                                 partition->rates,
-                                treeinfo->gamma_mode[part_num]))
+                                treeinfo->gamma_mode[part_num])) {
     return CORAX_FAILURE;
+}
 
   return CORAX_SUCCESS;
 }
@@ -156,7 +163,8 @@ static int treeinfo_get_pinv(const corax_treeinfo_t *treeinfo,
                              unsigned int            param_count)
 {
   CORAX_UNUSED(param_count);
-  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+  if (part_num >= treeinfo->partition_count) { return CORAX_FAILURE;
+}
 
   corax_partition_t *partition = treeinfo->partitions[part_num];
   param_vals[0] = partition->prop_invar[treeinfo->param_indices[part_num][0]];
@@ -169,17 +177,19 @@ static int treeinfo_set_pinv(corax_treeinfo_t *treeinfo,
                              unsigned int      param_count)
 {
   CORAX_UNUSED(param_count);
-  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+  if (part_num >= treeinfo->partition_count) { return CORAX_FAILURE;
+}
 
-  unsigned int       k;
+  unsigned int       k = 0;
   corax_partition_t *partition = treeinfo->partitions[part_num];
 
   /* update proportion of invariant sites */
   for (k = 0; k < partition->rate_cats; ++k)
   {
     if (!corax_update_invariant_sites_proportion(
-            partition, treeinfo->param_indices[part_num][k], param_vals[0]))
+            partition, treeinfo->param_indices[part_num][k], param_vals[0])) {
       return CORAX_FAILURE;
+}
   }
 
   return CORAX_SUCCESS;
@@ -191,7 +201,8 @@ static int treeinfo_get_brlen_scaler(const corax_treeinfo_t *treeinfo,
                                      unsigned int            param_count)
 {
   CORAX_UNUSED(param_count);
-  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+  if (part_num >= treeinfo->partition_count) { return CORAX_FAILURE;
+}
 
   param_vals[0] = treeinfo->brlen_scalers[part_num];
   return CORAX_SUCCESS;
@@ -203,7 +214,8 @@ static int treeinfo_set_brlen_scaler(corax_treeinfo_t *treeinfo,
                                      unsigned int      param_count)
 {
   CORAX_UNUSED(param_count);
-  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+  if (part_num >= treeinfo->partition_count) { return CORAX_FAILURE;
+}
 
   treeinfo->brlen_scalers[part_num] = param_vals[0];
 
@@ -214,7 +226,7 @@ static void fix_brlen_scalers(corax_treeinfo_t *treeinfo,
                               double            min_scaler,
                               double            max_scaler)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   assert(treeinfo->brlen_scalers);
 
@@ -226,7 +238,8 @@ static void fix_brlen_scalers(corax_treeinfo_t *treeinfo,
   {
     for (i = 0; i < treeinfo->partition_count; ++i)
     {
-      if (!treeinfo->partitions[i]) treeinfo->brlen_scalers[i] = 0.0;
+      if (!treeinfo->partitions[i]) { treeinfo->brlen_scalers[i] = 0.0;
+}
     }
 
     treeinfo->parallel_reduce_cb(treeinfo->parallel_context,
@@ -238,30 +251,34 @@ static void fix_brlen_scalers(corax_treeinfo_t *treeinfo,
   /* skip remote partitions and those without rates/weight optimization */
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
-    if (treeinfo->brlen_scalers[i] < lowest_scaler)
+    if (treeinfo->brlen_scalers[i] < lowest_scaler) {
       lowest_scaler = treeinfo->brlen_scalers[i];
-    if (treeinfo->brlen_scalers[i] > highest_scaler)
+}
+    if (treeinfo->brlen_scalers[i] > highest_scaler) {
       highest_scaler = treeinfo->brlen_scalers[i];
+}
   }
 
   /* check if some scaler are out of bounds */
   if (lowest_scaler < min_scaler || highest_scaler > max_scaler)
   {
-    double global_scaler;
+    double global_scaler = 0.0;
 
     assert(lowest_scaler >= min_scaler || highest_scaler <= max_scaler);
 
     /* compute correction factor */
-    if (lowest_scaler < min_scaler)
+    if (lowest_scaler < min_scaler) {
       global_scaler = min_scaler / lowest_scaler;
-    else if (highest_scaler > max_scaler)
+    } else if (highest_scaler > max_scaler) {
       global_scaler = max_scaler / highest_scaler;
-    else
+    } else {
       assert(0);
+}
 
     /* force scalers into bounds by multiplying with correction factor */
-    for (i = 0; i < treeinfo->partition_count; ++i)
+    for (i = 0; i < treeinfo->partition_count; ++i) {
       treeinfo->brlen_scalers[i] *= global_scaler;
+}
 
     /* multiply all branches by the inverse to preserve likelihood */
     corax_treeinfo_scale_branches_all(treeinfo, 1.0 / global_scaler);
@@ -301,12 +318,13 @@ corax_algo_opt_onedim_treeinfo_custom(corax_treeinfo_t *    treeinfo,
                                       double                tolerance)
 {
   unsigned int param_count = 0;
-  unsigned int i;
+  unsigned int i = 0;
 
   /* check how many partitions have to be optimized */
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
-    if (treeinfo->params_to_optimize[i] & param_to_optimize) param_count++;
+    if (treeinfo->params_to_optimize[i] & param_to_optimize) { param_count++;
+}
   }
 
   if (param_count > 0)
@@ -429,8 +447,10 @@ double corax_algo_opt_brlen_scalers_treeinfo(corax_treeinfo_t *treeinfo,
                                              double            max_brlen,
                                              double            lh_epsilon)
 {
-  unsigned int i, j;
-  double       old_loglh, loglh;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  double       old_loglh = NAN;
+  double       loglh = NAN;
   double *     old_scalers = NULL;
   double *     old_brlen   = NULL;
 
@@ -450,7 +470,8 @@ double corax_algo_opt_brlen_scalers_treeinfo(corax_treeinfo_t *treeinfo,
   old_brlen = (double *)calloc(treeinfo->tree->edge_count, sizeof(double));
   for (i = 0, j = 0; i < treeinfo->partition_count; ++i)
   {
-    if (treeinfo->partitions[i]) old_scalers[j++] = treeinfo->brlen_scalers[i];
+    if (treeinfo->partitions[i]) { old_scalers[j++] = treeinfo->brlen_scalers[i];
+}
   }
   assert(j == treeinfo->init_partition_count);
 
@@ -483,8 +504,9 @@ double corax_algo_opt_brlen_scalers_treeinfo(corax_treeinfo_t *treeinfo,
       /* revert optimization and restore old values */
       for (i = 0, j = 0; i < treeinfo->partition_count; ++i)
       {
-        if (treeinfo->partitions[i])
+        if (treeinfo->partitions[i]) {
           treeinfo->brlen_scalers[i] = old_scalers[j++];
+}
       }
       assert(j == treeinfo->init_partition_count);
 
@@ -517,15 +539,20 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
                                            double            bfgs_factor,
                                            double            tolerance)
 {
-  unsigned int i, j, k, l;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int l = 0;
 
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
 
-  double   cur_logl;
-  double **x, **lb, **ub;
-  int **   bt;
+  double   cur_logl = NAN;
+  double **x = NULL;
+  double **lb = NULL;
+  double **ub = NULL;
+  int **   bt = NULL;
 
-  unsigned int *subst_free_params;
+  unsigned int *subst_free_params = NULL;
 
   unsigned int part_count      = 0;
   unsigned int max_free_params = 0;
@@ -533,12 +560,14 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
   /* check how many partitions have subst. rates to optimize */
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
-    if (treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES)
+    if (treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES) {
       part_count++;
+}
   }
 
   /* nothing to optimize */
-  if (!part_count) return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (!part_count) { return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   x                 = (double **)malloc(sizeof(double *) * (part_count));
   lb                = (double **)malloc(sizeof(double *) * (part_count));
@@ -551,8 +580,9 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     /* skip partition where no rate optimization is needed */
-    if (!(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES))
+    if (!(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES)) {
       continue;
+}
 
     /* process thread-local partitions only */
     if (treeinfo->partitions[i])
@@ -575,8 +605,9 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
           }
         }
       }
-      if (part_free_params > max_free_params)
+      if (part_free_params > max_free_params) {
         max_free_params = part_free_params;
+}
 
       subst_free_params[part] = part_free_params;
       part++;
@@ -608,8 +639,9 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     /* skip partition where no rate optimization is needed */
-    if (!(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES))
+    if (!(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_SUBST_RATES)) {
       continue;
+}
 
     /* remote partition -> skip */
     if (!treeinfo->partitions[i])
@@ -635,7 +667,8 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
     {
       if (symmetries)
       {
-        if ((unsigned int)symmetries[subst_params - 1] == l) ++l;
+        if ((unsigned int)symmetries[subst_params - 1] == l) { ++l;
+}
 
         for (j = 0; j < subst_params; ++j)
         {
@@ -652,10 +685,11 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
         x[part][k] = subst_rates[k];
       }
 
-      if (x[part][k] < min_rate)
+      if (x[part][k] < min_rate) {
         x[part][k] = min_rate;
-      else if (x[part][k] > max_rate)
+      } else if (x[part][k] > max_rate) {
         x[part][k] = max_rate;
+}
     }
 
     part++;
@@ -685,7 +719,8 @@ double corax_algo_opt_subst_rates_treeinfo(corax_treeinfo_t *treeinfo,
   /* cleanup */
   for (i = 0; i < part_count; ++i)
   {
-    if (x[i]) free(x[i]);
+    if (x[i]) { free(x[i]);
+}
   }
 
   free(lb[0]);
@@ -711,12 +746,15 @@ double corax_algo_opt_frequencies_treeinfo(corax_treeinfo_t *treeinfo,
 {
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
 
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
 
-  double        cur_logl;
-  double **     x, **lb, **ub;
-  int **        bt;
-  unsigned int *num_free_params;
+  double        cur_logl = NAN;
+  double **     x = NULL;
+  double **lb = NULL;
+  double **ub = NULL;
+  int **        bt = NULL;
+  unsigned int *num_free_params = NULL;
 
   unsigned int part_count      = 0;
   unsigned int max_free_params = 0;
@@ -729,15 +767,18 @@ double corax_algo_opt_frequencies_treeinfo(corax_treeinfo_t *treeinfo,
       part_count++;
 
       /* remote partition -> skip */
-      if (!treeinfo->partitions[i]) continue;
+      if (!treeinfo->partitions[i]) { continue;
+}
 
       unsigned int nfree_params = treeinfo->partitions[i]->states - 1;
-      if (nfree_params > max_free_params) max_free_params = nfree_params;
+      if (nfree_params > max_free_params) { max_free_params = nfree_params;
+}
     }
   }
 
   /* nothing to optimize */
-  if (!part_count) return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (!part_count) { return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   /* IMPORTANT: we need to know max_free_params among all threads! */
   if (treeinfo->parallel_reduce_cb)
@@ -778,8 +819,9 @@ double corax_algo_opt_frequencies_treeinfo(corax_treeinfo_t *treeinfo,
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     // skip partition where no freqs optimization is needed
-    if (!(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_FREQUENCIES))
+    if (!(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_FREQUENCIES)) {
       continue;
+}
 
     /* skip remote partitions (will be handled by other threads) */
     if (!treeinfo->partitions[i])
@@ -792,7 +834,7 @@ double corax_algo_opt_frequencies_treeinfo(corax_treeinfo_t *treeinfo,
     corax_partition_t *partition   = treeinfo->partitions[i];
     double *           frequencies = partition->frequencies[params_index];
     unsigned int       states      = partition->states;
-    unsigned int       cur_index;
+    unsigned int       cur_index = 0;
 
     num_free_params[part] = states - 1;
 
@@ -859,7 +901,8 @@ double corax_algo_opt_frequencies_treeinfo(corax_treeinfo_t *treeinfo,
                                              target_freqs_func_multi);
 
   /* cleanup */
-  for (i = 0; i < part_count; ++i) free(x[i]);
+  for (i = 0; i < part_count; ++i) { free(x[i]);
+}
 
   free(lb[0]);
   free(ub[0]);
@@ -889,13 +932,15 @@ double corax_algo_opt_alpha_pinv_treeinfo(corax_treeinfo_t *treeinfo,
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
   const int params_to_optimize = CORAX_OPT_PARAM_ALPHA | CORAX_OPT_PARAM_PINV;
 
-  unsigned int i;
+  unsigned int i = 0;
 
-  double        cur_logl;
-  double **     x, **lb, **ub;
-  double *      xd;
-  int **        bt;
-  unsigned int *num_free_params;
+  double        cur_logl = NAN;
+  double **     x = NULL;
+  double **lb = NULL;
+  double **ub = NULL;
+  double *      xd = NULL;
+  int **        bt = NULL;
+  unsigned int *num_free_params = NULL;
 
   unsigned int part_count      = 0;
   unsigned int max_free_params = 2;
@@ -911,7 +956,8 @@ double corax_algo_opt_alpha_pinv_treeinfo(corax_treeinfo_t *treeinfo,
   }
 
   /* nothing to optimize */
-  if (!part_count) return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+  if (!part_count) { return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+}
 
   x               = (double **)malloc(sizeof(double *) * part_count);
   xd              = (double *)malloc(sizeof(double) * part_count * 2);
@@ -949,8 +995,9 @@ double corax_algo_opt_alpha_pinv_treeinfo(corax_treeinfo_t *treeinfo,
   {
     // skip partition where no freqs optimization is needed
     if ((treeinfo->params_to_optimize[i] & params_to_optimize)
-        != params_to_optimize)
+        != params_to_optimize) {
       continue;
+}
 
     /* skip remote partitions (will be handled by other threads) */
     if (!treeinfo->partitions[i])
@@ -1016,16 +1063,17 @@ static void scales_rates_and_branches(corax_treeinfo_t *treeinfo,
   double *           rates        = partition->rates;
   unsigned int       rate_cats    = partition->rate_cats;
   double             brlen_scaler = 1.0 / rate_scaler;
-  size_t             j;
+  size_t             j = 0;
 
-  for (j = 0; j < rate_cats; ++j) rates[j] *= rate_scaler;
+  for (j = 0; j < rate_cats; ++j) { rates[j] *= rate_scaler;
+}
 
   /* scale branch lengths such that likelihood is conserved */
-  if (treeinfo->partition_count == 1)
+  if (treeinfo->partition_count == 1) {
     corax_treeinfo_scale_branches_all(treeinfo, brlen_scaler);
-  else if (treeinfo->brlen_linkage == CORAX_BRLEN_UNLINKED)
+  } else if (treeinfo->brlen_linkage == CORAX_BRLEN_UNLINKED) {
     corax_treeinfo_scale_branches_partition(treeinfo, part_num, brlen_scaler);
-  else
+  } else
   {
     assert(treeinfo->brlen_scalers);
 
@@ -1037,39 +1085,41 @@ static void scales_rates_and_branches(corax_treeinfo_t *treeinfo,
 static void
 fix_free_rates(corax_treeinfo_t *treeinfo, double min_rate, double max_rate)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
 
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     /* skip remote partitions and those without rates/weight optimization */
     if (!treeinfo->partitions[i]
-        || !(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_FREE_RATES))
+        || !(treeinfo->params_to_optimize[i] & CORAX_OPT_PARAM_FREE_RATES)) {
       continue;
+}
 
     corax_partition_t *partition    = treeinfo->partitions[i];
     double *           rates        = partition->rates;
     unsigned int       rate_cats    = partition->rate_cats;
     double             lowest_rate  = rates[0];
     double             highest_rate = rates[0];
-    double             rate_scaler;
+    double             rate_scaler = NAN;
 
     /* force constraint sum(weights x rates) = 1.0 */
     for (j = 1; j < rate_cats; ++j)
     {
-      if (rates[j] < lowest_rate) lowest_rate = rates[j];
-      if (rates[j] > highest_rate) highest_rate = rates[j];
+      if (rates[j] < lowest_rate) { lowest_rate = rates[j];
+}
+      if (rates[j] > highest_rate) { highest_rate = rates[j];
+}
     }
 
     if (lowest_rate < min_rate || highest_rate > max_rate)
     {
       assert(lowest_rate >= min_rate || highest_rate <= max_rate);
 
-      if (lowest_rate < min_rate)
+      if (lowest_rate < min_rate) {
         rate_scaler = min_rate / lowest_rate;
-      else if (highest_rate > max_rate)
-        rate_scaler = max_rate / highest_rate;
-      else
-        assert(0);
+      } else { rate_scaler = max_rate / highest_rate;
+}
 
       scales_rates_and_branches(treeinfo, i, rate_scaler);
     }
@@ -1078,25 +1128,29 @@ fix_free_rates(corax_treeinfo_t *treeinfo, double min_rate, double max_rate)
 
 static void renormalize_free_rates(corax_treeinfo_t *treeinfo)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
 
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     /* skip remote partitions and those without rates/weight optimization */
     if (!treeinfo->partitions[i]
         || !(treeinfo->params_to_optimize[i]
-             & (CORAX_OPT_PARAM_FREE_RATES | CORAX_OPT_PARAM_RATE_WEIGHTS)))
+             & (CORAX_OPT_PARAM_FREE_RATES | CORAX_OPT_PARAM_RATE_WEIGHTS))) {
       continue;
+}
 
     corax_partition_t *partition = treeinfo->partitions[i];
     double *           rates     = partition->rates;
     double *           weights   = partition->rate_weights;
     unsigned int       rate_cats = partition->rate_cats;
-    double             sum_weightrates, rate_scaler;
+    double             sum_weightrates = NAN;
+    double             rate_scaler = NAN;
 
     /* force constraint sum(weights x rates) = 1.0 */
     sum_weightrates = 0.0;
-    for (j = 0; j < rate_cats; ++j) sum_weightrates += rates[j] * weights[j];
+    for (j = 0; j < rate_cats; ++j) { sum_weightrates += rates[j] * weights[j];
+}
     rate_scaler = 1.0 / sum_weightrates;
 
     scales_rates_and_branches(treeinfo, i, rate_scaler);
@@ -1114,13 +1168,20 @@ double corax_algo_opt_rates_weights_treeinfo(corax_treeinfo_t *treeinfo,
 {
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
 
-  unsigned int  i;
-  double        old_logl, cur_logl, prev_logl;
-  double **     x, **lb, **ub;
-  double *      old_weights, *old_rates, *old_brlens, *old_scalers;
-  int **        bt;
-  unsigned int *num_free_params;
-  size_t        rw_span;
+  unsigned int  i = 0;
+  double        old_logl = NAN;
+  double        cur_logl = NAN;
+  double        prev_logl = NAN;
+  double **     x = NULL;
+  double **lb = NULL;
+  double **ub = NULL;
+  double *      old_weights = NULL;
+  double *old_rates = NULL;
+  double *old_brlens = NULL;
+  double *old_scalers = NULL;
+  int **        bt = NULL;
+  unsigned int *num_free_params = NULL;
+  size_t        rw_span = 0;
 
   unsigned int part_count       = 0;
   unsigned int local_part_count = 0;
@@ -1137,19 +1198,22 @@ double corax_algo_opt_rates_weights_treeinfo(corax_treeinfo_t *treeinfo,
       part_count++;
 
       /* remote partition -> skip */
-      if (!treeinfo->partitions[i]) continue;
+      if (!treeinfo->partitions[i]) { continue;
+}
 
       local_part_count++;
 
       unsigned int nfree_params = treeinfo->partitions[i]->rate_cats;
-      if (nfree_params > max_free_params) max_free_params = nfree_params;
+      if (nfree_params > max_free_params) { max_free_params = nfree_params;
+}
     }
   }
 
   old_logl = corax_treeinfo_compute_loglh(treeinfo, 0);
 
   /* nothing to optimize */
-  if (!part_count) return -1 * old_logl;
+  if (!part_count) { return -1 * old_logl;
+}
 
   /* IMPORTANT: we need to know max_free_params among all threads! */
   if (treeinfo->parallel_reduce_cb)
@@ -1200,8 +1264,9 @@ double corax_algo_opt_rates_weights_treeinfo(corax_treeinfo_t *treeinfo,
   for (i = 0; i < treeinfo->partition_count; ++i)
   {
     if (!(treeinfo->params_to_optimize[i]
-          & (CORAX_OPT_PARAM_FREE_RATES | CORAX_OPT_PARAM_RATE_WEIGHTS)))
+          & (CORAX_OPT_PARAM_FREE_RATES | CORAX_OPT_PARAM_RATE_WEIGHTS))) {
       continue;
+}
 
     if (treeinfo->partitions[i])
     {
@@ -1356,8 +1421,9 @@ double corax_algo_opt_rates_weights_treeinfo(corax_treeinfo_t *treeinfo,
 
   /* normalize scalers and scale the branches accordingly */
   if (treeinfo->brlen_linkage == CORAX_BRLEN_SCALED
-      && treeinfo->partition_count > 1)
+      && treeinfo->partition_count > 1) {
     corax_treeinfo_normalize_brlen_scalers(treeinfo);
+}
 
   if (treeinfo->brlen_linkage != CORAX_BRLEN_UNLINKED)
   {
@@ -1403,9 +1469,10 @@ double corax_algo_opt_rates_weights_treeinfo(corax_treeinfo_t *treeinfo,
           }
         }
         /* restore initial branch lengths */
-        for (i = 0; i < treeinfo->subnode_count; ++i)
+        for (i = 0; i < treeinfo->subnode_count; ++i) {
           treeinfo->subnodes[i]->length =
               old_brlens[treeinfo->subnodes[i]->pmatrix_index];
+}
 
         /* restore initial branch length scalers */
         if (treeinfo->brlen_scalers)
@@ -1424,15 +1491,17 @@ double corax_algo_opt_rates_weights_treeinfo(corax_treeinfo_t *treeinfo,
             "%.12lf\n",
             cur_logl);
       }
-      else
+      else {
         cur_logl = new_logl;
+}
     }
   }
 
   /* cleanup */
   for (i = 0; i < part_count; ++i)
   {
-    if (x[i]) free(x[i]);
+    if (x[i]) { free(x[i]);
+}
   }
 
   free(old_rates);

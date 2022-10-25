@@ -28,7 +28,8 @@ static int
 dfa_parse(corax_phylip_t *fd, corax_msa_t *msa, char *p, int seqno, int offset)
 {
   int  j = 0;
-  char c, m;
+  char c = 0;
+  char m = 0;
 
   char *seqdata = msa->sequence[seqno] + offset;
 
@@ -90,12 +91,13 @@ static const int delimiters[4] = {' ', '\t', '\r', '\n'};
 static int       get_headerlen(char *s)
 {
   long min_len = strlen(s);
-  int  i;
+  int  i = 0;
 
   for (i = 0; i < 4; ++i)
   {
     char *r = strchr(s, delimiters[i]);
-    if (r && (r - s) < min_len) min_len = r - s;
+    if (r && (r - s) < min_len) { min_len = r - s;
+}
   }
 
   return (int)min_len;
@@ -129,8 +131,10 @@ static char *getnextline(corax_phylip_t *fd)
   {
     len = strlen(fd->buffer);
 
-    if (fd->line_size + len > fd->line_maxsize)
-      if (!reallocline(fd, fd->line_maxsize + CORAX_LINEALLOC)) return NULL;
+    if (fd->line_size + len > fd->line_maxsize) {
+      if (!reallocline(fd, fd->line_maxsize + CORAX_LINEALLOC)) { return NULL;
+}
+}
 
     memcpy(fd->line + fd->line_size, fd->buffer, len * sizeof(char));
     fd->line_size += len;
@@ -157,8 +161,10 @@ static char *getnextline(corax_phylip_t *fd)
     return NULL;
   }
 
-  if (fd->line_size == fd->line_maxsize)
-    if (!reallocline(fd, fd->line_maxsize + 1)) return NULL;
+  if (fd->line_size == fd->line_maxsize) {
+    if (!reallocline(fd, fd->line_maxsize + 1)) { return NULL;
+}
+}
 
   fd->line[fd->line_size] = 0;
   return fd->line;
@@ -166,25 +172,27 @@ static char *getnextline(corax_phylip_t *fd)
 
 static int args_getint(const char *arg, int *len)
 {
-  int temp;
+  int temp = 0;
   *len = 0;
 
   int ret = sscanf(arg, "%d%n", &temp, len);
-  if ((ret == 0) || (!*len)) return 0;
+  if ((ret == 0) || (!*len)) { return 0;
+}
 
   return temp;
 }
 
 static int whitespace(char c)
 {
-  if (c == ' ' || c == '\t' || c == '\n' || c == '\r') return 1;
+  if (c == ' ' || c == '\t' || c == '\n' || c == '\r') { return 1;
+}
   return 0;
 }
 
 static int
 parse_header(const char *line, int *seq_count, int *seq_len, int format)
 {
-  int len;
+  int len = 0;
 
   /* read number of sequences */
   if (!(*seq_count = args_getint(line, &len)))
@@ -207,21 +215,27 @@ parse_header(const char *line, int *seq_count, int *seq_len, int format)
   line += len;
 
   /* go through all white spaces */
-  while (*line && whitespace(*line)) ++line;
+  while (*line && whitespace(*line)) { ++line;
+}
 
   /* if end of line then return successfully */
-  if (!*line) return 1;
+  if (!*line) { return 1;
+}
 
   /* otherwise, continue only if interleaved format specified, otherwise die */
-  if (format == CORAX_PHYLIP_SEQUENTIAL) return 0;
+  if (format == CORAX_PHYLIP_SEQUENTIAL) { return 0;
+}
 
-  if (*line != 's' && *line != 'S' && *line != 'i' && *line != 'I') return 0;
+  if (*line != 's' && *line != 'S' && *line != 'i' && *line != 'I') { return 0;
+}
 
   /* go through all white spaces */
-  while (*line && whitespace(*line)) ++line;
+  while (*line && whitespace(*line)) { ++line;
+}
 
   /* if end of line then return successfully */
-  if (!*line) return 1;
+  if (!*line) { return 1;
+}
 
   return 0;
 }
@@ -258,8 +272,9 @@ static char *parse_oneline_sequence(corax_phylip_t *fd,
         return NULL;
       }
     }
-    else
+    else {
       p = getnextline(fd);
+}
   }
 
   return p;
@@ -268,7 +283,7 @@ static char *parse_oneline_sequence(corax_phylip_t *fd,
 CORAX_EXPORT corax_phylip_t *corax_phylip_open(const char *        filename,
                                                const unsigned int *map)
 {
-  int i;
+  int i = 0;
 
   corax_phylip_t *fd = (corax_phylip_t *)malloc(sizeof(corax_phylip_t));
   if (!fd)
@@ -313,12 +328,14 @@ CORAX_EXPORT corax_phylip_t *corax_phylip_open(const char *        filename,
 
   /* reset stripped char frequencies */
   fd->stripped_count = 0;
-  for (i = 0; i < 256; i++) fd->stripped[i] = 0;
+  for (i = 0; i < 256; i++) { fd->stripped[i] = 0;
+}
 
   /* cache line */
   if (!getnextline(fd))
   {
-    if (fd->line) free(fd->line);
+    if (fd->line) { free(fd->line);
+}
     fclose(fd->fp);
     free(fd);
     return NULL;
@@ -331,13 +348,14 @@ CORAX_EXPORT corax_phylip_t *corax_phylip_open(const char *        filename,
 
 CORAX_EXPORT int corax_phylip_rewind(corax_phylip_t *fd)
 {
-  int i;
+  int i = 0;
 
   rewind(fd->fp);
 
   /* reset stripped char frequencies */
   fd->stripped_count = 0;
-  for (i = 0; i < 256; i++) fd->stripped[i] = 0;
+  for (i = 0; i < 256; i++) { fd->stripped[i] = 0;
+}
 
   if (!getnextline(fd))
   {
@@ -353,17 +371,18 @@ CORAX_EXPORT int corax_phylip_rewind(corax_phylip_t *fd)
 CORAX_EXPORT void corax_phylip_close(corax_phylip_t *fd)
 {
   fclose(fd->fp);
-  if (fd->line) free(fd->line);
+  if (fd->line) { free(fd->line);
+}
   free(fd);
 }
 
 CORAX_EXPORT corax_msa_t *corax_phylip_parse_interleaved(corax_phylip_t *fd)
 {
-  int  i;
-  int  aln_len;
-  int  sumlen;
-  int  seqno;
-  long headerlen;
+  int  i = 0;
+  int  aln_len = 0;
+  int  sumlen = 0;
+  int  seqno = 0;
+  long headerlen = 0;
 
   corax_msa_t *msa = (corax_msa_t *)malloc(sizeof(corax_msa_t));
   if (!msa)
@@ -420,13 +439,16 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_interleaved(corax_phylip_t *fd)
     char *p = getnextline(fd);
 
     /* if no more lines break */
-    if (!p) break;
+    if (!p) { break;
+}
 
     /* skip whitespace before sequence header */
-    while (*p && whitespace(*p)) ++p;
+    while (*p && whitespace(*p)) { ++p;
+}
 
     /* restart loop if blank line */
-    if (!*p) continue;
+    if (!*p) { continue;
+}
 
     /* error if there are more sequences than specified */
     if (seqno == msa->count)
@@ -461,11 +483,13 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_interleaved(corax_phylip_t *fd)
 
     /* read (and parse) the first line (starting from p) that contains at
        least one character */
-    if (!parse_oneline_sequence(fd, msa, p, seqno, 0, &aln_len, &error)) break;
+    if (!parse_oneline_sequence(fd, msa, p, seqno, 0, &aln_len, &error)) { break;
+}
 
     ++seqno;
 
-    if (seqno == msa->count) break;
+    if (seqno == msa->count) { break;
+}
   }
 
   /* was the last block of sequences non-aligned? */
@@ -499,8 +523,9 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_interleaved(corax_phylip_t *fd)
 
     /* read (and parse) the first line (starting from p) that contains at
        least one character */
-    if (!parse_oneline_sequence(fd, msa, p, seqno, sumlen, &aln_len, &error))
+    if (!parse_oneline_sequence(fd, msa, p, seqno, sumlen, &aln_len, &error)) {
       break;
+}
 
     seqno = (seqno + 1) % msa->count;
 
@@ -547,8 +572,9 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_interleaved(corax_phylip_t *fd)
 
 CORAX_EXPORT corax_msa_t *corax_phylip_parse_sequential(corax_phylip_t *fd)
 {
-  int  i, j;
-  long headerlen;
+  int  i = 0;
+  int  j = 0;
+  long headerlen = 0;
 
   corax_msa_t *msa = (corax_msa_t *)malloc(sizeof(corax_msa_t));
   if (!msa)
@@ -601,13 +627,16 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_sequential(corax_phylip_t *fd)
     char *p  = fd->line;
 
     /* if no more lines break */
-    if (!p) break;
+    if (!p) { break;
+}
 
     /* skip whitespace before sequence header */
-    while (*p && whitespace(*p)) ++p;
+    while (*p && whitespace(*p)) { ++p;
+}
 
     /* restart loop if blank line */
-    if (!*p) continue;
+    if (!*p) { continue;
+}
 
     /* error if there are more sequences than specified */
     if (seqno == msa->count)
@@ -655,7 +684,8 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_sequential(corax_phylip_t *fd)
       j += chars_count;
 
       /* break if we read all sequence data */
-      if (j == msa->length) break;
+      if (j == msa->length) { break;
+}
 
       p = getnextline(fd);
 
@@ -692,7 +722,8 @@ CORAX_EXPORT corax_msa_t *corax_phylip_parse_sequential(corax_phylip_t *fd)
 corax_msa_t *corax_phylip_load(const char *fname, corax_bool_t interleaved)
 {
   corax_phylip_t *fd = corax_phylip_open(fname, corax_map_generic);
-  if (!fd) return NULL;
+  if (!fd) { return NULL;
+}
 
   corax_msa_t *msa = interleaved ? corax_phylip_parse_interleaved(fd)
                                  : corax_phylip_parse_sequential(fd);
@@ -728,7 +759,7 @@ CORAX_EXPORT int corax_phylip_save(const char *       out_fname,
   fprintf(
       f, "%lu %lu\n", (unsigned long)msa->count, (unsigned long)msa->length);
 
-  unsigned long i;
+  unsigned long i = 0;
   for (i = 0; i < (unsigned long)msa->count; ++i)
   {
     fprintf(f, "%s    %s\n", msa->label[i], msa->sequence[i]);
@@ -741,21 +772,26 @@ CORAX_EXPORT int corax_phylip_save(const char *       out_fname,
 
 CORAX_EXPORT void corax_msa_destroy(corax_msa_t *msa)
 {
-  if (!msa) return;
+  if (!msa) { return;
+}
 
-  int i;
+  int i = 0;
 
   if (msa->label)
   {
-    for (i = 0; i < msa->count; ++i)
-      if (msa->label[i]) free(msa->label[i]);
+    for (i = 0; i < msa->count; ++i) {
+      if (msa->label[i]) { free(msa->label[i]);
+}
+}
     free(msa->label);
   }
 
   if (msa->sequence)
   {
-    for (i = 0; i < msa->count; ++i)
-      if (msa->sequence[i]) free(msa->sequence[i]);
+    for (i = 0; i < msa->count; ++i) {
+      if (msa->sequence[i]) { free(msa->sequence[i]);
+}
+}
     free(msa->sequence);
   }
 

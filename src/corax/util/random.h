@@ -33,19 +33,19 @@ extern "C"
 
   /* functions in random.c */
 
-  CORAX_EXPORT extern int corax_random_r(struct corax_random_data *__buf,
-                                         int32_t *                 __result);
+  CORAX_EXPORT extern int corax_random_r(struct corax_random_data *_buf,
+                                         int32_t *                 _result);
 
-  CORAX_EXPORT extern int corax_srandom_r(unsigned int              __seed,
-                                          struct corax_random_data *__buf);
+  CORAX_EXPORT extern int corax_srandom_r(unsigned int              _seed,
+                                          struct corax_random_data *_buf);
 
-  CORAX_EXPORT extern int corax_initstate_r(unsigned int __seed,
-                                            char *       __statebuf,
-                                            size_t       __statelen,
-                                            struct corax_random_data *__buf);
+  CORAX_EXPORT extern int corax_initstate_r(unsigned int _seed,
+                                            char *       arg_state,
+                                            size_t       _statelen,
+                                            struct corax_random_data *_buf);
 
-  CORAX_EXPORT extern int corax_setstate_r(char *                    __statebuf,
-                                           struct corax_random_data *__buf);
+  CORAX_EXPORT extern int corax_setstate_r(char *                    arg_state,
+                                           struct corax_random_data *_buf);
 
   CORAX_EXPORT corax_random_state *corax_random_create(unsigned int seed);
 

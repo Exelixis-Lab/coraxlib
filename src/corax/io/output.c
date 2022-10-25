@@ -20,6 +20,7 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 
 static void unscale(double *prob, unsigned int times);
 
@@ -27,8 +28,10 @@ CORAX_EXPORT void corax_show_pmatrix(const corax_partition_t *partition,
                                      unsigned int             index,
                                      unsigned int             float_precision)
 {
-  unsigned int i, j, k;
-  double *     pmatrix;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  double *     pmatrix = NULL;
   unsigned int states        = partition->states;
   unsigned int states_padded = partition->states_padded;
 
@@ -37,8 +40,9 @@ CORAX_EXPORT void corax_show_pmatrix(const corax_partition_t *partition,
     pmatrix = partition->pmatrix[index] + k * states * states_padded;
     for (i = 0; i < partition->states; ++i)
     {
-      for (j = 0; j < states; ++j)
+      for (j = 0; j < states; ++j) {
         printf("%+2.*f   ", float_precision, pmatrix[i * states_padded + j]);
+}
       printf("\n");
     }
     printf("\n");
@@ -47,9 +51,10 @@ CORAX_EXPORT void corax_show_pmatrix(const corax_partition_t *partition,
 
 static void unscale(double *prob, unsigned int times)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
-  for (i = 0; i < times; ++i) *prob *= CORAX_SCALE_THRESHOLD;
+  for (i = 0; i < times; ++i) { *prob *= CORAX_SCALE_THRESHOLD;
+}
 }
 
 CORAX_EXPORT void corax_show_clv(const corax_partition_t *partition,
@@ -57,7 +62,10 @@ CORAX_EXPORT void corax_show_clv(const corax_partition_t *partition,
                                  int                      scaler_index,
                                  unsigned int             float_precision)
 {
-  unsigned int s, i, j, k;
+  unsigned int s = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
 
   double *      clv           = partition->clv[clv_index];
   unsigned int *scaler        = (scaler_index == CORAX_SCALE_BUFFER_NONE)
@@ -66,7 +74,7 @@ CORAX_EXPORT void corax_show_clv(const corax_partition_t *partition,
   unsigned int  states        = partition->states;
   unsigned int  states_padded = partition->states_padded;
   unsigned int  rates         = partition->rate_cats;
-  double        prob;
+  double        prob = NAN;
   unsigned int *site_id = 0;
   if (corax_repeats_enabled(partition)
       && partition->repeats->pernode_ids[clv_index])
@@ -75,8 +83,9 @@ CORAX_EXPORT void corax_show_clv(const corax_partition_t *partition,
   }
 
   if ((clv_index < partition->tips)
-      && (partition->attributes & CORAX_ATTRIB_PATTERN_TIP))
+      && (partition->attributes & CORAX_ATTRIB_PATTERN_TIP)) {
     return;
+}
 
   printf("[ ");
   for (s = 0; s < partition->sites; ++s)
@@ -89,13 +98,16 @@ CORAX_EXPORT void corax_show_clv(const corax_partition_t *partition,
       for (k = 0; k < states - 1; ++k)
       {
         prob = clv[i * rates * states_padded + j * states_padded + k];
-        if (scaler) unscale(&prob, scaler[i]);
+        if (scaler) { unscale(&prob, scaler[i]);
+}
         printf("%.*f,", float_precision, prob);
       }
       prob = clv[i * rates * states_padded + j * states_padded + k];
-      if (scaler) unscale(&prob, scaler[i]);
+      if (scaler) { unscale(&prob, scaler[i]);
+}
       printf("%.*f)", float_precision, prob);
-      if (j < rates - 1) printf(",");
+      if (j < rates - 1) { printf(",");
+}
     }
     printf("} ");
   }

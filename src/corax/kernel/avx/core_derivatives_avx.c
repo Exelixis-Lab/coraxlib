@@ -34,14 +34,17 @@ static int core_update_sumtable_ii_4x4_avx(unsigned int        sites,
                                            double *            sumtable,
                                            unsigned int        attrib)
 {
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
   /* build sumtable */
   double *sum = sumtable;
 
   const double *t_clvp = clvp;
   const double *t_clvc = clvc;
-  double *      t_freqs;
+  double *      t_freqs = NULL;
 
   unsigned int states = 4;
 
@@ -77,7 +80,8 @@ static int core_update_sumtable_ii_4x4_avx(unsigned int        sites,
 
   if (!tt_inv_eigenvecs)
   {
-    if (rate_scalings) free(rate_scalings);
+    if (rate_scalings) { free(rate_scalings);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_inv_eigenvecs");
@@ -87,12 +91,13 @@ static int core_update_sumtable_ii_4x4_avx(unsigned int        sites,
   for (i = 0; i < rate_cats; ++i)
   {
     t_freqs = freqs[i];
-    for (j = 0; j < states; ++j)
+    for (j = 0; j < states; ++j) {
       for (k = 0; k < states; ++k)
       {
         tt_inv_eigenvecs[i * states * states + j * states + k] =
             inv_eigenvecs[i][k * states + j] * t_freqs[k];
       }
+}
   }
 
   /* vectorized loop from update_sumtable() */
@@ -108,7 +113,8 @@ static int core_update_sumtable_ii_4x4_avx(unsigned int        sites,
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -119,16 +125,18 @@ static int core_update_sumtable_ii_4x4_avx(unsigned int        sites,
       }
     }
 
-    const double *c_eigenvecs;
+    const double *c_eigenvecs = NULL;
     const double *c_inv_eigenvecs = tt_inv_eigenvecs;
 
     for (i = 0; i < rate_cats; ++i)
     {
       c_eigenvecs = eigenvecs[i];
 
-      __m256d v_lefterm[4], v_righterm[4];
+      __m256d v_lefterm[4];
+      __m256d v_righterm[4];
       __m256d v_eigen;
-      __m256d v_clvp, v_clvc;
+      __m256d v_clvp;
+      __m256d v_clvc;
 
       v_clvp = _mm256_load_pd(t_clvp);
       v_clvc = _mm256_load_pd(t_clvc);
@@ -202,7 +210,8 @@ static int core_update_sumtable_ii_4x4_avx(unsigned int        sites,
 
   corax_aligned_free(tt_inv_eigenvecs);
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -229,12 +238,15 @@ corax_core_update_sumtable_repeats_4x4_avx(unsigned int        states,
   CORAX_UNUSED(parent_sites);
   CORAX_UNUSED(bclv_buffer);
   CORAX_UNUSED(inv);
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
   /* build sumtable */
   double *sum = sumtable;
 
-  double *t_freqs;
+  double *t_freqs = NULL;
 
   unsigned int span_padded = rate_cats * states;
 
@@ -270,7 +282,8 @@ corax_core_update_sumtable_repeats_4x4_avx(unsigned int        states,
 
   if (!tt_inv_eigenvecs)
   {
-    if (rate_scalings) free(rate_scalings);
+    if (rate_scalings) { free(rate_scalings);
+}
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_inv_eigenvecs");
     return CORAX_FAILURE;
@@ -279,12 +292,13 @@ corax_core_update_sumtable_repeats_4x4_avx(unsigned int        states,
   for (i = 0; i < rate_cats; ++i)
   {
     t_freqs = freqs[i];
-    for (j = 0; j < states; ++j)
+    for (j = 0; j < states; ++j) {
       for (k = 0; k < states; ++k)
       {
         tt_inv_eigenvecs[i * states * states + j * states + k] =
             inv_eigenvecs[i][k * states + j] * t_freqs[k];
       }
+}
   }
 
   /* vectorized loop from update_sumtable() */
@@ -304,7 +318,8 @@ corax_core_update_sumtable_repeats_4x4_avx(unsigned int        states,
             (parent_scaler) ? parent_scaler[pid * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[cid * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -315,16 +330,18 @@ corax_core_update_sumtable_repeats_4x4_avx(unsigned int        states,
       }
     }
 
-    const double *c_eigenvecs;
+    const double *c_eigenvecs = NULL;
     const double *c_inv_eigenvecs = tt_inv_eigenvecs;
 
     for (i = 0; i < rate_cats; ++i)
     {
       c_eigenvecs = eigenvecs[i];
 
-      __m256d v_lefterm[4], v_righterm[4];
+      __m256d v_lefterm[4];
+      __m256d v_righterm[4];
       __m256d v_eigen;
-      __m256d v_clvp, v_clvc;
+      __m256d v_clvp;
+      __m256d v_clvc;
 
       v_clvp = _mm256_load_pd(t_clvp);
       v_clvc = _mm256_load_pd(t_clvc);
@@ -398,7 +415,8 @@ corax_core_update_sumtable_repeats_4x4_avx(unsigned int        states,
 
   corax_aligned_free(tt_inv_eigenvecs);
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -422,13 +440,16 @@ CORAX_EXPORT int corax_core_update_sumtable_repeatsbclv_4x4_avx(
     unsigned int        inv,
     unsigned int        attrib)
 {
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
   /* build sumtable */
   double *sum = sumtable;
-  double *t_eigenvecs;
+  double *t_eigenvecs = NULL;
 
-  double *t_freqs;
+  double *t_freqs = NULL;
 
   unsigned int span_padded = rate_cats * states;
   double *     lbclv       = bclv_buffer;
@@ -468,9 +489,12 @@ CORAX_EXPORT int corax_core_update_sumtable_repeatsbclv_4x4_avx(
   tt_inv_eigenvecs_ptr = (double **)malloc(rate_cats * sizeof(double *));
   if (!tt_inv_eigenvecs_buff || !tt_inv_eigenvecs_ptr)
   {
-    if (rate_scalings) free(rate_scalings);
-    if (tt_inv_eigenvecs_buff) corax_aligned_free(tt_inv_eigenvecs_buff);
-    if (tt_inv_eigenvecs_ptr) free(tt_inv_eigenvecs_ptr);
+    if (rate_scalings) { free(rate_scalings);
+}
+    if (tt_inv_eigenvecs_buff) { corax_aligned_free(tt_inv_eigenvecs_buff);
+}
+    if (tt_inv_eigenvecs_ptr) { free(tt_inv_eigenvecs_ptr);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_inv_eigenvecs");
@@ -480,12 +504,13 @@ CORAX_EXPORT int corax_core_update_sumtable_repeatsbclv_4x4_avx(
   for (i = 0; i < rate_cats; ++i)
   {
     t_freqs = freqs[i];
-    for (j = 0; j < states; ++j)
+    for (j = 0; j < states; ++j) {
       for (k = 0; k < states; ++k)
       {
         tt_inv_eigenvecs_buff[i * states * states + j * states + k] =
             inv_eigenvecs[i][k * states + j] * t_freqs[k];
       }
+}
     tt_inv_eigenvecs_ptr[i] = tt_inv_eigenvecs_buff + i * states * states;
   }
   double *const *tt_inv_eigenvecs = tt_inv_eigenvecs_ptr;
@@ -567,7 +592,8 @@ CORAX_EXPORT int corax_core_update_sumtable_repeatsbclv_4x4_avx(
             (parent_scaler) ? parent_scaler[pid * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[cid * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -644,7 +670,8 @@ CORAX_EXPORT int corax_core_update_sumtable_repeatsbclv_4x4_avx(
   corax_aligned_free(tt_inv_eigenvecs_buff);
   free(tt_inv_eigenvecs_ptr);
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -671,12 +698,15 @@ CORAX_EXPORT int corax_core_update_sumtable_repeats_generic_avx(
   CORAX_UNUSED(parent_sites);
   CORAX_UNUSED(bclv_buffer);
   CORAX_UNUSED(inv);
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
   /* build sumtable */
   double *sum = sumtable;
 
-  double *t_freqs;
+  double *t_freqs = NULL;
 
   unsigned int states_padded = (states + 3) & 0xFFFFFFFC;
   unsigned int span_padded   = rate_cats * states_padded;
@@ -714,7 +744,8 @@ CORAX_EXPORT int corax_core_update_sumtable_repeats_generic_avx(
 
   if (!tt_eigenvecs)
   {
-    if (rate_scalings) free(rate_scalings);
+    if (rate_scalings) { free(rate_scalings);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_eigenvecs");
@@ -744,7 +775,7 @@ CORAX_EXPORT int corax_core_update_sumtable_repeats_generic_avx(
   for (i = 0; i < rate_cats; ++i)
   {
     t_freqs = freqs[i];
-    for (j = 0; j < states; ++j)
+    for (j = 0; j < states; ++j) {
       for (k = 0; k < states; ++k)
       {
         tt_inv_eigenvecs[i * states_padded * states_padded + j * states_padded
@@ -753,6 +784,7 @@ CORAX_EXPORT int corax_core_update_sumtable_repeats_generic_avx(
         tt_eigenvecs[i * states_padded * states_padded + j * states_padded
                      + k] = eigenvecs[i][j * states_padded + k];
       }
+}
   }
 
   /* vectorized loop from update_sumtable() */
@@ -772,7 +804,8 @@ CORAX_EXPORT int corax_core_update_sumtable_repeats_generic_avx(
             (parent_scaler) ? parent_scaler[pid * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[cid * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -900,7 +933,8 @@ CORAX_EXPORT int corax_core_update_sumtable_repeats_generic_avx(
 
   corax_aligned_free(tt_inv_eigenvecs);
   corax_aligned_free(tt_eigenvecs);
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -918,14 +952,17 @@ corax_core_update_sumtable_ii_avx(unsigned int        states,
                                   double *            sumtable,
                                   unsigned int        attrib)
 {
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
   /* build sumtable */
   double *sum = sumtable;
 
   const double *t_clvp = clvp;
   const double *t_clvc = clvc;
-  double *      t_freqs;
+  double *      t_freqs = NULL;
 
   /* dedicated functions for 4x4 matrices */
   if (states == 4)
@@ -978,7 +1015,8 @@ corax_core_update_sumtable_ii_avx(unsigned int        states,
 
   if (!tt_eigenvecs)
   {
-    if (rate_scalings) free(rate_scalings);
+    if (rate_scalings) { free(rate_scalings);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_eigenvecs");
@@ -1008,7 +1046,7 @@ corax_core_update_sumtable_ii_avx(unsigned int        states,
   for (i = 0; i < rate_cats; ++i)
   {
     t_freqs = freqs[i];
-    for (j = 0; j < states; ++j)
+    for (j = 0; j < states; ++j) {
       for (k = 0; k < states; ++k)
       {
         tt_inv_eigenvecs[i * states_padded * states_padded + j * states_padded
@@ -1017,6 +1055,7 @@ corax_core_update_sumtable_ii_avx(unsigned int        states,
         tt_eigenvecs[i * states_padded * states_padded + j * states_padded
                      + k] = eigenvecs[i][j * states_padded + k];
       }
+}
   }
 
   /* vectorized loop from update_sumtable() */
@@ -1032,7 +1071,8 @@ corax_core_update_sumtable_ii_avx(unsigned int        states,
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -1160,7 +1200,8 @@ corax_core_update_sumtable_ii_avx(unsigned int        states,
 
   corax_aligned_free(tt_inv_eigenvecs);
   corax_aligned_free(tt_eigenvecs);
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -1178,12 +1219,14 @@ static int core_update_sumtable_ti_4x4_avx(unsigned int         sites,
 {
   const unsigned int states = 4;
 
-  unsigned int i, k, n;
-  unsigned int tipstate;
+  unsigned int i = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
+  unsigned int tipstate = 0;
 
   double *      sum    = sumtable;
   const double *t_clvc = parent_clv;
-  const double *t_eigenvecs_trans;
+  const double *t_eigenvecs_trans = NULL;
 
   double *eigenvecs_trans = NULL;
   double *precomp_left    = NULL;
@@ -1221,9 +1264,12 @@ static int core_update_sumtable_ti_4x4_avx(unsigned int         sites,
 
   if (!eigenvecs_trans || !precomp_left)
   {
-    if (eigenvecs_trans) corax_aligned_free(eigenvecs_trans);
-    if (precomp_left) corax_aligned_free(precomp_left);
-    if (rate_scalings) free(rate_scalings);
+    if (eigenvecs_trans) { corax_aligned_free(eigenvecs_trans);
+}
+    if (precomp_left) { corax_aligned_free(precomp_left);
+}
+    if (rate_scalings) { free(rate_scalings);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_inv_eigenvecs");
@@ -1232,8 +1278,15 @@ static int core_update_sumtable_ti_4x4_avx(unsigned int         sites,
 
   /* transpose eigenvecs matrix -> for efficient vectorization */
 
-  __m256d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
-  double *evecs;
+  __m256d xmm0;
+  __m256d xmm1;
+  __m256d xmm2;
+  __m256d xmm3;
+  __m256d xmm4;
+  __m256d xmm5;
+  __m256d xmm6;
+  __m256d xmm7;
+  double *evecs = NULL;
   double *transev = eigenvecs_trans;
   for (i = 0; i < rate_cats; ++i)
   {
@@ -1299,7 +1352,8 @@ static int core_update_sumtable_ti_4x4_avx(unsigned int         sites,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -1347,7 +1401,8 @@ static int core_update_sumtable_ti_4x4_avx(unsigned int         sites,
 
   corax_aligned_free(eigenvecs_trans);
   corax_aligned_free(precomp_left);
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -1385,12 +1440,15 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
   unsigned int span          = states_padded * rate_cats;
   unsigned int maxstates     = tipmap_size;
 
-  unsigned int i, j, k, n;
-  unsigned int tipstate;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
+  unsigned int tipstate = 0;
 
   double *      sum    = sumtable;
   const double *t_clvc = parent_clv;
-  const double *t_eigenvecs_padded;
+  const double *t_eigenvecs_padded = NULL;
 
   double *eigenvecs_padded = NULL;
   double *precomp_left     = NULL;
@@ -1431,9 +1489,12 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
 
   if (!eigenvecs_padded || !precomp_left)
   {
-    if (eigenvecs_padded) corax_aligned_free(eigenvecs_padded);
-    if (precomp_left) corax_aligned_free(precomp_left);
-    if (rate_scalings) free(rate_scalings);
+    if (eigenvecs_padded) { corax_aligned_free(eigenvecs_padded);
+}
+    if (precomp_left) { corax_aligned_free(precomp_left);
+}
+    if (rate_scalings) { free(rate_scalings);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for tt_inv_eigenvecs");
@@ -1443,7 +1504,7 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
   /* add padding to eigenvecs matrix -> for efficient vectorization */
   for (i = 0; i < rate_cats; ++i)
   {
-    for (j = 0; j < states_padded; ++j)
+    for (j = 0; j < states_padded; ++j) {
       for (k = 0; k < states_padded; ++k)
       {
         eigenvecs_padded[i * states_padded * states_padded + j * states_padded
@@ -1451,6 +1512,7 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
                                     ? eigenvecs[i][j * states_padded + k]
                                     : 0.;
       }
+}
   }
 
   /* precompute left terms since they are the same for every site */
@@ -1509,7 +1571,8 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -1570,7 +1633,10 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
         }
 
         /* reduce righterm */
-        __m256d xmm0, xmm1, xmm2, xmm3;
+        __m256d xmm0;
+        __m256d xmm1;
+        __m256d xmm2;
+        __m256d xmm3;
         xmm0 = _mm256_unpackhi_pd(v_righterm0, v_righterm1);
         xmm1 = _mm256_unpacklo_pd(v_righterm0, v_righterm1);
 
@@ -1607,7 +1673,8 @@ corax_core_update_sumtable_ti_avx(unsigned int         states,
 
   corax_aligned_free(eigenvecs_padded);
   corax_aligned_free(precomp_left);
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -1627,7 +1694,10 @@ corax_core_likelihood_derivatives_avx(unsigned int         states,
                                       double *             d_f,
                                       double *             dd_f)
 {
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
   unsigned int span_padded = rate_cats * states_padded;
 
   double *      t_diagp     = NULL;
@@ -1887,8 +1957,10 @@ corax_core_likelihood_derivatives_avx(unsigned int         states,
   _mm256_store_pd(site_lk, v_ddf);
   *dd_f += site_lk[0] + site_lk[1] + site_lk[2] + site_lk[3];
 
-  if (t_diagp) corax_aligned_free(t_diagp);
-  if (invar_lk) corax_aligned_free(invar_lk);
+  if (t_diagp) { corax_aligned_free(t_diagp);
+}
+  if (invar_lk) { corax_aligned_free(invar_lk);
+}
 
   return CORAX_SUCCESS;
 }

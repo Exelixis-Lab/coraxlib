@@ -26,10 +26,10 @@ private:
 #endif
 
 // A function to build the error message of failed assertions.
-inline std::string corax_assert_message(const char *expression,
+inline auto corax_assert_message(const char *expression,
                                         const char *message,
                                         const char *file,
-                                        int         line)
+                                        int         line) -> std::string
 {
   std::stringstream ss;
   ss << "Assertion '" << expression << "' failed in " << file << " line "

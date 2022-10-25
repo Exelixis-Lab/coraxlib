@@ -61,17 +61,17 @@ void hash_print(bitv_hashtable_t *h);
 
 void bitv_normalize(corax_split_t bitv, unsigned int bit_count);
 
-int bitv_is_normalized(const corax_split_t bitv);
+int bitv_is_normalized(corax_split_t bitv);
 
 unsigned int bitv_length(unsigned int bit_count);
 
 int bitv_compare(corax_split_t v1, corax_split_t v2, unsigned int bitv_len);
 
-unsigned int bitv_popcount(const corax_split_t bitv,
+unsigned int bitv_popcount(corax_split_t bitv,
                            unsigned int        bit_count,
                            unsigned int        bitv_len);
 
-unsigned int bitv_lightside(const corax_split_t bitv,
+unsigned int bitv_lightside(corax_split_t bitv,
                             unsigned int        bit_count,
                             unsigned int        bitv_len);
 

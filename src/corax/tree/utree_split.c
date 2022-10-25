@@ -23,8 +23,9 @@ struct cb_split_params
 static inline void
 merge_split(corax_split_t to, const corax_split_t from, unsigned int split_len)
 {
-  unsigned int i;
-  for (i = 0; i < split_len; ++i) to[i] |= from[i];
+  unsigned int i = 0;
+  for (i = 0; i < split_len; ++i) { to[i] |= from[i];
+}
 }
 
 /*
@@ -47,14 +48,17 @@ static unsigned int get_utree_splitmap_id(corax_unode_t *node,
 static int cb_get_splits(corax_unode_t *node, void *data)
 {
   struct cb_split_params *split_data = (struct cb_split_params *)data;
-  corax_split_t           current_split;
+  corax_split_t           current_split = NULL;
 
   unsigned int tip_count  = split_data->tip_count;
   unsigned int split_size = split_data->split_size;
   unsigned int split_len  = split_data->split_len;
-  unsigned int my_split_id, child_split_id;
-  unsigned int my_map_id, back_map_id;
-  unsigned int tip_id, split_id;
+  unsigned int my_split_id = 0;
+  unsigned int child_split_id = 0;
+  unsigned int my_map_id = 0;
+  unsigned int back_map_id = 0;
+  unsigned int tip_id = 0;
+  unsigned int split_id = 0;
 
   if (!(CORAX_UTREE_IS_TIP(node) || CORAX_UTREE_IS_TIP(node->back)))
   {
@@ -131,11 +135,12 @@ static int cb_get_splits(corax_unode_t *node, void *data)
 static int
 compare_splits(corax_split_t s1, corax_split_t s2, unsigned int split_len)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   for (i = 0; i < split_len; ++i)
   {
-    if (s1[i] != s2[i]) return (int)(s1[i] > s2[i] ? 1 : -1);
+    if (s1[i] != s2[i]) { return (int)(s1[i] > s2[i] ? 1 : -1);
+}
   }
   return 0;
 }
@@ -143,24 +148,25 @@ compare_splits(corax_split_t s1, corax_split_t s2, unsigned int split_len)
 /*
  * Precondition: splits *must* be different.
  */
-static int _cmp_splits(const void *a, const void *b)
+static int cmp_splits(const void *a, const void *b)
 {
   const corax_split_t *s1    = (const corax_split_t *)a;
   const corax_split_t *s2    = (const corax_split_t *)b;
   unsigned int         limit = 10000; /* max_taxa = split_size * 10^4 */
   int                  i     = 0;
-  for (; ((*s1)[i] == (*s2)[i]) && limit; --limit, ++i)
-    ;
+  for (; ((*s1)[i] == (*s2)[i]) && limit; --limit, ++i) {
+    
+}
   assert(limit);
   return (int)((*s1)[i] > (*s2)[i] ? 1 : -1);
 }
 
-static int _cmp_split_node_pair(const void *a, const void *b)
+static int cmp_split_node_pair(const void *a, const void *b)
 {
   const struct split_node_pair *s1 = (const struct split_node_pair *)a;
   const struct split_node_pair *s2 = (const struct split_node_pair *)b;
 
-  return (_cmp_splits(&s1->split, &s2->split));
+  return (cmp_splits(&s1->split, &s2->split));
 }
 
 /*
@@ -171,20 +177,22 @@ static int split_is_valid_and_normalized(const corax_split_t bitv,
                                          unsigned int        tip_count)
 {
   // this will also automatically check for all-0s case
-  if (!bitv_is_normalized(bitv)) return 0;
+  if (!bitv_is_normalized(bitv)) { return 0;
+}
 
   // now check that we don't have all 1s
   unsigned int split_size   = sizeof(corax_split_base_t) * 8;
   unsigned int split_offset = tip_count % split_size;
   unsigned int split_len    = bitv_length(tip_count);
   unsigned int i            = 0;
-  unsigned int all1         = ~0u;
+  unsigned int all1         = ~0U;
   unsigned int mask         = all1;
   for (i = 0; i < split_len - 1; ++i) { mask &= bitv[i]; }
-  if (split_offset)
+  if (split_offset) {
     mask &= bitv[split_len - 1] | ((1 << split_offset) - 1);
-  else
+  } else {
     mask &= bitv[split_len - 1];
+}
 
   return (mask == all1) ? 0 : 1;
 }
@@ -194,14 +202,16 @@ static void truncate_splits(corax_split_set_t * split_set, unsigned int new_tip_
   unsigned int bitv_elem = split_set->split_size;
   unsigned int bitv_size = new_tip_count / bitv_elem;
   unsigned int bitv_off = new_tip_count % bitv_elem;
-  if (bitv_off > 0)
+  if (bitv_off > 0) {
     bitv_size++;
+}
 
   if (split_set->tip_count > new_tip_count)
   {
     unsigned int mask = 0;
-    for (unsigned int i = 0; i < (bitv_off ? bitv_off : bitv_elem); ++i)
-      mask |= (1u << i);
+    for (unsigned int i = 0; i < (bitv_off ? bitv_off : bitv_elem); ++i) {
+      mask |= (1U << i);
+}
 
     for (unsigned int i = 0; i < split_set->split_count; ++i)
     {
@@ -246,12 +256,14 @@ CORAX_EXPORT corax_split_t *
                                       unsigned int         tip_count,
                                       corax_unode_t **     split_to_node_map)
 {
-  unsigned int   i;
-  unsigned int   split_count, split_len, split_size;
-  corax_split_t *split_list; /* array with ordered split pointers */
-  corax_split_t  splits;     /* contiguous array of splits, as size is known */
-  struct split_node_pair *split_nodes;
-  corax_split_t           first_split;
+  unsigned int   i = 0;
+  unsigned int   split_count = 0;
+  unsigned int   split_len = 0;
+  unsigned int   split_size = 0;
+  corax_split_t *split_list = NULL; /* array with ordered split pointers */
+  corax_split_t  splits = NULL;     /* contiguous array of splits, as size is known */
+  struct split_node_pair *split_nodes = NULL;
+  corax_split_t           first_split = NULL;
 
   /* as many non-trivial splits as inner branches */
   split_count = tip_count - 3;
@@ -313,9 +325,11 @@ CORAX_EXPORT corax_split_t *
     return NULL;
   }
 
-  for (i = 0; i < 3 * (tip_count - 2); ++i) split_data.id_to_split[i] = -1;
+  for (i = 0; i < 3 * (tip_count - 2); ++i) { split_data.id_to_split[i] = -1;
+}
 
-  if (CORAX_UTREE_IS_TIP(tree)) tree = tree->back;
+  if (CORAX_UTREE_IS_TIP(tree)) { tree = tree->back;
+}
 
   /* traverse for computing the scripts */
   corax_utree_traverse_apply(
@@ -326,22 +340,24 @@ CORAX_EXPORT corax_split_t *
 
   free(split_data.id_to_split);
 
-  for (i = 0; i < split_count; ++i) bitv_normalize(split_list[i], tip_count);
+  for (i = 0; i < split_count; ++i) { bitv_normalize(split_list[i], tip_count);
+}
 
   /* sort map and split list together */
   first_split = split_nodes[0].split;
   qsort(split_nodes,
         split_count,
         sizeof(struct split_node_pair),
-        _cmp_split_node_pair);
+        cmp_split_node_pair);
 
   /* if first item has changed, swap them such that the array can be deallocated
    */
   if (first_split != split_nodes[0].split)
   {
     /* find first split */
-    for (i = 1; split_nodes[i].split != first_split && i < split_count; ++i)
-      ;
+    for (i = 1; split_nodes[i].split != first_split && i < split_count; ++i) {
+      
+}
     assert(i < split_count);
 
     /* swap */
@@ -383,7 +399,8 @@ CORAX_EXPORT corax_split_t *
   }
   else
   {
-    for (i = 0; i < split_count; ++i) split_list[i] = split_nodes[i].split;
+    for (i = 0; i < split_count; ++i) { split_list[i] = split_nodes[i].split;
+}
   }
 
   free(split_nodes);
@@ -410,7 +427,7 @@ CORAX_EXPORT unsigned int corax_utree_split_hamming_distance(
 {
   unsigned int split_len = bitv_length(tip_count);
   unsigned int hdist     = 0;
-  unsigned int i;
+  unsigned int i = 0;
 
   for (i = 0; i < split_len; ++i) { hdist += CORAX_POPCNT32(s1[i] ^ s2[i]); }
 
@@ -423,15 +440,20 @@ CORAX_EXPORT void corax_utree_split_show(const corax_split_t split,
   unsigned int split_size   = sizeof(corax_split_base_t) * 8;
   unsigned int split_offset = tip_count % split_size;
   unsigned int split_len    = bitv_length(tip_count);
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
 
-  if (!split_offset) split_offset = split_size;
+  if (!split_offset) { split_offset = split_size;
+}
 
-  for (i = 0; i < (split_len - 1); ++i)
-    for (j = 0; j < split_size; ++j)
-      (split[i] & (1u << j)) ? putchar('*') : putchar('-');
-  for (j = 0; j < split_offset; ++j)
-    (split[i] & (1u << j)) ? putchar('*') : putchar('-');
+  for (i = 0; i < (split_len - 1); ++i) {
+    for (j = 0; j < split_size; ++j) {
+      (split[i] & (1U << j)) ? putchar('*') : putchar('-');
+}
+}
+  for (j = 0; j < split_offset; ++j) {
+    (split[i] & (1U << j)) ? putchar('*') : putchar('-');
+}
 }
 
 /*
@@ -457,24 +479,26 @@ CORAX_EXPORT void corax_utree_split_normalize_and_sort(corax_split_t *s,
                                                        unsigned int split_count,
                                                        int          keep_first)
 {
-  unsigned int i;
-  unsigned int split_len;
+  unsigned int i = 0;
+  unsigned int split_len = 0;
 
   corax_reset_error();
 
-  corax_split_t first_split;
-  for (i = 0; i < split_count; ++i) bitv_normalize(s[i], tip_count);
+  corax_split_t first_split = NULL;
+  for (i = 0; i < split_count; ++i) { bitv_normalize(s[i], tip_count);
+}
 
   first_split = s[0];
-  qsort(s, split_count, sizeof(corax_split_t), _cmp_splits);
+  qsort(s, split_count, sizeof(corax_split_t), cmp_splits);
 
   if (keep_first && first_split != s[0])
   {
     split_len = bitv_length(tip_count);
 
     /* find first split */
-    for (i = 1; s[i] != first_split && i < split_count; ++i)
-      ;
+    for (i = 1; s[i] != first_split && i < split_count; ++i) {
+      
+}
     assert(i < split_count);
 
     /* swap */
@@ -505,7 +529,8 @@ CORAX_EXPORT unsigned int corax_utree_split_rf_distance(const corax_split_t *s1,
   unsigned int split_count = tip_count - 3;
   unsigned int split_len   = bitv_length(tip_count);
   unsigned int equal       = 0;
-  unsigned int s1_idx = 0, s2_idx = 0;
+  unsigned int s1_idx = 0;
+  unsigned int s2_idx = 0;
 
   for (s1_idx = 0; s1_idx < split_count && s2_idx < split_count; ++s1_idx)
   {
@@ -520,8 +545,9 @@ CORAX_EXPORT unsigned int corax_utree_split_rf_distance(const corax_split_t *s1,
       if (cmp > 0)
       {
         while (++s2_idx < split_count
-               && (cmp = compare_splits(s1[s1_idx], s2[s2_idx], split_len)) > 0)
-          ;
+               && (cmp = compare_splits(s1[s1_idx], s2[s2_idx], split_len)) > 0) {
+          
+}
         if (!cmp)
         {
           equal++;
@@ -555,46 +581,59 @@ CORAX_EXPORT int corax_utree_split_compatible(const corax_split_t s1,
                                               unsigned int        split_len,
                                               unsigned int        tip_count)
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int split_size   = sizeof(corax_split_base_t) * 8;
   unsigned int split_offset = tip_count % split_size;
-  unsigned int mask         = split_offset ? (1u << split_offset) - 1 : ~0u;
+  unsigned int mask         = split_offset ? (1U << split_offset) - 1 : ~0U;
 
   /* check conflicts between s1 and s2 */
-  for (i = 0; i < split_len; i++)
-    if (s1[i] & s2[i]) break;
+  for (i = 0; i < split_len; i++) {
+    if (s1[i] & s2[i]) { break;
+}
+}
 
-  if (i == split_len) return 1;
+  if (i == split_len) { return 1;
+}
 
   /* check conflicts between s1 and ~s2 */
-  for (i = 0; i < split_len; i++)
-    if (s1[i] & ~s2[i]) break;
+  for (i = 0; i < split_len; i++) {
+    if (s1[i] & ~s2[i]) { break;
+}
+}
 
-  if (i == split_len) return 1;
+  if (i == split_len) { return 1;
+}
 
   /* check conflicts between ~s1 and s2 */
-  for (i = 0; i < split_len; i++)
-    if (~s1[i] & s2[i]) break;
+  for (i = 0; i < split_len; i++) {
+    if (~s1[i] & s2[i]) { break;
+}
+}
 
-  if (i == split_len) return 1;
+  if (i == split_len) { return 1;
+}
 
   /* check conflicts between ~s1 and ~s2 */
-  for (i = 0; i < split_len - 1; i++)
-    if (~s1[i] & ~s2[i]) break;
+  for (i = 0; i < split_len - 1; i++) {
+    if (~s1[i] & ~s2[i]) { break;
+}
+}
 
-  if (i == split_len - 1 && !(~s1[i] & ~s2[i] & mask)) ++i;
+  if (i == split_len - 1 && !(~s1[i] & ~s2[i] & mask)) { ++i;
+}
 
-  if (i == split_len)
+  if (i == split_len) {
     return 1;
-  else
-    return 0;
+}
+      return 0;
 }
 
 CORAX_EXPORT
 bitv_hashtable_t *corax_utree_split_hashtable_create(unsigned int tip_count,
                                                      unsigned int slot_count)
 {
-  if (!slot_count) slot_count = tip_count * 10;
+  if (!slot_count) { slot_count = tip_count * 10;
+}
 
   return hash_init(slot_count, tip_count);
 }
@@ -632,7 +671,7 @@ CORAX_EXPORT bitv_hashtable_t *
                                                 const double *    support,
                                                 int               update_only)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   if (!splits_hash)
   {
@@ -681,7 +720,8 @@ CORAX_EXPORT bitv_hash_entry_t *
 
   for (; p != NULL; p = p->next)
   {
-    if (!compare_splits(p->bit_vector, split, split_len)) return p;
+    if (!compare_splits(p->bit_vector, split, split_len)) { return p;
+}
   }
 
   return 0;
@@ -690,7 +730,8 @@ CORAX_EXPORT bitv_hash_entry_t *
 CORAX_EXPORT
 void corax_utree_split_hashtable_destroy(bitv_hashtable_t *hash)
 {
-  if (hash) hash_destroy(hash);
+  if (hash) { hash_destroy(hash);
+}
 }
 
 CORAX_EXPORT corax_split_set_t * corax_utree_splitset_create(const corax_utree_t * tree){

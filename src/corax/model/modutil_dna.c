@@ -161,7 +161,7 @@ const int ALIAS_COUNT =
 
 static int get_model_index(const char *model_name)
 {
-  int         i;
+  int         i = 0;
   const char *resolved_name = model_name;
 
   /* resolve model aliases first (e.g., TPM1 -> K81) */
@@ -175,8 +175,10 @@ static int get_model_index(const char *model_name)
   }
 
   /* search for the model */
-  for (i = 0; i < DNA_MODELS_COUNT; ++i)
-    if (strcasecmp(resolved_name, dna_model_list[i].name) == 0) return i;
+  for (i = 0; i < DNA_MODELS_COUNT; ++i) {
+    if (strcasecmp(resolved_name, dna_model_list[i].name) == 0) { return i;
+}
+}
 
   /* model not found*/
   return -1;
@@ -197,7 +199,7 @@ CORAX_EXPORT char **corax_util_model_names_dna()
 {
   char **names = calloc(DNA_MODELS_COUNT, sizeof(char *));
 
-  int i;
+  int i = 0;
   for (i = 0; i < DNA_MODELS_COUNT; ++i)
   {
     const char *model_name = dna_model_list[i].name;
@@ -234,10 +236,9 @@ CORAX_EXPORT corax_subst_model_t *
   {
     return corax_util_model_clone(&dna_model_list[model_index]);
   }
-  else
-  {
-    corax_set_error(
+  
+      corax_set_error(
         CORAX_UTIL_ERROR_MODEL_UNKNOWN, "DNA model not found: %s", model_name);
     return NULL;
-  }
+ 
 }

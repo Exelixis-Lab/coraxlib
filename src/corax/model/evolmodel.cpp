@@ -44,27 +44,27 @@ const std::string ParamModeNames[] = {"undefined", "equal", "user", "model", "em
 
 // TODO move it out of here
 
-void corax_check_error(const std::string& errmsg, bool force = false)
+static void corax_check_error(const std::string& errmsg, bool force = false)
 {
-  if (corax_errno)
+  if (corax_errno != 0) {
     throw runtime_error(errmsg +  " (CORAX-" + to_string(corax_errno) + "): " + string(corax_errmsg));
-  else if (force)
+}
+  if (force) {
     throw runtime_error("Unknown CORAX error.");
 }
-
-static bool sysutil_dir_exists(const string& dname)
-{
-  struct stat info;
-
-  if( stat( dname.c_str(), &info ) != 0 )
-    return false;
-  else if( info.st_mode & S_IFDIR )
-    return true;
-  else
-    return false;
 }
 
-bool sysutil_file_exists(const std::string& fname, int access_mode = F_OK)
+static auto sysutil_dir_exists(const string& dname) -> bool
+{
+  struct stat info{};
+
+  if( stat( dname.c_str(), &info ) != 0 ) {
+    return false;
+}
+  return (info.st_mode & S_IFDIR) != 0;
+}
+
+static auto sysutil_file_exists(const std::string& fname, int access_mode = F_OK) -> bool
 {
   return !sysutil_dir_exists(fname) && access(fname.c_str(), access_mode) == 0;
 }
@@ -72,15 +72,15 @@ bool sysutil_file_exists(const std::string& fname, int access_mode = F_OK)
 class parse_error : public runtime_error
 {
 public:
-  parse_error(const std::string& msg = "") : runtime_error(msg) {};
+  parse_error(const std::string& msg = "") : runtime_error(msg) {}
 };
 
-bool isprefix(const std::string& s, const std::string& prefix)
+static auto isprefix(const std::string& s, const std::string& prefix) -> bool
 {
   return s.rfind(prefix, 0) == 0;
 }
 
-static string read_option(istringstream& s)
+static auto read_option(istringstream& s) -> string
 {
   ostringstream os;
   while (s.peek() != '{' && s.peek() != '+' && s.peek() != EOF)
@@ -90,7 +90,7 @@ static string read_option(istringstream& s)
   return os.str();
 }
 
-static bool read_param(istringstream& s, string& val)
+static auto read_param(istringstream& s, string& val) -> bool
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
@@ -100,35 +100,35 @@ static bool read_param(istringstream& s, string& val)
     s.get();
 
     string str;
-    if (!std::getline(s, str, delim))
+    if (!std::getline(s, str, delim)) {
       throw parse_error();
+}
     val = str;
 
     return true;
   }
-  else
-    return false;
+      return false;
 }
 
 template<typename T>
-static bool read_param(istringstream& s, T& val)
+static auto read_param(istringstream& s, T& val) -> bool
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
     s.get();
     s >> val;
     auto c = s.get();
-    if (c != '}' && c != ']')
+    if (c != '}' && c != ']') {
       throw parse_error();
+}
 
     return true;
   }
-  else
-    return false;
+      return false;
 }
 
 template<typename T>
-static bool read_param(istringstream& s, std::vector<T>& vec)
+static auto read_param(istringstream& s, std::vector<T>& vec) -> bool
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
@@ -140,17 +140,17 @@ static bool read_param(istringstream& s, std::vector<T>& vec)
       vec.push_back(val);
       c = s.get();
     }
-    if (c != '}' && c != ']')
+    if (c != '}' && c != ']') {
       throw parse_error();
+}
 
     return true;
   }
-  else
-    return false;
+      return false;
 }
 
 template<typename T>
-static bool read_param_file(istringstream& s, std::vector<T>& vec, bool& file_found)
+static auto read_param_file(istringstream& s, std::vector<T>& vec, bool& file_found) -> bool
 {
   file_found = false;
   if (s.peek() == '{' || s.peek() == '[')
@@ -172,17 +172,17 @@ static bool read_param_file(istringstream& s, std::vector<T>& vec, bool& file_fo
       {
         T val;
         fs >> val;
-        if (!fs.fail())
+        if (!fs.fail()) {
           vec.push_back(val);
+}
       }
       return true;
     }
-    else
-    {
-      // if it failed, rewind the stream and try to parse as a list of values
+    
+          // if it failed, rewind the stream and try to parse as a list of values
       s.seekg(start);
       return read_param(s, vec);
-    }
+   
   }
   return false;
 }
@@ -215,7 +215,7 @@ EvolModel::EvolModel (DataType data_type, const std::string &model_string) :
   init_from_string(model_string_tmp);
 }
 
-const corax_state_t * EvolModel::charmap() const
+auto EvolModel::charmap() const -> const corax_state_t *
 {
   return _custom_charmap ? _custom_charmap.get() : DATATYPE_MAPS.at(_data_type);
 }
@@ -237,12 +237,14 @@ void EvolModel::init_from_string(const std::string &model_string)
     _num_states = corax_util_model_numstates_mult(model_name.c_str());
     _custom_charmap = shared_ptr<corax_state_t>(corax_util_model_charmap_mult(_num_states), free);
 
-    if (!_custom_charmap)
+    if (!_custom_charmap) {
       corax_check_error("ERROR in model specification |" + model_name + "|");
+}
     assert(_custom_charmap);
   }
-  else
+  else {
     _num_states = DATATYPE_STATES.at(_data_type);
+}
 
   corax_mixture_model_t * mix_model = init_mix_model(model_name);
 
@@ -251,7 +253,7 @@ void EvolModel::init_from_string(const std::string &model_string)
   corax_util_model_mixture_destroy(mix_model);
 }
 
-std::string EvolModel::data_type_name() const
+auto EvolModel::data_type_name() const -> std::string
 {
   switch (_data_type)
   {
@@ -276,11 +278,11 @@ void EvolModel::autodetect_data_type(const std::string &model_name)
 {
   if (_data_type == DataType::autodetect)
   {
-    if (corax_util_model_exists_genotype(model_name.c_str()))
+    if (corax_util_model_exists_genotype(model_name.c_str()) != 0)
     {
       _data_type = DataType::genotype10;
     }
-    else if (corax_util_model_exists_mult(model_name.c_str()))
+    else if (corax_util_model_exists_mult(model_name.c_str()) != 0)
     {
       _data_type = DataType::multistate;
     }
@@ -288,45 +290,46 @@ void EvolModel::autodetect_data_type(const std::string &model_name)
     {
       _data_type = DataType::binary;
     }
-    else if (corax_util_model_exists_protein(model_name.c_str()) ||
-             corax_util_model_exists_protmix(model_name.c_str()))
+    else if ((corax_util_model_exists_protein(model_name.c_str()) != 0) ||
+             (corax_util_model_exists_protmix(model_name.c_str()) != 0))
     {
       _data_type = DataType::protein;
     }
-    else if (corax_util_model_exists_dna(model_name.c_str()))
+    else if (corax_util_model_exists_dna(model_name.c_str()) != 0)
     {
       _data_type = DataType::dna;
     }
     else
     {
       /* try to guess datatype from model prefix */
-      if (isprefix(model_name, "DNA"))
+      if (isprefix(model_name, "DNA")) {
         _data_type = DataType::dna;
-      else if (isprefix(model_name, "PROT"))
+      } else if (isprefix(model_name, "PROT")) {
         _data_type = DataType::protein;
-      else if (isprefix(model_name, "GT"))
+      } else if (isprefix(model_name, "GT")) {
         _data_type = DataType::genotype10;
-      else if (isprefix(model_name, "MULTI"))
+      } else if (isprefix(model_name, "MULTI")) {
         _data_type = DataType::multistate;
-      else
+      } else {
         _data_type = DataType::dna;   /* assume DNA by default & hope for the best */
+}
     }
   }
 }
 
-corax_mixture_model_t * EvolModel::init_mix_model(const std::string &model_name)
+auto EvolModel::init_mix_model(const std::string &model_name) -> corax_mixture_model_t *
 {
   const char * model_cstr = model_name.c_str();
   const std::string& prefix = DATATYPE_PREFIX.at(_data_type);
   corax_mixture_model_t * mix_model = nullptr;
 
-  if (corax_util_model_exists_protmix(model_cstr))
+  if (corax_util_model_exists_protmix(model_cstr) != 0)
   {
     mix_model = corax_util_model_info_protmix(model_cstr);
   }
   else
   {
-    corax_subst_model_t * modinfo =  NULL;
+    corax_subst_model_t * modinfo =  nullptr;
 
     /* initialize parameters from the model */
     if (_data_type == DataType::protein)
@@ -339,7 +342,7 @@ corax_mixture_model_t * EvolModel::init_mix_model(const std::string &model_name)
     }
     else if (_data_type == DataType::binary)
     {
-      modinfo =  corax_util_model_create_custom("BIN", 2, NULL, NULL, NULL, NULL);
+      modinfo =  corax_util_model_create_custom("BIN", 2, nullptr, nullptr, nullptr, nullptr);
     }
     else if (_data_type == DataType::genotype10)
     {
@@ -351,25 +354,26 @@ corax_mixture_model_t * EvolModel::init_mix_model(const std::string &model_name)
     }
 
     /* pre-defined model not found; assume model string encodes rate symmetries */
-    if (!modinfo && isprefix(model_name, prefix) && _data_type != DataType::multistate)
+    if ((modinfo == nullptr) && isprefix(model_name, prefix) && _data_type != DataType::multistate)
     {
       corax_reset_error();
 
       const char * custom_sym_cstr = model_cstr + prefix.size();
-      modinfo =  corax_util_model_create_custom(model_cstr, _num_states, NULL, NULL,
-                                                 custom_sym_cstr, NULL);
+      modinfo =  corax_util_model_create_custom(model_cstr, _num_states, nullptr, nullptr,
+                                                 custom_sym_cstr, nullptr);
     }
 
-    if (!modinfo)
+    if (modinfo == nullptr)
     {
-      if (corax_errno)
+      if (corax_errno != 0) {
         corax_check_error("ERROR model initialization |" + model_name + "|");
-      else
+      } else {
         throw runtime_error("Invalid model name: " + model_name);
+}
     }
 
     /* create pseudo-mixture with 1 component */
-    mix_model = corax_util_model_mixture_create(modinfo->name, 1, &modinfo, NULL, NULL,
+    mix_model = corax_util_model_mixture_create(modinfo->name, 1, &modinfo, nullptr, nullptr,
                                                   CORAX_UTIL_MIXTYPE_FIXED);
 
     corax_util_model_destroy(modinfo);
@@ -387,12 +391,14 @@ void EvolModel::set_user_srates(vector<double>& srates, bool normalize)
   {
     auto last_rate = smodel.rate_sym().empty() ?
                                 srates.back() : srates[smodel.rate_sym().back()];
-    for (auto& r: srates)
+    for (auto& r: srates) {
       r /= last_rate;
+}
   }
 
-  for (auto& m: _submodels)
+  for (auto& m: _submodels) {
     m.uniq_subst_rates(srates);
+}
 
   _param_mode[CORAX_OPT_PARAM_SUBST_RATES] = ParamMode::user;
 }
@@ -411,8 +417,9 @@ void EvolModel::set_user_freqs(vector<double>& freqs)
         "Frequencies must be positive numbers between 0. and 1.");
   }
 
-  for (auto& m: _submodels)
+  for (auto& m: _submodels) {
     m.base_freqs(freqs);
+}
 
   _param_mode[CORAX_OPT_PARAM_FREQUENCIES] = ParamMode::user;
 }
@@ -438,18 +445,20 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
   _rate_het = mix_model.mix_type;
 
   /* allocate space for all subst matrices */
-  for (size_t i = 0; i < mix_model.ncomp; ++i)
+  for (size_t i = 0; i < mix_model.ncomp; ++i) {
     _submodels.emplace_back(*mix_model.models[i]);
+}
 
   /* set default param optimization modes */
-  for (auto param: ALL_MODEL_PARAMS)
+  for (auto param: ALL_MODEL_PARAMS) {
     _param_mode[param] = ParamMode::undefined;
+}
 
   _param_mode[CORAX_OPT_PARAM_FREQUENCIES] =
-      mix_model.models[0]->freqs ? ParamMode::model : ParamMode::ML;
+      mix_model.models[0]->freqs != nullptr ? ParamMode::model : ParamMode::ML;
 
   _param_mode[CORAX_OPT_PARAM_SUBST_RATES] =
-      mix_model.models[0]->rates ? ParamMode::model : ParamMode::ML;
+      mix_model.models[0]->rates != nullptr ? ParamMode::model : ParamMode::ML;
 
   const char *s = model_opts.c_str();
 
@@ -462,8 +471,9 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
     if (read_param_file(ss, user_srates, param_file))
     {
       // TODO support multi-matrix models
-      if (_submodels.size() > 0)
+      if (_submodels.size() > 0) {
         runtime_error("User-defined rates for multi-matrix models are not supported yet!");
+}
 
       auto smodel = _submodels[0];
       auto num_uniq_rates = smodel.num_uniq_rates();
@@ -484,8 +494,9 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
             j = start_col;
             stride = col;
           }
-          else
+          else {
             ++stride;
+}
         }
 
         set_user_srates(rates, false);
@@ -543,14 +554,15 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
           else if (asc_str == "ASC_FELS")
           {
             _ascbias_type = AscBiasCorrection::felsenstein;
-            corax_weight_t w;
+            corax_weight_t w = 0;
             if (read_param(ss, w))
             {
               _ascbias_weights.resize(_num_states, 0);
               _ascbias_weights[0] = w;
             }
-            else
+            else {
               throw parse_error();
+}
           }
           else if (asc_str == "ASC_STAM")
           {
@@ -558,16 +570,19 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
             std::vector<corax_weight_t> v;
             if (read_param(ss, v))
             {
-              if (v.size() == _num_states)
+              if (v.size() == _num_states) {
                 _ascbias_weights.assign(v.cbegin(), v.cend());
-              else
+              } else {
                 throw parse_error();
+}
             }
-            else
+            else {
               throw parse_error();
+}
           }
-          else
+          else {
             throw parse_error();
+}
         }
         catch (parse_error& e)
         {
@@ -588,10 +603,11 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
               param_mode = ParamMode::ML;
               break;
             case 'U':
-              if (read_param(ss, _brlen_scaler))
+              if (read_param(ss, _brlen_scaler)) {
                 param_mode = ParamMode::user;
-              else
+              } else {
                 throw parse_error();
+}
               break;
             default:
               throw parse_error();
@@ -641,8 +657,9 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
 
                 set_user_freqs(user_freqs);
               }
-              else
+              else {
                 throw parse_error();
+}
             }
             break;
             default:
@@ -671,10 +688,11 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
               param_mode = ParamMode::empirical;
               break;
             case 'U':
-              if (read_param(ss, _pinv))
+              if (read_param(ss, _pinv)) {
                 param_mode = ParamMode::user;
-              else
+              } else {
                 throw parse_error();
+}
               break;
             default:
               throw parse_error();
@@ -691,12 +709,13 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
         {
           /* allow to override mixture ratehet mode for now */
           _rate_het = CORAX_UTIL_MIXTYPE_GAMMA;
-          if (isdigit(ss.peek()))
+          if (isdigit(ss.peek()) != 0)
           {
             ss >> _num_ratecats;
           }
-          else if (_num_ratecats == 1)
+          else if (_num_ratecats == 1) {
             _num_ratecats = 4;
+}
 
           if (ss.peek() == 'a' || ss.peek() == 'A')
           {
@@ -727,11 +746,13 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
             ss.get();
             _custom_case_sensitive = false;
           }
-          else
+          else {
             _custom_case_sensitive = true;
+}
 
-          if (!read_param(ss, _custom_states))
+          if (!read_param(ss, _custom_states)) {
             throw parse_error();
+}
 
           read_param(ss, _custom_gaps);
 
@@ -764,17 +785,18 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
         catch(parse_error& e)
         {
           throw runtime_error(string("Invalid character map specification: ") + s +
-              (e.what() ? "\n" + string(e.what()) : ""));
+              (e.what() != nullptr ? "\n" + string(e.what()) : ""));
         }
         break;
       case 'R':
         _rate_het = CORAX_UTIL_MIXTYPE_FREE;
-        if (isdigit(ss.peek()))
+        if (isdigit(ss.peek()) != 0)
         {
           ss >> _num_ratecats;
         }
-        else if (_num_ratecats == 1)
+        else if (_num_ratecats == 1) {
           _num_ratecats = 4;
+}
 
         try
         {
@@ -807,24 +829,29 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
 
               // normalize weights
               double sum = 0;
-              for (auto w: v)
+              for (auto w: v) {
                 sum += w;
+}
 
-              for (auto& w: v)
+              for (auto& w: v) {
                 w /= sum;
+}
 
               _ratecat_weights = v;
             }
-            else
+            else {
               _ratecat_weights.assign(_num_ratecats, 1.0 / _num_ratecats);
+}
 
             // normalize weights + rates
             double sum_weightrates = 0.0;
-            for (size_t i = 0; i < _num_ratecats; ++i)
+            for (size_t i = 0; i < _num_ratecats; ++i) {
               sum_weightrates += _ratecat_rates[i] * _ratecat_weights[i];
+}
 
-            for (auto& r: _ratecat_rates)
+            for (auto& r: _ratecat_rates) {
               r /= sum_weightrates;
+}
           }
         }
         catch(parse_error& e)
@@ -847,8 +874,9 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
     case ParamMode::equal:
     case ParamMode::ML:
       /* use equal frequencies as s a starting value for ML optimization */
-      for (auto& m: _submodels)
+      for (auto& m: _submodels) {
         m.base_freqs(vector<double>(_num_states, 1.0 / _num_states));
+}
       break;
     default:
       assert(0);
@@ -865,18 +893,21 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
     case ParamMode::equal:
     case ParamMode::ML:
       /* use equal rates as s a starting value for ML optimization */
-      for (auto& m: _submodels)
+      for (auto& m: _submodels) {
         m.subst_rates(vector<double>(m.num_rates(), 1.0));
+}
       break;
     default:
       assert(0);
   }
 
   /* default: equal rates & weights */
-  if (_ratecat_rates.empty())
+  if (_ratecat_rates.empty()) {
     _ratecat_rates.assign(_num_ratecats, 1.0);
-  if (_ratecat_weights.empty())
+}
+  if (_ratecat_weights.empty()) {
     _ratecat_weights.assign(_num_ratecats, 1.0 / _num_ratecats);
+}
   _ratecat_submodels.assign(_num_ratecats, 0);
 
   if (_num_ratecats > 1)
@@ -895,8 +926,9 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
         /* compute the discretized category rates from a gamma distribution
            with given alpha shape and store them in rate_cats  */
         corax_compute_gamma_cats(_alpha, _num_ratecats, _ratecat_rates.data(), _gamma_mode);
-        if (_param_mode[CORAX_OPT_PARAM_ALPHA] == ParamMode::undefined)
+        if (_param_mode[CORAX_OPT_PARAM_ALPHA] == ParamMode::undefined) {
           _param_mode[CORAX_OPT_PARAM_ALPHA] = ParamMode::ML;
+}
         break;
 
       case CORAX_UTIL_MIXTYPE_FREE:
@@ -906,8 +938,9 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
           corax_compute_gamma_cats(_alpha, _num_ratecats, _ratecat_rates.data(), _gamma_mode);
           _param_mode[CORAX_OPT_PARAM_FREE_RATES] = ParamMode::ML;
         }
-        if (_param_mode[CORAX_OPT_PARAM_RATE_WEIGHTS] == ParamMode::undefined)
+        if (_param_mode[CORAX_OPT_PARAM_RATE_WEIGHTS] == ParamMode::undefined) {
           _param_mode[CORAX_OPT_PARAM_RATE_WEIGHTS] = ParamMode::ML;
+}
         break;
 
       default:
@@ -917,13 +950,14 @@ void EvolModel::init_model_opts(const std::string &model_opts, const corax_mixtu
     /* link rate categories to corresponding mixture components (R-matrix + freqs)*/
     if (_num_submodels == _num_ratecats)
     {
-      for (size_t i = 0; i < _num_ratecats; ++i)
+      for (size_t i = 0; i < _num_ratecats; ++i) {
         _ratecat_submodels[i] = i;
+}
     }
   }
 }
 
-std::string EvolModel::to_string(bool print_params, unsigned int precision) const
+auto EvolModel::to_string(bool print_params, unsigned int precision) const -> std::string
 {
   ostringstream model_string;
   model_string << name();
@@ -931,15 +965,18 @@ std::string EvolModel::to_string(bool print_params, unsigned int precision) cons
   auto out_param_mode = _param_mode;
   if (print_params)
   {
-    for (auto& entry: out_param_mode)
+    for (auto& entry: out_param_mode) {
       entry.second = (entry.second == ParamMode::ML) ? ParamMode::user : entry.second;
+}
   }
 
-  if (precision)
+  if (precision != 0u) {
     model_string << fixed << setprecision(precision);
+}
 
-  if (out_param_mode.at(CORAX_OPT_PARAM_SUBST_RATES) == ParamMode::user)
+  if (out_param_mode.at(CORAX_OPT_PARAM_SUBST_RATES) == ParamMode::user) {
     print_param(model_string, submodel(0).uniq_subst_rates());
+}
 
   switch(out_param_mode.at(CORAX_OPT_PARAM_FREQUENCIES))
   {
@@ -983,8 +1020,9 @@ std::string EvolModel::to_string(bool print_params, unsigned int precision) cons
     {
       model_string << "+G" << _num_ratecats;
       model_string << (_gamma_mode == CORAX_GAMMA_RATES_MEDIAN ? "a" : "m");
-      if (out_param_mode.at(CORAX_OPT_PARAM_ALPHA) == ParamMode::user)
+      if (out_param_mode.at(CORAX_OPT_PARAM_ALPHA) == ParamMode::user) {
         model_string << "{" << _alpha << "}";
+}
     }
     else if (_rate_het == CORAX_UTIL_MIXTYPE_FREE)
     {
@@ -1030,32 +1068,34 @@ std::string EvolModel::to_string(bool print_params, unsigned int precision) cons
   {
     model_string << "+M" << (_custom_case_sensitive ? "" : "i");
     model_string << "{" << _custom_states << "}";
-    if (!_custom_gaps.empty())
+    if (!_custom_gaps.empty()) {
       model_string << "{" << _custom_gaps << "}";
+}
   }
 
   return model_string.str();
 }
 
-int EvolModel::params_to_optimize() const
+auto EvolModel::params_to_optimize() const -> int
 {
   int params_to_optimize = 0;
 
   for (auto param: ALL_MODEL_PARAMS)
   {
-    if (_param_mode.at(param) == ParamMode::ML)
+    if (_param_mode.at(param) == ParamMode::ML) {
       params_to_optimize |= param;
+}
   }
 
   return params_to_optimize;
 }
 
-bool EvolModel::param_estimated(int param) const
+auto EvolModel::param_estimated(int param) const -> bool
 {
   return (_param_mode.at(param) == ParamMode::ML) || (_param_mode.at(param) == ParamMode::empirical);
 }
 
-unsigned int EvolModel::num_free_params() const
+auto EvolModel::num_free_params() const -> unsigned int
 {
   unsigned int  free_params = 0;
 
@@ -1075,22 +1115,26 @@ unsigned int EvolModel::num_free_params() const
     free_params += submodel(0).num_uniq_rates() - 1;
   }
 
-  if (param_estimated(CORAX_OPT_PARAM_PINV))
+  if (param_estimated(CORAX_OPT_PARAM_PINV)) {
     free_params += 1;
+}
 
   if (_num_ratecats > 1)
   {
     switch(_rate_het)
     {
     case CORAX_UTIL_MIXTYPE_GAMMA:
-      if (param_estimated(CORAX_OPT_PARAM_ALPHA))
+      if (param_estimated(CORAX_OPT_PARAM_ALPHA)) {
         free_params += 1;
+}
       break;
     case CORAX_UTIL_MIXTYPE_FREE:
-      if (param_estimated(CORAX_OPT_PARAM_FREE_RATES))
+      if (param_estimated(CORAX_OPT_PARAM_FREE_RATES)) {
         free_params += _num_ratecats - 1;
-      if (param_estimated(CORAX_OPT_PARAM_RATE_WEIGHTS))
+}
+      if (param_estimated(CORAX_OPT_PARAM_RATE_WEIGHTS)) {
         free_params += _num_ratecats - 1;
+}
       break;
     }
   }
@@ -1102,8 +1146,9 @@ void EvolModel::init_state_names() const
 {
   auto map = charmap();
 
-  if (!charmap())
+  if (charmap() == nullptr) {
     return;
+}
 
   _state_names.resize(_num_states);
 
@@ -1111,7 +1156,7 @@ void EvolModel::init_state_names() const
   {
     auto state = map[i];
     auto popcnt = CORAX_STATE_POPCNT(state);
-    if (popcnt > 0 && !_full_state_namemap.count(state))
+    if (popcnt > 0 && (_full_state_namemap.count(state) == 0u))
     {
       string state_name;
       state_name = (char) i;
@@ -1127,18 +1172,20 @@ void EvolModel::init_state_names() const
   }
 }
 
-const vector<string>& EvolModel::state_names() const
+auto EvolModel::state_names() const -> const vector<string>&
 {
-  if (_state_names.empty())
+  if (_state_names.empty()) {
     init_state_names();
+}
 
   return _state_names;
 }
 
-const StateNameMap& EvolModel::full_state_namemap() const
+auto EvolModel::full_state_namemap() const -> const StateNameMap&
 {
-  if (_full_state_namemap.empty())
+  if (_full_state_namemap.empty()) {
     init_state_names();
+}
 
   return _full_state_namemap;
 }
@@ -1167,8 +1214,9 @@ void corax::model::assign(EvolModel& model, const corax_partition_t * partition)
                                                partition->rate_weights + partition->rate_cats));
     }
   }
-  else
+  else {
     throw runtime_error("incompatible partition!");
+}
 }
 
 void corax::model::assign(corax_partition_t * partition, const EvolModel& model)
@@ -1195,25 +1243,26 @@ void corax::model::assign(corax_partition_t * partition, const EvolModel& model)
       corax_update_invariant_sites_proportion (partition, i, model.pinv());
     }
   }
-  else
+  else {
     throw runtime_error("incompatible partition!");
 }
+}
 
-static string get_param_mode_str(ParamMode mode)
+static auto get_param_mode_str(ParamMode mode) -> string
 {
   return ParamModeNames[(size_t) mode];
 }
 
-static string get_ratehet_mode_str(const EvolModel& m)
+static auto get_ratehet_mode_str(const EvolModel& m) -> string
 {
-  if (m.num_ratecats() == 1)
+  if (m.num_ratecats() == 1) {
     return "NONE";
-  else
-    return (m.ratehet_mode() == CORAX_UTIL_MIXTYPE_GAMMA) ? "GAMMA" :
+}
+      return (m.ratehet_mode() == CORAX_UTIL_MIXTYPE_GAMMA) ? "GAMMA" :
             (m.ratehet_mode() == CORAX_UTIL_MIXTYPE_FREE) ? "FREE" : "FIXED";
 }
 
-ostream& operator<<(ostream& stream, const EvolModel& m)
+auto operator<<(ostream& stream, const EvolModel& m) -> ostream&
 {
   if (m.param_mode(CORAX_OPT_PARAM_BRANCH_LEN_SCALER) != ParamMode::undefined)
   {
@@ -1226,9 +1275,10 @@ ostream& operator<<(ostream& stream, const EvolModel& m)
   {
     stream << " (" << m.num_ratecats() << " cats, " <<
         (m.gamma_mode() == CORAX_GAMMA_RATES_MEDIAN ? "median" : "mean") << ")";
-    if (m.ratehet_mode() == CORAX_UTIL_MIXTYPE_GAMMA)
+    if (m.ratehet_mode() == CORAX_UTIL_MIXTYPE_GAMMA) {
       stream << ",  alpha: " << m.alpha() << " ("
              << get_param_mode_str(m.param_mode(CORAX_OPT_PARAM_ALPHA)) << ")";
+}
     stream << ",  weights&rates: ";
     for (size_t i = 0; i < m.num_ratecats(); ++i)
     {
@@ -1248,11 +1298,13 @@ ostream& operator<<(ostream& stream, const EvolModel& m)
          << get_param_mode_str(m.param_mode(CORAX_OPT_PARAM_FREQUENCIES)) << "): ";
   for (size_t i = 0; i < m.num_submodels(); ++i)
   {
-    if (m.num_submodels() > 1)
+    if (m.num_submodels() > 1) {
       stream << "\nM" << i << ": ";
+}
 
-    for (size_t j = 0; j < m.base_freqs(i).size(); ++j)
+    for (size_t j = 0; j < m.base_freqs(i).size(); ++j) {
       stream << m.base_freqs(i)[j] << " ";
+}
   }
   stream << endl;
 
@@ -1260,11 +1312,13 @@ ostream& operator<<(ostream& stream, const EvolModel& m)
          << get_param_mode_str(m.param_mode(CORAX_OPT_PARAM_SUBST_RATES)) << "): ";
   for (size_t i = 0; i < m.num_submodels(); ++i)
   {
-    if (m.num_submodels() > 1)
+    if (m.num_submodels() > 1) {
       stream << "\nM " << i << ": ";
+}
 
-    for (size_t j = 0; j < m.subst_rates(i).size(); ++j)
+    for (size_t j = 0; j < m.subst_rates(i).size(); ++j) {
       stream << m.subst_rates(i)[j] << " ";
+}
   }
   stream << endl;
 

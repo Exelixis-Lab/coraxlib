@@ -27,7 +27,7 @@ const char mult_statechars[] =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,/:;<=>@[\\]^_{|}~";
 const char mult_gapchars[] = "-?.";
 
-const char *skip_datatype(const char *full_model_name)
+static const char *skip_datatype(const char *full_model_name)
 {
   const char *sep = strchr(full_model_name, '_');
   return sep ? sep + 1 : full_model_name;
@@ -48,11 +48,11 @@ CORAX_EXPORT int corax_util_model_exists_mult(const char *model_name)
 CORAX_EXPORT unsigned int
 corax_util_model_numstates_mult(const char *model_name)
 {
-  unsigned int states;
-  if (sscanf(model_name, "MULTI%u", &states) == 1)
+  unsigned int states = 0;
+  if (sscanf(model_name, "MULTI%u", &states) == 1) {
     return states;
-  else
-    return 0;
+}
+      return 0;
 }
 
 /**
@@ -109,7 +109,7 @@ CORAX_EXPORT corax_subst_model_t *
     return corax_util_model_create_custom(
         model_name, states, NULL, NULL, NULL, NULL);
   }
-  else if (strcasecmp("MK", subst_model_name) == 0
+  if (strcasecmp("MK", subst_model_name) == 0
            || strcasecmp("JC", subst_model_name) == 0)
   {
     return corax_util_model_create_custom(model_name,

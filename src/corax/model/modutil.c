@@ -23,16 +23,16 @@
 
 #include "corax/model/modutil.h"
 
-void const_free(const void *ptr) { free((void *)ptr); }
+static void const_free(const void *ptr) { free((void *)ptr); }
 
-int *clone_int_array(const int *src, size_t len)
+static int *clone_int_array(const int *src, size_t len)
 {
   int *dst = (int *)malloc(len * sizeof(int));
   memcpy(dst, src, len * sizeof(int));
   return dst;
 }
 
-double *clone_double_array(const double *src, size_t len)
+static double *clone_double_array(const double *src, size_t len)
 {
   double *dst = (double *)malloc(len * sizeof(double));
   memcpy(dst, src, len * sizeof(double));
@@ -48,8 +48,9 @@ double *corax_util_get_equal_freqs(unsigned int states)
     return NULL;
   }
 
-  unsigned int i;
-  for (i = 0; i < states; ++i) basefreqs[i] = 1. / states;
+  unsigned int i = 0;
+  for (i = 0; i < states; ++i) { basefreqs[i] = 1. / states;
+}
   return basefreqs;
 }
 
@@ -63,8 +64,9 @@ double *corax_util_get_equal_rates(unsigned int states)
     return NULL;
   }
 
-  unsigned int i;
-  for (i = 0; i < rates; ++i) substrates[i] = 1.;
+  unsigned int i = 0;
+  for (i = 0; i < rates; ++i) { substrates[i] = 1.;
+}
   return substrates;
 }
 
@@ -86,13 +88,16 @@ CORAX_EXPORT int *corax_util_model_string_to_sym(const char *s)
 {
   size_t len      = strlen(s);
   int *  sym_list = calloc(len, sizeof(int));
-  size_t i;
+  size_t i = 0;
 
   int min = s[0];
-  for (i = 1; i < len; ++i)
-    if (s[i] < min) min = s[i];
+  for (i = 1; i < len; ++i) {
+    if (s[i] < min) { min = s[i];
+}
+}
 
-  for (i = 0; i < len; ++i) sym_list[i] = s[i] - min;
+  for (i = 0; i < len; ++i) { sym_list[i] = s[i] - min;
+}
 
   return sym_list;
 }
@@ -147,16 +152,19 @@ CORAX_EXPORT corax_subst_model_t *
   model->states         = states;
   model->dynamic_malloc = 1;
 
-  if (name) model->name = strdup(name);
+  if (name) { model->name = strdup(name);
+}
 
   model->rates = rates;
   model->freqs = freqs;
 
-  if (rate_sym_str)
+  if (rate_sym_str) {
     model->rate_sym = corax_util_model_string_to_sym(rate_sym_str);
+}
 
-  if (freq_sym_str)
+  if (freq_sym_str) {
     model->freq_sym = corax_util_model_string_to_sym(freq_sym_str);
+}
 
   return model;
 }
@@ -167,7 +175,8 @@ CORAX_EXPORT corax_subst_model_t *
 CORAX_EXPORT corax_subst_model_t *
              corax_util_model_clone(const corax_subst_model_t *src)
 {
-  if (!src) return NULL;
+  if (!src) { return NULL;
+}
 
   const size_t rate_count = src->states * (src->states - 1) / 2;
 
@@ -176,16 +185,21 @@ CORAX_EXPORT corax_subst_model_t *
   dst->dynamic_malloc = 1;
   dst->states         = src->states;
 
-  if (src->name) dst->name = strdup(src->name);
+  if (src->name) { dst->name = strdup(src->name);
+}
 
-  if (src->rates) dst->rates = clone_double_array(src->rates, rate_count);
+  if (src->rates) { dst->rates = clone_double_array(src->rates, rate_count);
+}
 
-  if (src->freqs) dst->freqs = clone_double_array(src->freqs, src->states);
+  if (src->freqs) { dst->freqs = clone_double_array(src->freqs, src->states);
+}
 
-  if (src->rate_sym) dst->rate_sym = clone_int_array(src->rate_sym, rate_count);
+  if (src->rate_sym) { dst->rate_sym = clone_int_array(src->rate_sym, rate_count);
+}
 
-  if (src->freq_sym)
+  if (src->freq_sym) {
     dst->freq_sym = clone_int_array(src->freq_sym, src->states);
+}
 
   return dst;
 }
@@ -197,15 +211,20 @@ CORAX_EXPORT void corax_util_model_destroy(corax_subst_model_t *model)
 {
   if (model->dynamic_malloc)
   {
-    if (model->name) const_free(model->name);
+    if (model->name) { const_free(model->name);
+}
 
-    if (model->rates) const_free(model->rates);
+    if (model->rates) { const_free(model->rates);
+}
 
-    if (model->freqs) const_free(model->freqs);
+    if (model->freqs) { const_free(model->freqs);
+}
 
-    if (model->rate_sym) const_free(model->rate_sym);
+    if (model->rate_sym) { const_free(model->rate_sym);
+}
 
-    if (model->freq_sym) const_free(model->freq_sym);
+    if (model->freq_sym) { const_free(model->freq_sym);
+}
 
     const_free(model);
   }
@@ -243,7 +262,7 @@ CORAX_EXPORT corax_mixture_model_t *
   }
 
   /* check that all components have the same number of states */
-  size_t i;
+  size_t i = 0;
   for (i = 0; i < ncomp; ++i)
   {
     if (models[i]->states != models[0]->states)
@@ -265,17 +284,21 @@ CORAX_EXPORT corax_mixture_model_t *
 
   mixture->models = calloc(ncomp, sizeof(corax_subst_model_t *));
 
-  for (i = 0; i < ncomp; ++i)
+  for (i = 0; i < ncomp; ++i) {
     mixture->models[i] = models[i]->dynamic_malloc
                              ? corax_util_model_clone(models[i])
                              : models[i];
+}
 
-  if (name) mixture->name = strdup(name);
+  if (name) { mixture->name = strdup(name);
+}
 
-  if (mix_rates) mixture->mix_rates = clone_double_array(mix_rates, ncomp);
+  if (mix_rates) { mixture->mix_rates = clone_double_array(mix_rates, ncomp);
+}
 
-  if (mix_weights)
+  if (mix_weights) {
     mixture->mix_weights = clone_double_array(mix_weights, ncomp);
+}
 
   return mixture;
 }
@@ -286,15 +309,15 @@ CORAX_EXPORT corax_mixture_model_t *
 CORAX_EXPORT corax_mixture_model_t *
              corax_util_model_mixture_clone(const corax_mixture_model_t *src)
 {
-  if (src)
+  if (src) {
     return corax_util_model_mixture_create(src->name,
                                            src->ncomp,
                                            src->models,
                                            src->mix_rates,
                                            src->mix_weights,
                                            src->mix_type);
-  else
-    return NULL;
+}
+      return NULL;
 }
 
 /**
@@ -303,17 +326,21 @@ CORAX_EXPORT corax_mixture_model_t *
 CORAX_EXPORT void
 corax_util_model_mixture_destroy(corax_mixture_model_t *mixture)
 {
-  if (mixture->name) free(mixture->name);
+  if (mixture->name) { free(mixture->name);
+}
 
-  if (mixture->mix_rates) free(mixture->mix_rates);
+  if (mixture->mix_rates) { free(mixture->mix_rates);
+}
 
-  if (mixture->mix_weights) free(mixture->mix_weights);
+  if (mixture->mix_weights) { free(mixture->mix_weights);
+}
 
   if (mixture->models)
   {
-    size_t i;
-    for (i = 0; i < mixture->ncomp; ++i)
+    size_t i = 0;
+    for (i = 0; i < mixture->ncomp; ++i) {
       corax_util_model_destroy(mixture->models[i]);
+}
 
     free(mixture->models);
   }
@@ -339,7 +366,7 @@ CORAX_EXPORT corax_state_t *corax_util_charmap_create(unsigned int states,
                                                       const char * gapchars,
                                                       int case_sensitive)
 {
-  size_t                    i;
+  size_t                    i = 0;
   static const unsigned int maxstates = sizeof(corax_state_t) * 8;
 
   if (states > maxstates)
@@ -416,9 +443,11 @@ CORAX_EXPORT corax_state_t *corax_util_charmap_parse(unsigned int states,
                                                      int    case_sensitive,
                                                      char **state_names)
 {
-  size_t                    i, j;
+  size_t                    i = 0;
+  size_t                    j = 0;
   static const unsigned int maxstates = sizeof(corax_state_t) * 8;
-  unsigned int              obs_states, mod_states;
+  unsigned int              obs_states = 0;
+  unsigned int              mod_states = 0;
 
   if (states > maxstates)
   {
@@ -488,7 +517,8 @@ CORAX_EXPORT corax_state_t *corax_util_charmap_parse(unsigned int states,
                       i);
       return CORAX_FAILURE;
     }
-    if (state_names) state_names[i] = strdup(sname);
+    if (state_names) { state_names[i] = strdup(sname);
+}
   }
 
   corax_state_t *map = calloc(256, sizeof(corax_state_t));
@@ -496,9 +526,10 @@ CORAX_EXPORT corax_state_t *corax_util_charmap_parse(unsigned int states,
   /* fill map */
   for (i = 0; i < obs_states; ++i)
   {
-    char ostate;
-    while (fscanf(f, "\n") || fscanf(f, "\r"))
-      ;
+    char ostate = 0;
+    while (fscanf(f, "\n") || fscanf(f, "\r")) {
+      
+}
     if (fscanf(f, "%c", &ostate) != 1)
     {
       corax_set_error(CORAX_UTIL_ERROR_MODEL_INVALID_MAPFILE,
@@ -523,7 +554,7 @@ CORAX_EXPORT corax_state_t *corax_util_charmap_parse(unsigned int states,
     int           c      = (int)ostate;
     for (j = 0; j < mod_states; ++j)
     {
-      int flag;
+      int flag = 0;
       if (fscanf(f, "%d", &flag) != 1 && fscanf(f, ",%d", &flag) != 1)
       {
         corax_set_error(CORAX_UTIL_ERROR_MODEL_INVALID_MAPFILE,

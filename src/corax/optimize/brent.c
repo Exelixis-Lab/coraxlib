@@ -8,6 +8,7 @@
  * Ultrafast approximation for phylogenetic bootstrap.
  * Mol. Biol. Evol., 30:1188-1195. (free reprint, DOI: 10.1093/molbev/mst024) */
 
+#include "math.h"
 #include "opt_generic.h"
 
 #define ITMAX 100
@@ -61,13 +62,14 @@ typedef struct
 
 static int brent_opt_pre_loop(opt_params *bp)
 {
-  double etemp;
+  double etemp = NAN;
 
   bp->xm   = 0.5 * (bp->a + bp->b);
   bp->tol2 = 2.0 * (bp->tol1 = bp->tol * fabs(bp->x) + ZEPS);
   if (fabs(bp->x - bp->xm) <= (bp->tol2 - 0.5 * (bp->b - bp->a)))
   {
-    if (bp->foptx) *bp->foptx = bp->fx;
+    if (bp->foptx) { *bp->foptx = bp->fx;
+}
     bp->xw = bp->x - bp->w;
     bp->wv = bp->w - bp->v;
     bp->vx = bp->v - bp->x;
@@ -86,20 +88,22 @@ static int brent_opt_pre_loop(opt_params *bp)
     bp->q = (bp->x - bp->v) * (bp->fx - bp->fw);
     bp->p = (bp->x - bp->v) * bp->q - (bp->x - bp->w) * bp->r;
     bp->q = 2.0 * (bp->q - bp->r);
-    if (bp->q > 0.0) bp->p = -bp->p;
+    if (bp->q > 0.0) { bp->p = -bp->p;
+}
     bp->q = fabs(bp->q);
     etemp = bp->e;
     bp->e = bp->d;
     if (fabs(bp->p) >= fabs(0.5 * bp->q * etemp)
-        || bp->p <= bp->q * (bp->a - bp->x) || bp->p >= bp->q * (bp->b - bp->x))
+        || bp->p <= bp->q * (bp->a - bp->x) || bp->p >= bp->q * (bp->b - bp->x)) {
       bp->d =
           CGOLD * (bp->e = (bp->x >= bp->xm ? bp->a - bp->x : bp->b - bp->x));
-    else
+    } else
     {
       bp->d = bp->p / bp->q;
       bp->u = bp->x + bp->d;
-      if (bp->u - bp->a < bp->tol2 || bp->b - bp->u < bp->tol2)
+      if (bp->u - bp->a < bp->tol2 || bp->b - bp->u < bp->tol2) {
         bp->d = SIGN(bp->tol1, bp->xm - bp->x);
+}
     }
   }
   else
@@ -161,20 +165,22 @@ static int brent_opt_post_loop(opt_params *bp)
 
   if (bp->fu <= bp->fx)
   {
-    if (bp->u >= bp->x)
+    if (bp->u >= bp->x) {
       bp->a = bp->x;
-    else
+    } else {
       bp->b = bp->x;
+}
 
     SHFT(bp->v, bp->w, bp->x, bp->u)
     SHFT(bp->fv, bp->fw, bp->fx, bp->fu)
   }
   else
   {
-    if (bp->u < bp->x)
+    if (bp->u < bp->x) {
       bp->a = bp->u;
-    else
+    } else {
       bp->b = bp->u;
+}
     if (bp->fu <= bp->fw || bp->w == bp->x)
     {
       bp->v  = bp->w;
@@ -196,7 +202,7 @@ static int brent_opt_post_loop(opt_params *bp)
   return brent_opt_pre_loop(bp);
 }
 
-double
+static double
 target_funk_wrapper(void *params, double *xopt, double *fxopt, int *converged)
 {
   CORAX_UNUSED(converged);
@@ -235,7 +241,7 @@ brent_opt_alt(unsigned int xnum,
   double *l_xmin = NULL;
   double *l_xmax = NULL;
 
-  unsigned int i;
+  unsigned int i = 0;
   int          iterate = 1;
 
   if (global_range)
@@ -287,15 +293,19 @@ brent_opt_alt(unsigned int xnum,
 
   for (i = 0; i < xnum; ++i)
   {
-    double eps;
-    int    outbounds_ax, outbounds_cx;
+    double eps = NAN;
+    int    outbounds_ax = 0;
+    int    outbounds_cx = 0;
 
     /* skip params that do not need to be optimized */
-    if (opt_mask && !opt_mask[i]) continue;
+    if (opt_mask && !opt_mask[i]) { continue;
+}
 
     /* first attempt to bracketize minimum */
-    if (xguess[i] < l_xmin[i]) xguess[i] = l_xmin[i];
-    if (xguess[i] > l_xmax[i]) xguess[i] = l_xmax[i];
+    if (xguess[i] < l_xmin[i]) { xguess[i] = l_xmin[i];
+}
+    if (xguess[i] > l_xmax[i]) { xguess[i] = l_xmax[i];
+}
 
     // TODO: this is a quick workaround to make it work for xguess==0
     // But we should double-check this bracketing heuristic! (alexey)
@@ -303,10 +313,12 @@ brent_opt_alt(unsigned int xnum,
 
     ax[i]        = xguess[i] - eps;
     outbounds_ax = ax[i] < l_xmin[i];
-    if (outbounds_ax) ax[i] = l_xmin[i];
+    if (outbounds_ax) { ax[i] = l_xmin[i];
+}
     cx[i]        = xguess[i] + eps;
     outbounds_cx = cx[i] > l_xmax[i];
-    if (outbounds_cx) cx[i] = l_xmax[i];
+    if (outbounds_cx) { cx[i] = l_xmax[i];
+}
   }
 
   target_funk(params, ax, fa, NULL);
@@ -319,7 +331,8 @@ brent_opt_alt(unsigned int xnum,
   for (i = 0; i < xnum; ++i)
   {
     /* skip params that do not need to be optimized */
-    if (opt_mask && !opt_mask[i]) continue;
+    if (opt_mask && !opt_mask[i]) { continue;
+}
 
     /* if it works use these borders else be conservative */
     if ((fa[i] < fb[i]) || (fc[i] < fb[i]))
@@ -376,7 +389,8 @@ brent_opt_alt(unsigned int xnum,
   int iter_num = 0;
   while (iterate)
   {
-    for (i = 0; i < xnum; ++i) u[i] = brent_params[i].u;
+    for (i = 0; i < xnum; ++i) { u[i] = brent_params[i].u;
+}
 
     target_funk(params, u, fu, converged);
 
@@ -387,7 +401,8 @@ brent_opt_alt(unsigned int xnum,
     for (i = 0; i < xnum; ++i)
     {
       /* skip params that do not need to be optimized */
-      if (opt_mask && !opt_mask[i]) continue;
+      if (opt_mask && !opt_mask[i]) { continue;
+}
 
       if (!converged[i])
       {

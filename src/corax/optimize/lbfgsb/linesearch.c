@@ -1,4 +1,5 @@
 #include "lbfgsb.h"
+#include "math.h"
 static int c__1 = 1;
 
 
@@ -48,13 +49,14 @@ static int c__1 = 1;
     double c_b16 = CORAX_LBFGSB_DEFAULT_XTOL;
     double c_b17 = CORAX_LBFGSB_DEFAULT_STEPMIN;
     /* System generated locals */
-    int i__1;
-    double d__1;
+    int i__1 = 0;
+    double d__1 = NAN;
 
 
     /* Local variables */
-    int i__;
-    double a1, a2;
+    int i__ = 0;
+    double a1 = NAN;
+    double a2 = NAN;
 
     /* Parameter adjustments */
     --z__;
@@ -164,14 +166,32 @@ int dcsrch(double *f, double *g, double *stp,
         dsave) /* ftnlen task_len) */
 {
     /* System generated locals */
-    double d__1;
+    double d__1 = NAN;
 
 
     /* Local variables */
-    double fm, gm, fx, fy, gx, gy, fxm, fym, gxm, gym, stx, sty;
-    int stage;
-    double finit, ginit, width, ftest, gtest, stmin, stmax, width1;
-    logical brackt;
+    double fm = NAN;
+    double gm = NAN;
+    double fx = NAN;
+    double fy = NAN;
+    double gx = NAN;
+    double gy = NAN;
+    double fxm = NAN;
+    double fym = NAN;
+    double gxm = NAN;
+    double gym = NAN;
+    double stx = NAN;
+    double sty = NAN;
+    int stage = 0;
+    double finit = NAN;
+    double ginit = NAN;
+    double width = NAN;
+    double ftest = NAN;
+    double gtest = NAN;
+    double stmin = NAN;
+    double stmax = NAN;
+    double width1 = NAN;
+    logical brackt = 0;
 
     /*
      ********** 
@@ -315,14 +335,22 @@ the sufficient decrease and curvature condition.
     /* Function Body */
     if ( *task == START ) {
         /*        Check the input arguments for errors.  See lbfgsb.h for messages */
-        if (*stp < *stpmin)  *task=ERROR_SMALLSTP;
-        if (*stp > *stpmax)  *task=ERROR_LARGESTP;
-        if (*g >= 0.)        *task=ERROR_INITIAL;
-        if (*ftol < 0.)      *task=ERROR_FTOL;
-        if (*gtol < 0.)      *task=ERROR_GTOL;
-        if (*xtol < 0.)      *task=ERROR_XTOL;
-        if (*stpmin < 0.)    *task=ERROR_STP0;
-        if (*stpmax < *stpmin) *task=ERROR_STP1;
+        if (*stp < *stpmin) {  *task=ERROR_SMALLSTP;
+}
+        if (*stp > *stpmax) {  *task=ERROR_LARGESTP;
+}
+        if (*g >= 0.) {        *task=ERROR_INITIAL;
+}
+        if (*ftol < 0.) {      *task=ERROR_FTOL;
+}
+        if (*gtol < 0.) {      *task=ERROR_GTOL;
+}
+        if (*xtol < 0.) {      *task=ERROR_XTOL;
+}
+        if (*stpmin < 0.) {    *task=ERROR_STP0;
+}
+        if (*stpmax < *stpmin) { *task=ERROR_STP1;
+}
         /*        Exit if there are errors on input. */
         if ( IS_ERROR(*task) ) {
             return 0;
@@ -429,11 +457,11 @@ the sufficient decrease and curvature condition.
     }
     /*     Decide if a bisection step is needed. */
     if (brackt) {
-        if ((d__1 = sty - stx, abs(d__1)) >= width1 * .66) {
+        if (((void)(d__1 = sty - stx), abs(d__1)) >= width1 * .66) {
             *stp = stx + (sty - stx) * .5;
         }
         width1 = width;
-        width = (d__1 = sty - stx, abs(d__1));
+        width = ((void)(d__1 = sty - stx), abs(d__1));
     }
     /*     Set the minimum and maximum steps allowed for stp. */
     if (brackt) {
@@ -488,10 +516,21 @@ int dcstep(double *stx, double *fx, double *dx,
         double *stpmax)
 {
     /* System generated locals */
-    double d__1, d__2, d__3;
+    double d__1 = NAN;
+    double d__2 = NAN;
+    double d__3 = NAN;
 
     /* Local variables */
-    double p, q, r__, s, sgnd, stpc, stpf, stpq, gamma, theta;
+    double p = NAN;
+    double q = NAN;
+    double r__ = NAN;
+    double s = NAN;
+    double sgnd = NAN;
+    double stpc = NAN;
+    double stpf = NAN;
+    double stpq = NAN;
+    double gamma = NAN;
+    double theta = NAN;
 
     /*
      ********** 
@@ -595,7 +634,7 @@ int dcstep(double *stx, double *fx, double *dx,
     if (*fp > *fx) {
         theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
         /* Computing MAX */
-        d__1 = abs(theta), d__2 = abs(*dx), d__1 = max(d__1,d__2), d__2 = abs(
+        (void)(d__1 = abs(theta)), (void)(d__2 = abs(*dx)), (void)(d__1 = max(d__1,d__2)), d__2 = abs(
                 *dp);
         s = max(d__1,d__2);
         /* Computing 2nd power */
@@ -610,7 +649,7 @@ int dcstep(double *stx, double *fx, double *dx,
         stpc = *stx + r__ * (*stp - *stx);
         stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 2. * (*stp 
                 - *stx);
-        if ((d__1 = stpc - *stx, abs(d__1)) < (d__2 = stpq - *stx, abs(d__2)))
+        if (((void)(d__1 = stpc - *stx), abs(d__1)) < ((void)(d__2 = stpq - *stx), abs(d__2)))
         {
             stpf = stpc;
         } else {
@@ -624,7 +663,7 @@ int dcstep(double *stx, double *fx, double *dx,
     } else if (sgnd < 0.) {
         theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
         /* Computing MAX */
-        d__1 = abs(theta), d__2 = abs(*dx), d__1 = max(d__1,d__2), d__2 = abs(
+        (void)(d__1 = abs(theta)), (void)(d__2 = abs(*dx)), (void)(d__1 = max(d__1,d__2)), d__2 = abs(
                 *dp);
         s = max(d__1,d__2);
         /* Computing 2nd power */
@@ -638,7 +677,7 @@ int dcstep(double *stx, double *fx, double *dx,
         r__ = p / q;
         stpc = *stp + r__ * (*stx - *stp);
         stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
-        if ((d__1 = stpc - *stp, abs(d__1)) > (d__2 = stpq - *stp, abs(d__2)))
+        if (((void)(d__1 = stpc - *stp), abs(d__1)) > ((void)(d__2 = stpq - *stp), abs(d__2)))
         {
             stpf = stpc;
         } else {
@@ -654,7 +693,7 @@ int dcstep(double *stx, double *fx, double *dx,
         /*        secant step. */
         theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
         /* Computing MAX */
-        d__1 = abs(theta), d__2 = abs(*dx), d__1 = max(d__1,d__2), d__2 = abs(
+        (void)(d__1 = abs(theta)), (void)(d__2 = abs(*dx)), (void)(d__1 = max(d__1,d__2)), d__2 = abs(
                 *dp);
         s = max(d__1,d__2);
         /*        The case gamma = 0 only arises if the cubic does not tend */
@@ -662,7 +701,7 @@ int dcstep(double *stx, double *fx, double *dx,
         /* Computing MAX */
         /* Computing 2nd power */
         d__3 = theta / s;
-        d__1 = 0., d__2 = d__3 * d__3 - *dx / s * (*dp / s);
+        (void)(d__1 = 0.), d__2 = d__3 * d__3 - *dx / s * (*dp / s);
         gamma = s * sqrt((max(d__1,d__2)));
         if (*stp > *stx) {
             gamma = -gamma;
@@ -682,7 +721,7 @@ int dcstep(double *stx, double *fx, double *dx,
             /*           A minimizer has been bracketed. If the cubic step is */
             /*           closer to stp than the secant step, the cubic step is */
             /*           taken, otherwise the secant step is taken. */
-            if ((d__1 = stpc - *stp, abs(d__1)) < (d__2 = stpq - *stp, abs(
+            if (((void)(d__1 = stpc - *stp), abs(d__1)) < ((void)(d__2 = stpq - *stp), abs(
                             d__2))) {
                 stpf = stpc;
             } else {
@@ -701,7 +740,7 @@ int dcstep(double *stx, double *fx, double *dx,
             /*           A minimizer has not been bracketed. If the cubic step is */
             /*           farther from stp than the secant step, the cubic step is */
             /*           taken, otherwise the secant step is taken. */
-            if ((d__1 = stpc - *stp, abs(d__1)) > (d__2 = stpq - *stp, abs(
+            if (((void)(d__1 = stpc - *stp), abs(d__1)) > ((void)(d__2 = stpq - *stp), abs(
                             d__2))) {
                 stpf = stpc;
             } else {
@@ -718,7 +757,7 @@ int dcstep(double *stx, double *fx, double *dx,
         if (*brackt) {
             theta = (*fp - *fy) * 3. / (*sty - *stp) + *dy + *dp;
             /* Computing MAX */
-            d__1 = abs(theta), d__2 = abs(*dy), d__1 = max(d__1,d__2), d__2 = 
+            (void)(d__1 = abs(theta)), (void)(d__2 = abs(*dy)), (void)(d__1 = max(d__1,d__2)), d__2 = 
                 abs(*dp);
             s = max(d__1,d__2);
             /* Computing 2nd power */

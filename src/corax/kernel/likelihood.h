@@ -49,7 +49,7 @@ extern "C"
    *
    * @param child_clv_index Index of the child CLV
    *
-   * @param child_parent_scaler_index Index of the child CLV scaler.
+   * @param child_scaler_index Index of the child CLV scaler.
    *
    * @param matrix_index Index of the probability matrix between `parent` and
    * `child`.

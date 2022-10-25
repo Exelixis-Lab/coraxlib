@@ -24,7 +24,8 @@
 static void tracked_swap(int i, int j, char **x, unsigned int *sort_backmap)
 {
   CORAX_SWAP(x[i], x[j]);
-  if (sort_backmap) CORAX_SWAP(sort_backmap[i], sort_backmap[j]);
+  if (sort_backmap) { CORAX_SWAP(sort_backmap[i], sort_backmap[j]);
+}
 }
 
 static void vecswap(int i, int j, int n, char **x, unsigned int *sort_backmap)
@@ -43,9 +44,15 @@ static void ssort1(char **             x,
                    unsigned int *      sort_backmap,
                    corax_random_state *rstate)
 {
-  int a, b, c, d, r, v;
+  int a = 0;
+  int b = 0;
+  int c = 0;
+  int d = 0;
+  int r = 0;
+  int v = 0;
 
-  if (n <= 1) return;
+  if (n <= 1) { return;
+}
 
   a = corax_random_getint(rstate, n);
 
@@ -76,7 +83,8 @@ static void ssort1(char **             x,
       }
       --c;
     }
-    if (b > c) break;
+    if (b > c) { break;
+}
     tracked_swap(b, c, x, sort_backmap);
     ++b;
     --c;
@@ -106,44 +114,50 @@ static void ssort1(char **             x,
 static void remap_range(const corax_state_t *map, unsigned char *charmap)
 {
   corax_state_t oldmap[CORAX_ASCII_SIZE];
-  unsigned int  i, j;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
   unsigned char k = 1;
 
   memcpy(oldmap, map, CORAX_ASCII_SIZE * sizeof(corax_state_t));
   memset(charmap, 0, CORAX_ASCII_SIZE * sizeof(unsigned char));
 
-  for (i = 0; i < CORAX_ASCII_SIZE; ++i)
+  for (i = 0; i < CORAX_ASCII_SIZE; ++i) {
     if (oldmap[i])
     {
       charmap[i] = k;
 
-      for (j = i + 1; j < CORAX_ASCII_SIZE; ++j)
+      for (j = i + 1; j < CORAX_ASCII_SIZE; ++j) {
         if (oldmap[i] == oldmap[j])
         {
           charmap[j] = k;
           oldmap[j]  = 0;
         }
+}
 
       ++k;
     }
 }
+}
 
 static corax_state_t findmax(const corax_state_t *map)
 {
-  int           i;
+  int           i = 0;
   corax_state_t max = 0;
 
-  for (i = 0; i < CORAX_ASCII_SIZE; ++i)
-    if (map[i] > max) max = map[i];
+  for (i = 0; i < CORAX_ASCII_SIZE; ++i) {
+    if (map[i] > max) { max = map[i];
+}
+}
 
   return max;
 }
 
 static int encode(char **sequence, const unsigned char *map, int count, int len)
 {
-  int            i, j;
-  unsigned char *p;
-  unsigned char  c;
+  int            i = 0;
+  int            j = 0;
+  unsigned char *p = NULL;
+  unsigned char  c = 0;
 
   /* reset error */
   corax_errno = 0;
@@ -179,12 +193,13 @@ static unsigned int *compress_site_patterns(char **              sequence,
                                             int *                length,
                                             unsigned int *site_pattern_map)
 {
-  int                 i, j;
-  char *              memptr;
-  char **             column;
-  unsigned int *      weight;
-  unsigned int *      sort_backmap;
-  corax_random_state *rnd_state;
+  int                 i = 0;
+  int                 j = 0;
+  char *              memptr = NULL;
+  char **             column = NULL;
+  unsigned int *      weight = NULL;
+  unsigned int *      sort_backmap = NULL;
+  corax_random_state *rnd_state = NULL;
 
   unsigned char charmap[CORAX_ASCII_SIZE];
   unsigned char inv_charmap[CORAX_ASCII_SIZE];
@@ -216,7 +231,8 @@ static unsigned int *compress_site_patterns(char **              sequence,
   if (findmax(map) >= CORAX_ASCII_SIZE) { remap_range(map, charmap); }
   else
   {
-    for (i = 0; i < CORAX_ASCII_SIZE; ++i) charmap[i] = (unsigned char)(map[i]);
+    for (i = 0; i < CORAX_ASCII_SIZE; ++i) { charmap[i] = (unsigned char)(map[i]);
+}
   }
 
   /* create inverse charmap to decode states back to characters when
@@ -226,8 +242,9 @@ static unsigned int *compress_site_patterns(char **              sequence,
   {
     /* always use '-' to represent gap, otherwise if multiple chars code for the
      * same state, use char with lowest ASCII code (= capital AA/DNA letters) */
-    if (map[i] && (!inv_charmap[charmap[i]] || i == '-'))
+    if (map[i] && (!inv_charmap[charmap[i]] || i == '-')) {
       inv_charmap[charmap[i]] = (unsigned char)i;
+}
   }
 
   /* encode sequences using charmap */
@@ -248,10 +265,12 @@ static unsigned int *compress_site_patterns(char **              sequence,
                       "Cannot allocate space for sort backmap.");
       return NULL;
     }
-    for (i = 0; i < *length; ++i) sort_backmap[i] = i;
+    for (i = 0; i < *length; ++i) { sort_backmap[i] = i;
+}
   }
-  else
+  else {
     sort_backmap = NULL;
+}
 
   /* allocate memory for columns */
   column = (char **)malloc((size_t)(*length) * sizeof(char *));
@@ -293,7 +312,8 @@ static unsigned int *compress_site_patterns(char **              sequence,
   /* split alignment into columns instead of rows */
   for (i = 0; i < (*length); ++i)
   {
-    for (j = 0; j < count; ++j) column[i][j] = sequence[j][i];
+    for (j = 0; j < count; ++j) { column[i][j] = sequence[j][i];
+}
     column[i][j] = 0;
   }
 
@@ -317,7 +337,8 @@ static unsigned int *compress_site_patterns(char **              sequence,
   int    compressed_length = 1;
   size_t ref               = 0;
   weight[ref]              = 1;
-  if (site_pattern_map) site_pattern_map[sort_backmap[0]] = ref;
+  if (site_pattern_map) { site_pattern_map[sort_backmap[0]] = ref;
+}
 
   /* find all unique columns and set their weights */
   for (i = 1; i < *length; ++i)
@@ -329,17 +350,22 @@ static unsigned int *compress_site_patterns(char **              sequence,
       ++compressed_length;
       weight[ref] = 1;
     }
-    else
+    else {
       weight[ref]++;
-    if (site_pattern_map) site_pattern_map[sort_backmap[i]] = ref;
+}
+    if (site_pattern_map) { site_pattern_map[sort_backmap[i]] = ref;
+}
   }
 
   /* copy the unique columns over the original sequences */
-  for (i = 0; i < compressed_length; ++i)
-    for (j = 0; j < count; ++j) sequence[j][i] = column[i][j];
+  for (i = 0; i < compressed_length; ++i) {
+    for (j = 0; j < count; ++j) { sequence[j][i] = column[i][j];
+}
+}
 
   /* add terminating zero */
-  for (j = 0; j < count; ++j) sequence[j][compressed_length] = 0;
+  for (j = 0; j < count; ++j) { sequence[j][compressed_length] = 0;
+}
 
   /* deallocate memory */
   free(memptr);
@@ -353,7 +379,8 @@ static unsigned int *compress_site_patterns(char **              sequence,
   if (mem)
   {
     /* copy weights */
-    for (i = 0; i < compressed_length; ++i) mem[i] = weight[i];
+    for (i = 0; i < compressed_length; ++i) { mem[i] = weight[i];
+}
 
     /* free and re-point */
     free(weight);

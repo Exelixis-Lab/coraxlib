@@ -102,7 +102,7 @@ CORAX_EXPORT int *corax_util_model_string_to_sym(const char *s);
 CORAX_EXPORT corax_mixture_model_t *
              corax_util_model_mixture_create(const char *                name,
                                              unsigned int                ncomp,
-                                             corax_subst_model_t **const models,
+                                             corax_subst_model_t **models,
                                              const double *              mix_rates,
                                              const double *              mix_weights,
                                              int                         mix_type);

@@ -20,6 +20,7 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 #include <limits.h>
 
 CORAX_EXPORT double
@@ -36,18 +37,23 @@ corax_core_root_loglikelihood_avx2(unsigned int         states,
                                    const unsigned int * freqs_indices,
                                    double *             persite_lnl)
 {
-  unsigned int i, j, k;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl       = 0;
   double       prop_invar = 0;
 
   const double *freqs = NULL;
 
-  double term, term_r;
-  double inv_site_lk;
+  double term = NAN;
+  double term_r = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int states_padded = (states + 3) & 0xFFFFFFFC;
 
-  __m256d xmm0, xmm1, xmm3;
+  __m256d xmm0;
+  __m256d xmm1;
+  __m256d xmm3;
 
   for (i = 0; i < sites; ++i)
   {
@@ -94,12 +100,14 @@ corax_core_root_loglikelihood_avx2(unsigned int         states,
 
     /* compute site log-likelihood and scale if necessary */
     term = log(term);
-    if (scaler && scaler[i]) term += scaler[i] * log(CORAX_SCALE_THRESHOLD);
+    if (scaler && scaler[i]) { term += scaler[i] * log(CORAX_SCALE_THRESHOLD);
+}
 
     term *= pattern_weights[i];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[i] = term;
+    if (persite_lnl) { persite_lnl[i] = term;
+}
 
     logl += term;
   }
@@ -121,19 +129,24 @@ corax_core_root_loglikelihood_repeats_avx2(unsigned int         states,
                                            const unsigned int *freqs_indices,
                                            double *            persite_lnl)
 {
-  unsigned int i, j, k;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl       = 0;
   double       prop_invar = 0;
 
   const double *freqs = NULL;
 
-  double term, term_r;
-  double inv_site_lk;
+  double term = NAN;
+  double term_r = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int states_padded = (states + 3) & 0xFFFFFFFC;
   unsigned int span          = rate_cats * states_padded;
 
-  __m256d xmm0, xmm1, xmm3;
+  __m256d xmm0;
+  __m256d xmm1;
+  __m256d xmm3;
 
   for (i = 0; i < sites; ++i)
   {
@@ -182,12 +195,14 @@ corax_core_root_loglikelihood_repeats_avx2(unsigned int         states,
 
     /* compute site log-likelihood and scale if necessary */
     term = log(term);
-    if (scaler && scaler[id]) term += scaler[id] * log(CORAX_SCALE_THRESHOLD);
+    if (scaler && scaler[id]) { term += scaler[id] * log(CORAX_SCALE_THRESHOLD);
+}
 
     term *= pattern_weights[i];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[i] = term;
+    if (persite_lnl) { persite_lnl[i] = term;
+}
 
     logl += term;
   }
@@ -213,27 +228,35 @@ corax_core_edge_loglikelihood_ti_20x20_avx2(unsigned int         sites,
                                             double *            persite_lnl,
                                             unsigned int        attrib)
 {
-  unsigned int n, i, j, m = 0;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int m = 0;
   double       logl       = 0;
   double       prop_invar = 0;
 
   const double *clvp = parent_clv;
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
-  unsigned int cstate;
+  unsigned int cstate = 0;
   unsigned int states        = 20;
   unsigned int states_padded = states;
 
-  __m256d xmm0, xmm1, xmm2;
+  __m256d xmm0;
+  __m256d xmm1;
+  __m256d xmm2;
 
   size_t displacement = (states_padded - states) * (states_padded);
 
   /* scaling stuff */
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -272,7 +295,8 @@ corax_core_edge_loglikelihood_ti_20x20_avx2(unsigned int         sites,
     /* TODO: in the highly unlikely event that allocation fails, we should
        resort to a non-lookup-precomputation version of this function,
        available at commit e.g.  a4fc873fdc65741e402cdc1c59919375143d97d1 */
-    if (rate_scalings) free(rate_scalings);
+    if (rate_scalings) { free(rate_scalings);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate space for precomputation.");
@@ -297,7 +321,7 @@ corax_core_edge_loglikelihood_ti_20x20_avx2(unsigned int         sites,
 
       for (i = 0; i < states; ++i)
       {
-        double terml;
+        double terml = NAN;
         if (ss != -1)
         {
           /* special case for non-ambiguous states */
@@ -337,7 +361,8 @@ corax_core_edge_loglikelihood_ti_20x20_avx2(unsigned int         sites,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -427,13 +452,15 @@ corax_core_edge_loglikelihood_ti_20x20_avx2(unsigned int         sites,
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
   }
 
   corax_aligned_free(lookup);
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }
@@ -457,26 +484,39 @@ corax_core_edge_loglikelihood_ii_avx2(unsigned int         states,
                                       double *             persite_lnl,
                                       unsigned int         attrib)
 {
-  unsigned int n, i, j, k;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl       = 0;
   double       prop_invar = 0;
 
   const double *clvp = parent_clv;
   const double *clvc = child_clv;
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int states_padded = (states + 3) & 0xFFFFFFFC;
 
-  __m256d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+  __m256d xmm0;
+  __m256d xmm1;
+  __m256d xmm2;
+  __m256d xmm3;
+  __m256d xmm4;
+  __m256d xmm5;
+  __m256d xmm6;
+  __m256d xmm7;
 
   size_t displacement = (states_padded - states) * (states_padded);
 
   /* scaling stuff */
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -519,7 +559,8 @@ corax_core_edge_loglikelihood_ii_avx2(unsigned int         states,
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -667,12 +708,14 @@ corax_core_edge_loglikelihood_ii_avx2(unsigned int         states,
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }
@@ -702,25 +745,38 @@ double corax_core_edge_loglikelihood_repeats_generic_avx2(
 {
   CORAX_UNUSED(child_sites);
   CORAX_UNUSED(bclv);
-  unsigned int n, i, j, k;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   double       logl       = 0;
   double       prop_invar = 0;
 
-  const double *pmat;
+  const double *pmat = NULL;
   const double *freqs = NULL;
 
-  double terma, terma_r, terminv;
-  double site_lk, inv_site_lk;
+  double terma = NAN;
+  double terma_r = NAN;
+  double terminv = NAN;
+  double site_lk = NAN;
+  double inv_site_lk = NAN;
 
   unsigned int states_padded = (states + 3) & 0xFFFFFFFC;
   unsigned int span          = states_padded * rate_cats;
 
-  __m256d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+  __m256d xmm0;
+  __m256d xmm1;
+  __m256d xmm2;
+  __m256d xmm3;
+  __m256d xmm4;
+  __m256d xmm5;
+  __m256d xmm6;
+  __m256d xmm7;
 
   size_t displacement = (states_padded - states) * (states_padded);
 
   /* scaling stuff */
-  unsigned int  site_scalings;
+  unsigned int  site_scalings = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -767,7 +823,8 @@ double corax_core_edge_loglikelihood_repeats_generic_avx2(
             (parent_scaler) ? parent_scaler[pid * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[cid * rate_cats + i] : 0;
-        if (rate_scalings[i] < site_scalings) site_scalings = rate_scalings[i];
+        if (rate_scalings[i] < site_scalings) { site_scalings = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -915,12 +972,14 @@ double corax_core_edge_loglikelihood_repeats_generic_avx2(
     site_lk *= pattern_weights[n];
 
     /* store per-site log-likelihood */
-    if (persite_lnl) persite_lnl[n] = site_lk;
+    if (persite_lnl) { persite_lnl[n] = site_lk;
+}
 
     logl += site_lk;
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return logl;
 }

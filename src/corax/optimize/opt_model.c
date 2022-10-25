@@ -22,6 +22,7 @@
 #include "opt_model.h"
 #include "callback.h"
 #include "corax/corax.h"
+#include "math.h"
 
 static void fill_rates(double *     rates,
                        double *     x,
@@ -47,10 +48,12 @@ CORAX_EXPORT double corax_algo_opt_frequencies(corax_partition_t *  partition,
                                                double               bfgs_factor,
                                                double               tolerance)
 {
-  double              cur_logl;
-  double *            x, *lb, *ub;
-  int *               bt;
-  unsigned int        i;
+  double              cur_logl = NAN;
+  double *            x = NULL;
+  double *lb = NULL;
+  double *ub = NULL;
+  int *               bt = NULL;
+  unsigned int        i = 0;
   struct freqs_params opt_params;
   opt_params.partition      = partition;
   opt_params.tree           = tree;
@@ -59,7 +62,7 @@ CORAX_EXPORT double corax_algo_opt_frequencies(corax_partition_t *  partition,
 
   double *     frequencies = partition->frequencies[params_index];
   unsigned int states      = partition->states;
-  unsigned int cur_index;
+  unsigned int cur_index = 0;
 
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
 
@@ -126,15 +129,19 @@ CORAX_EXPORT double corax_algo_opt_subst_rates(corax_partition_t *  partition,
                                                double               bfgs_factor,
                                                double               tolerance)
 {
-  double       cur_logl;
-  double *     x, *lb, *ub;
-  int *        bt;
-  unsigned int i, j, k;
+  double       cur_logl = NAN;
+  double *     x = NULL;
+  double *lb = NULL;
+  double *ub = NULL;
+  int *        bt = NULL;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
 
   double *     subst_rates  = partition->subst_params[params_index];
   unsigned int states       = partition->states;
   unsigned int subst_params = (states * (states - 1)) / 2;
-  unsigned int subst_free_params;
+  unsigned int subst_free_params = 0;
 
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
 
@@ -175,7 +182,8 @@ CORAX_EXPORT double corax_algo_opt_subst_rates(corax_partition_t *  partition,
 
     if (symmetries)
     {
-      if ((unsigned int)symmetries[subst_params - 1] == k) ++k;
+      if ((unsigned int)symmetries[subst_params - 1] == k) { ++k;
+}
 
       for (j = 0; j < subst_params; ++j)
       {
@@ -235,9 +243,9 @@ CORAX_EXPORT double corax_algo_opt_alpha(corax_partition_t  * partition,
                                          double *             alpha,
                                          double               tolerance)
 {
-  double cur_logl;
-  double f2x;
-  double xres;
+  double cur_logl = NAN;
+  double f2x = NAN;
+  double xres = NAN;
 
   struct default_params opt_params;
   opt_params.partition      = partition;
@@ -267,10 +275,10 @@ CORAX_EXPORT double corax_algo_opt_pinv(corax_partition_t *  partition,
                                         double               max_pinv,
                                         double               tolerance)
 {
-  double                cur_logl;
-  double                f2x;
-  double                xres;
-  double                start_pinv;
+  double                cur_logl = NAN;
+  double                f2x = NAN;
+  double                xres = NAN;
+  double                start_pinv = NAN;
   struct default_params opt_params;
   opt_params.partition      = partition;
   opt_params.tree           = tree;
@@ -302,8 +310,10 @@ CORAX_EXPORT double corax_algo_opt_alpha_pinv(corax_partition_t *  partition,
                                               double               bfgs_factor,
                                               double               tolerance)
 {
-  double cur_logl;
-  double x[2], lb[2], ub[2];
+  double cur_logl = NAN;
+  double x[2];
+  double lb[2];
+  double ub[2];
   int    bt[2];
 
   const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
@@ -354,11 +364,15 @@ CORAX_EXPORT double corax_algo_opt_rates_weights(corax_partition_t *  partition,
                                                  double *             brlen_scaler,
                                                  int                  scale_branches)
 {
-  double       cur_logl, prev_logl;
-  double       sum_weightrates, rate_scaler;
-  double *     x, *lb, *ub;
-  int *        bt;
-  unsigned int i;
+  double       cur_logl = NAN;
+  double       prev_logl = NAN;
+  double       sum_weightrates = NAN;
+  double       rate_scaler = NAN;
+  double *     x = NULL;
+  double *lb = NULL;
+  double *ub = NULL;
+  int *        bt = NULL;
+  unsigned int i = 0;
 
   double *     rates     = partition->rates;
   double *     weights   = partition->rate_weights;
@@ -416,10 +430,12 @@ CORAX_EXPORT double corax_algo_opt_rates_weights(corax_partition_t *  partition,
 
   /* force constraint sum(weights x rates) = 1.0 */
   sum_weightrates = 0.0;
-  for (i = 0; i < rate_cats; ++i) sum_weightrates += rates[i] * weights[i];
+  for (i = 0; i < rate_cats; ++i) { sum_weightrates += rates[i] * weights[i];
+}
   rate_scaler = 1.0 / sum_weightrates;
 
-  for (i = 0; i < rate_cats; ++i) rates[i] *= rate_scaler;
+  for (i = 0; i < rate_cats; ++i) { rates[i] *= rate_scaler;
+}
 
   *brlen_scaler = sum_weightrates;
 
@@ -453,9 +469,9 @@ CORAX_EXPORT double corax_algo_opt_brlen_scaler(corax_partition_t *  partition,
                                                 double               max_scaler,
                                                 double               tolerance)
 {
-  double                     cur_logl;
-  double                     f2x;
-  double                     xres;
+  double                     cur_logl = NAN;
+  double                     f2x = NAN;
+  double                     xres = NAN;
   struct brlen_scaler_params opt_params;
 
   /* create a temporary tree with the scaled branches */
@@ -496,7 +512,7 @@ static void fill_rates(double *     rates,
                        double       max_rate,
                        unsigned int n_rates)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   assert(min_rate > 1e-4 && max_rate > min_rate);
 
@@ -506,12 +522,13 @@ static void fill_rates(double *     rates,
     lb[i] = min_rate;
     ub[i] = max_rate;
 
-    if (rates[i] < min_rate)
+    if (rates[i] < min_rate) {
       x[i] = min_rate;
-    else if (rates[i] > max_rate)
+    } else if (rates[i] > max_rate) {
       x[i] = max_rate;
-    else
+    } else {
       x[i] = rates[i];
+}
   }
 }
 
@@ -523,7 +540,8 @@ static void fill_weights(double *      weights,
                          double *      ub,
                          unsigned int  n_weights)
 {
-  unsigned int i, cur_index = 0;
+  unsigned int i = 0;
+  unsigned int cur_index = 0;
 
   *fixed_weight_index = n_weights;
   for (i = 0; i < n_weights; ++i)
@@ -547,12 +565,13 @@ static void fill_weights(double *      weights,
       double r      = weights[i] / weights[*fixed_weight_index];
       lb[cur_index] = CORAX_ALGO_MIN_WEIGHT_RATIO;
       ub[cur_index] = CORAX_ALGO_MAX_WEIGHT_RATIO;
-      if (r < lb[cur_index])
+      if (r < lb[cur_index]) {
         x[cur_index] = lb[cur_index];
-      else if (r > ub[cur_index])
+      } else if (r > ub[cur_index]) {
         x[cur_index] = ub[cur_index];
-      else
+      } else {
         x[cur_index] = r;
+}
 
       cur_index++;
     }

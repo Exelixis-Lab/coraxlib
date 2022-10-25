@@ -21,26 +21,34 @@
 
 #include "utree_moves.h"
 #include "corax/corax.h"
+#include "math.h"
 
 static int utree_find(corax_unode_t *start, corax_unode_t *target)
 {
   /* checks whether the subtree rooted at 'start' (in the direction of
      start->next and start->next->next) contains the node 'target' */
 
-  if (!start) return 0;
+  if (!start) { return 0;
+}
 
-  if (start == target) return 1;
+  if (start == target) { return 1;
+}
 
   if (start->next)
   {
-    if (start->next == target) return 1;
-    if (utree_find(start->next->back, target)) return 1;
+    if (start->next == target) { return 1;
+}
+    if (utree_find(start->next->back, target)) { return 1;
+}
   }
-  else
+  else {
     return 0;
+}
 
-  if (start->next->next == target) return 1;
-  if (utree_find(start->next->next->back, target)) return 1;
+  if (start->next->next == target) { return 1;
+}
+  if (utree_find(start->next->next->back, target)) { return 1;
+}
 
   return 0;
 }
@@ -72,8 +80,8 @@ static void utree_swap(corax_unode_t *t1, corax_unode_t *t2)
 
 static int utree_nni(corax_unode_t *p, int type)
 {
-  corax_unode_t *subtree1;
-  corax_unode_t *subtree2;
+  corax_unode_t *subtree1 = NULL;
+  corax_unode_t *subtree2 = NULL;
 
   if ((type != CORAX_UTREE_MOVE_NNI_LEFT)
       && (type != CORAX_UTREE_MOVE_NNI_RIGHT))
@@ -247,7 +255,8 @@ CORAX_EXPORT int corax_utree_connect_nodes(corax_unode_t *parent,
                                            corax_unode_t *child,
                                            double         length)
 {
-  if (!(parent && child)) return CORAX_FAILURE;
+  if (!(parent && child)) { return CORAX_FAILURE;
+}
 
   parent->back = child;
   child->back  = parent;
@@ -290,9 +299,10 @@ CORAX_EXPORT int corax_utree_bisect(corax_unode_t  *edge,
   assert(parent_subtree);
   assert(child_subtree);
 
-  corax_unode_t *aux_tree;
+  corax_unode_t *aux_tree = NULL;
 
-  if (!edge->next) return CORAX_FAILURE;
+  if (!edge->next) { return CORAX_FAILURE;
+}
 
   corax_unode_t *c_edge = edge->back;
 
@@ -339,7 +349,8 @@ CORAX_EXPORT corax_utree_edge_t
 corax_utree_reconnect(corax_utree_edge_t *edge, corax_unode_t *pruned_edge)
 {
   /* create and connect 2 new nodes */
-  corax_unode_t *parent_node, *child_node;
+  corax_unode_t *parent_node = NULL;
+  corax_unode_t *child_node = NULL;
   assert(pruned_edge->back);
 
   parent_node = pruned_edge;
@@ -391,7 +402,8 @@ corax_utree_reconnect(corax_utree_edge_t *edge, corax_unode_t *pruned_edge)
  */
 CORAX_EXPORT corax_unode_t *corax_utree_prune(corax_unode_t *edge)
 {
-  corax_unode_t *edge1, *edge2;
+  corax_unode_t *edge1 = NULL;
+  corax_unode_t *edge2 = NULL;
 
   assert(edge);
   if (!edge->next)
@@ -436,8 +448,9 @@ CORAX_EXPORT corax_unode_t *corax_utree_prune(corax_unode_t *edge)
  */
 CORAX_EXPORT int corax_utree_regraft(corax_unode_t *edge, corax_unode_t *tree)
 {
-  corax_unode_t *edge1, *edge2;
-  double         new_length;
+  corax_unode_t *edge1 = NULL;
+  corax_unode_t *edge2 = NULL;
+  double         new_length = NAN;
 
   assert(edge && tree);
   if (!edge->next)
@@ -481,7 +494,8 @@ CORAX_EXPORT int corax_utree_tbr(corax_unode_t         *b_edge,
                                  corax_utree_edge_t    *r_edge,
                                  corax_tree_rollback_t *rollback_info)
 {
-  corax_unode_t *parent, *child;
+  corax_unode_t *parent = NULL;
+  corax_unode_t *child = NULL;
 
   /* validate if the move can be applied */
 
@@ -561,7 +575,7 @@ CORAX_EXPORT int corax_utree_spr(corax_unode_t         *p_edge,
                                  corax_unode_t         *r_edge,
                                  corax_tree_rollback_t *rollback_info)
 {
-  int retval;
+  int retval = 0;
 
   if (CORAX_UTREE_IS_TIP(p_edge))
   {
@@ -592,7 +606,7 @@ CORAX_EXPORT int corax_utree_spr(corax_unode_t         *p_edge,
 /* this is a safer (but slower) function for performing an spr move, than
    corax_utree_spr(). See the last paragraph in the comments section of the
    corax_utree_spr() function for more details */
-CORAX_EXPORT int corax_utree_spr_safe(corax_unode_t         *p,
+CORAX_EXPORT static int corax_utree_spr_safe(corax_unode_t         *p,
                                       corax_unode_t         *r,
                                       corax_tree_rollback_t *rollback_info)
 {
@@ -672,7 +686,8 @@ CORAX_EXPORT int corax_utree_nni(corax_unode_t         *edge,
     rollback_info->NNI.edge_bl        = edge->length;
   }
 
-  if (!utree_nni(edge, type)) return CORAX_FAILURE;
+  if (!utree_nni(edge, type)) { return CORAX_FAILURE;
+}
 
   return CORAX_SUCCESS;
 }
@@ -688,8 +703,9 @@ static int utree_rollback_tbr(corax_tree_rollback_t *rollback_info)
   double         reconn_length = rollback_info->TBR.reconn_edge.length;
 
   /* undo move */
-  if (!corax_utree_tbr(p, &(rollback_info->TBR.reconn_edge), 0))
+  if (!corax_utree_tbr(p, &(rollback_info->TBR.reconn_edge), 0)) {
     return CORAX_FAILURE;
+}
 
   /* reset branches */
   corax_utree_set_length(p, reconn_length);
@@ -717,7 +733,8 @@ static int utree_rollback_spr(corax_tree_rollback_t *rollback_info)
   corax_unode_t *z2 = r->back;
 
   /* undo move */
-  if (!corax_utree_spr(p, r, 0)) return CORAX_FAILURE;
+  if (!corax_utree_spr(p, r, 0)) { return CORAX_FAILURE;
+}
 
   /* reset branches */
   corax_utree_set_length(z1, rollback_info->SPR.regraft_bl);
@@ -737,7 +754,8 @@ static int utree_rollback_nni(corax_tree_rollback_t *rollback_info)
   corax_unode_t *q = p->back;
 
   /* undo move */
-  if (!corax_utree_nni(p, rollback_info->NNI.type, 0)) return CORAX_FAILURE;
+  if (!corax_utree_nni(p, rollback_info->NNI.type, 0)) { return CORAX_FAILURE;
+}
 
   /* reset branches */
 

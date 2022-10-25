@@ -170,9 +170,11 @@ const int PROTMIX_MODELS_COUNT =
 
 static int get_model_index(const char *model_name)
 {
-  int i;
-  for (i = 0; i < PROT_MODELS_COUNT; ++i)
-    if (strcasecmp(model_name, prot_model_list[i]->name) == 0) return i;
+  int i = 0;
+  for (i = 0; i < PROT_MODELS_COUNT; ++i) {
+    if (strcasecmp(model_name, prot_model_list[i]->name) == 0) { return i;
+}
+}
 
   /* model not found*/
   return -1;
@@ -180,9 +182,11 @@ static int get_model_index(const char *model_name)
 
 static int get_mixmodel_index(const char *model_name)
 {
-  int i;
-  for (i = 0; i < PROTMIX_MODELS_COUNT; ++i)
-    if (strcasecmp(model_name, protmix_model_list[i]->name) == 0) return i;
+  int i = 0;
+  for (i = 0; i < PROTMIX_MODELS_COUNT; ++i) {
+    if (strcasecmp(model_name, protmix_model_list[i]->name) == 0) { return i;
+}
+}
 
   /* model not found*/
   return -1;
@@ -203,7 +207,7 @@ CORAX_EXPORT char **corax_util_model_names_protein()
 {
   char **names = calloc(PROT_MODELS_COUNT, sizeof(char *));
 
-  int i;
+  int i = 0;
   for (i = 0; i < PROT_MODELS_COUNT; ++i)
   {
     const char *model_name = prot_model_list[i]->name;
@@ -240,13 +244,12 @@ CORAX_EXPORT corax_subst_model_t *
   {
     return corax_util_model_clone(prot_model_list[model_index]);
   }
-  else
-  {
-    corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
+  
+      corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
                     "Protein model not found: %s",
                     model_name);
     return NULL;
-  }
+ 
 }
 
 /**
@@ -274,13 +277,12 @@ CORAX_EXPORT int corax_util_model_set_protein(corax_partition_t *partition,
     }
     return CORAX_SUCCESS;
   }
-  else
-  {
-    corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
+  
+      corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
                     "Protein model not found: %s",
                     model_name);
     return CORAX_FAILURE;
-  }
+ 
 }
 
 CORAX_EXPORT int corax_util_model_exists_protmix(const char *model_name)
@@ -296,13 +298,12 @@ CORAX_EXPORT corax_mixture_model_t *
   {
     return corax_util_model_mixture_clone(protmix_model_list[model_index]);
   }
-  else
-  {
-    corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
+  
+      corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
                     "Protein mixture model not found: %s",
                     model_name);
     return NULL;
-  }
+ 
 }
 
 /**
@@ -335,7 +336,7 @@ CORAX_EXPORT int corax_util_model_set_protmix(corax_partition_t *partition,
       return CORAX_FAILURE;
     }
 
-    unsigned int i;
+    unsigned int i = 0;
     for (i = 0; i < mixture->ncomp; ++i)
     {
       corax_set_subst_params(partition, i, mixture->models[i]->rates);
@@ -349,11 +350,10 @@ CORAX_EXPORT int corax_util_model_set_protmix(corax_partition_t *partition,
     }
     return CORAX_SUCCESS;
   }
-  else
-  {
-    corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
+  
+      corax_set_error(CORAX_UTIL_ERROR_MODEL_UNKNOWN,
                     "Protein model not found: %s",
                     model_name);
     return CORAX_FAILURE;
-  }
+ 
 }

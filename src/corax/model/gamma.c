@@ -20,6 +20,7 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 
 #define POINT_GAMMA(prob, alpha, beta)                                         \
   PointChi2(prob, 2.0 * (alpha)) / (2.0 * (beta))
@@ -37,17 +38,29 @@ static double IncompleteGamma(double x, double alpha, double ln_gamma_alpha)
      Bhattacharjee GP (1970) The incomplete gamma integral.  Applied Statistics,
      19: 285-287 (AS32)
   */
-  int    i;
-  double p = alpha, g = ln_gamma_alpha;
-  double accurate = 1e-8, overflow = 1e30;
-  double factor, gin = 0, rn = 0, a = 0, b = 0, an = 0, dif = 0, term = 0,
-                 pn[6];
+  int    i = 0;
+  double p = alpha;
+  double g = ln_gamma_alpha;
+  double accurate = 1e-8;
+  double overflow = 1e30;
+  double factor = NAN;
+  double gin = 0;
+  double rn = 0;
+  double a = 0;
+  double b = 0;
+  double an = 0;
+  double dif = 0;
+  double term = 0;
+  double pn[6];
 
-  if (x == 0) return (0);
-  if (x < 0 || p <= 0) return (-1);
+  if (x == 0) { return (0);
+}
+  if (x < 0 || p <= 0) { return (-1);
+}
 
   factor = exp(p * log(x) - x - g);
-  if (x > 1 && x >= p) goto l30;
+  if (x > 1 && x >= p) { goto l30;
+}
   /* (1) series expansion */
   gin  = 1;
   term = 1;
@@ -57,7 +70,8 @@ l20:
   term *= x / rn;
   gin += term;
 
-  if (term > accurate) goto l20;
+  if (term > accurate) { goto l20;
+}
   gin *= factor / p;
   goto l50;
 l30:
@@ -75,19 +89,26 @@ l32:
   b += 2;
   term++;
   an = a * term;
-  for (i = 0; i < 2; i++) pn[i + 4] = b * pn[i + 2] - an * pn[i];
-  if (pn[5] == 0) goto l35;
+  for (i = 0; i < 2; i++) { pn[i + 4] = b * pn[i + 2] - an * pn[i];
+}
+  if (pn[5] == 0) { goto l35;
+}
   rn  = pn[4] / pn[5];
   dif = fabs(gin - rn);
-  if (dif > accurate) goto l34;
-  if (dif <= accurate * rn) goto l42;
+  if (dif > accurate) { goto l34;
+}
+  if (dif <= accurate * rn) { goto l42;
+}
 l34:
   gin = rn;
 l35:
-  for (i = 0; i < 4; i++) pn[i] = pn[i + 2];
-  if (fabs(pn[4]) < overflow) goto l32;
+  for (i = 0; i < 4; i++) { pn[i] = pn[i + 2];
+}
+  if (fabs(pn[4]) < overflow) { goto l32;
+}
 
-  for (i = 0; i < 4; i++) pn[i] /= overflow;
+  for (i = 0; i < 4; i++) { pn[i] /= overflow;
+}
 
   goto l32;
 l42:
@@ -104,7 +125,10 @@ static double LnGamma(double alpha)
      procedure. Pike MC & Hill ID (1966) Algorithm 291: Logarithm of the gamma
      function. Communications of the Association for Computing Machinery, 9:684
   */
-  double x, f, z, result;
+  double x = NAN;
+  double f = NAN;
+  double z = NAN;
+  double result = NAN;
 
   x = alpha;
   f = 0.0;
@@ -147,14 +171,24 @@ static double PointNormal(double prob)
          points of the normal distribution.  26: 118-121.
 
   */
-  double a0 = -.322232431088, a1 = -1, a2 = -.342242088547,
-         a3 = -.0204231210245;
-  double a4 = -.453642210148e-4, b0 = .0993484626060, b1 = .588581570495;
-  double b2 = .531103462366, b3 = .103537752850, b4 = .0038560700634;
-  double y, z = 0, p = prob, p1;
+  double a0 = -.322232431088;
+  double a1 = -1;
+  double a2 = -.342242088547;
+  double a3 = -.0204231210245;
+  double a4 = -.453642210148e-4;
+  double b0 = .0993484626060;
+  double b1 = .588581570495;
+  double b2 = .531103462366;
+  double b3 = .103537752850;
+  double b4 = .0038560700634;
+  double y = NAN;
+  double z = 0;
+  double p = prob;
+  double p1 = NAN;
 
   p1 = (p < 0.5 ? p : 1 - p);
-  if (p1 < 1e-20) return (-9999);
+  if (p1 < 1e-20) { return (-9999);
+}
 
   y = sqrt(log(1 / (p1 * p1)));
   z = y
@@ -172,23 +206,44 @@ static double PointChi2(double prob, double v)
          Chi2 distribution.  Applied Statistics 24: 385-388.  (AS91)
      Converted into C by Ziheng Yang, Oct. 1993.
   */
-  double e = .5e-6, aa = .6931471805, p = prob, g;
-  double xx, c, ch, a = 0, q = 0, p1 = 0, p2 = 0, t = 0, x = 0, b = 0, s1, s2,
-                    s3, s4, s5, s6;
+  double e = .5e-6;
+  double aa = .6931471805;
+  double p = prob;
+  double g = NAN;
+  double xx = NAN;
+  double c = NAN;
+  double ch = NAN;
+  double a = 0;
+  double q = 0;
+  double p1 = 0;
+  double p2 = 0;
+  double t = 0;
+  double x = 0;
+  double b = 0;
+  double s1 = NAN;
+  double s2 = NAN;
+  double s3 = NAN;
+  double s4 = NAN;
+  double s5 = NAN;
+  double s6 = NAN;
 
-  if (p < .000002 || p > .999998 || v <= 0) return (-1);
+  if (p < .000002 || p > .999998 || v <= 0) { return (-1);
+}
 
   g = LnGamma(v / 2);
 
   xx = v / 2;
   c  = xx - 1;
-  if (v >= -1.24 * log(p)) goto l1;
+  if (v >= -1.24 * log(p)) { goto l1;
+}
 
   ch = pow((p * xx * exp(g + xx * aa)), 1 / xx);
-  if (ch - e < 0) return (ch);
+  if (ch - e < 0) { return (ch);
+}
   goto l4;
 l1:
-  if (v > .32) goto l3;
+  if (v > .32) { goto l3;
+}
   ch = 0.4;
   a  = log(1 - p);
 l2:
@@ -197,16 +252,18 @@ l2:
   p2 = ch * (6.73 + ch * (6.66 + ch));
   t  = -0.5 + (4.67 + 2 * ch) / p1 - (6.73 + ch * (13.32 + 3 * ch)) / p2;
   ch -= (1 - exp(a + g + .5 * ch + c * aa) * p2 / p1) / t;
-  if (fabs(q / ch - 1) - .01 <= 0)
+  if (fabs(q / ch - 1) - .01 <= 0) {
     goto l4;
-  else
+  } else {
     goto l2;
+}
 
 l3:
   x  = PointNormal(p);
   p1 = 0.222222 / v;
   ch = v * pow((x * sqrt(p1) + 1 - p1), 3.0);
-  if (ch > 2.2 * v + 6) ch = -2 * (log(1 - p) - c * log(.5 * ch) + g);
+  if (ch > 2.2 * v + 6) { ch = -2 * (log(1 - p) - c * log(.5 * ch) + g);
+}
 l4:
   q  = ch;
   p1 = .5 * ch;
@@ -230,7 +287,8 @@ l4:
   ch += t
         * (1 + 0.5 * t * s1
            - b * c * (s1 - b * (s2 - b * (s3 - b * (s4 - b * (s5 - b * s6))))));
-  if (fabs(q / ch - 1) > e) goto l4;
+  if (fabs(q / ch - 1) > e) { goto l4;
+}
 
   return (ch);
 }
@@ -240,10 +298,13 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
                                           double *     output_rates,
                                           int          rates_mode)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
-  double factor = alpha / alpha * categories, lnga1, alfa = alpha, beta = alpha,
-         *gammaProbs;
+  double factor = alpha / alpha * categories;
+  double lnga1 = NAN;
+  double alfa = alpha;
+  double beta = alpha;
+  double *gammaProbs = NULL;
 
   /* Note that ALPHA_MIN setting is somewhat critical due to   */
   /* numerical instability caused by very small rate[0] values */
@@ -259,13 +320,17 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
   if (categories == 1) { output_rates[0] = 1.0; }
   else if (rates_mode == CORAX_GAMMA_RATES_MEDIAN)
   {
-    double middle = 1.0 / (2.0 * categories), t = 0.0;
+    double middle = 1.0 / (2.0 * categories);
+    double t = 0.0;
 
-    for (i = 0; i < categories; i++)
+    for (i = 0; i < categories; i++) {
       output_rates[i] = POINT_GAMMA((double)(i * 2 + 1) * middle, alfa, beta);
+}
 
-    for (i = 0; i < categories; i++) t += output_rates[i];
-    for (i = 0; i < categories; i++) output_rates[i] *= factor / t;
+    for (i = 0; i < categories; i++) { t += output_rates[i];
+}
+    for (i = 0; i < categories; i++) { output_rates[i] *= factor / t;
+}
   }
   else if (rates_mode == CORAX_GAMMA_RATES_MEAN)
   {
@@ -273,18 +338,21 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
 
     lnga1 = LnGamma(alfa + 1);
 
-    for (i = 0; i < categories - 1; i++)
+    for (i = 0; i < categories - 1; i++) {
       gammaProbs[i] = POINT_GAMMA((i + 1.0) / categories, alfa, beta);
+}
 
-    for (i = 0; i < categories - 1; i++)
+    for (i = 0; i < categories - 1; i++) {
       gammaProbs[i] = IncompleteGamma(gammaProbs[i] * beta, alfa + 1, lnga1);
+}
 
     output_rates[0] = gammaProbs[0] * factor;
 
     output_rates[categories - 1] = (1 - gammaProbs[categories - 2]) * factor;
 
-    for (i = 1; i < categories - 1; i++)
+    for (i = 1; i < categories - 1; i++) {
       output_rates[i] = (gammaProbs[i] - gammaProbs[i - 1]) * factor;
+}
 
     free(gammaProbs);
   }

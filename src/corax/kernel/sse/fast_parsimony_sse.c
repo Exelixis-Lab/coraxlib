@@ -27,7 +27,7 @@ corax_fastparsimony_edge_score_4x4_sse(const corax_parsimony_t *parsimony,
                                        unsigned int node1_score_index,
                                        unsigned int node2_score_index)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   unsigned int bits[16] __attribute__((aligned(CORAX_ALIGNMENT_SSE)));
 
@@ -46,7 +46,14 @@ corax_fastparsimony_edge_score_4x4_sse(const corax_parsimony_t *parsimony,
     node2[i] = vector[node2_score_index] + i * vector_count;
   }
 
-  __m128i xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+  __m128i xmm0;
+  __m128i xmm1;
+  __m128i xmm2;
+  __m128i xmm3;
+  __m128i xmm4;
+  __m128i xmm5;
+  __m128i xmm6;
+  __m128i xmm7;
 
   /* set all bits to one */
   xmm7 = _mm_set1_epi32(-1);
@@ -104,7 +111,7 @@ CORAX_EXPORT
 void corax_fastparsimony_update_vector_4x4_sse(corax_parsimony_t *parsimony,
                                                const corax_pars_buildop_t *op)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   unsigned int bits[16] __attribute__((aligned(CORAX_ALIGNMENT_SSE)));
 
@@ -125,8 +132,18 @@ void corax_fastparsimony_update_vector_4x4_sse(corax_parsimony_t *parsimony,
     child2[i] = vector[op->child2_score_index] + i * vector_count;
   }
 
-  __m128i xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10,
-      xmm11;
+  __m128i xmm0;
+  __m128i xmm1;
+  __m128i xmm2;
+  __m128i xmm3;
+  __m128i xmm4;
+  __m128i xmm5;
+  __m128i xmm6;
+  __m128i xmm7;
+  __m128i xmm8;
+  __m128i xmm9;
+  __m128i xmm10;
+  __m128i xmm11;
 
   /* set all bits to one */
   xmm11 = _mm_set1_epi32(-1);
@@ -205,21 +222,27 @@ CORAX_EXPORT
 void corax_fastparsimony_update_vector_sse(corax_parsimony_t *parsimony,
                                            const corax_pars_buildop_t *op)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
   unsigned int states = parsimony->states;
 
   unsigned int bits[16] __attribute__((aligned(CORAX_ALIGNMENT_SSE)));
 
-  unsigned int *parent;
-  unsigned int *child1;
-  unsigned int *child2;
+  unsigned int *parent = NULL;
+  unsigned int *child1 = NULL;
+  unsigned int *child2 = NULL;
 
   unsigned int **vector       = parsimony->packedvector;
   unsigned int   vector_count = parsimony->packedvector_count;
 
   unsigned int score = 0;
 
-  __m128i xmm0, xmm1, xmm2, xmm3, xmm4, xmm5;
+  __m128i xmm0;
+  __m128i xmm1;
+  __m128i xmm2;
+  __m128i xmm3;
+  __m128i xmm4;
+  __m128i xmm5;
 
   /* set all bits to one */
   xmm5 = _mm_set1_epi32(-1);
@@ -287,20 +310,25 @@ corax_fastparsimony_edge_score_sse(const corax_parsimony_t *parsimony,
                                    unsigned int             node1_score_index,
                                    unsigned int             node2_score_index)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
   unsigned int states = parsimony->states;
 
   unsigned int bits[16] __attribute__((aligned(CORAX_ALIGNMENT_SSE)));
 
-  unsigned int *node1;
-  unsigned int *node2;
+  unsigned int *node1 = NULL;
+  unsigned int *node2 = NULL;
 
   unsigned int   vector_count = parsimony->packedvector_count;
   unsigned int **vector       = parsimony->packedvector;
 
   unsigned int score = 0;
 
-  __m128i xmm0, xmm1, xmm2, xmm4, xmm5;
+  __m128i xmm0;
+  __m128i xmm1;
+  __m128i xmm2;
+  __m128i xmm4;
+  __m128i xmm5;
 
   /* set all bits to one */
   xmm5 = _mm_set1_epi32(-1);

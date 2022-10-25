@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "corax/corax.h"
 #include "corax/io/newick.hpp"
@@ -12,7 +13,7 @@
 inline void synchronize_attrs(corax_unode_t *start)
 {
   corax_unode_t *cur = start;
-  if (start->label)
+  if (start->label != nullptr)
   {
     while (cur->next != start)
     {
@@ -24,26 +25,26 @@ inline void synchronize_attrs(corax_unode_t *start)
 
 inline void free_label_from_nodes(corax_unode_t *start)
 {
-  if (start->label)
+  if (start->label != nullptr)
   {
     free(start->label);
     start->label = nullptr;
   }
   corax_unode_t *cur = start;
-  while (cur->next && cur->next != start)
+  while ((cur->next != nullptr) && cur->next != start)
   {
     cur        = cur->next;
     cur->label = nullptr;
   }
 }
 
-void delete_unode(corax_unode_t *node)
+static void delete_unode(corax_unode_t *node)
 {
-  if (node->label) { free_label_from_nodes(node); }
+  if (node->label != nullptr) { free_label_from_nodes(node); }
   free(node);
 }
 
-inline size_t close_node_loop(corax_unode_t *start)
+inline auto close_node_loop(corax_unode_t *start) -> size_t
 {
   size_t         node_count = 1;
   corax_unode_t *cur        = start;
@@ -73,16 +74,16 @@ inline void free_node_exception(corax_unode_t *n)
   {
     if (s->back != nullptr) { free_node_exception(s->back); }
     auto tmp = s->next;
-    if (s) { delete_unode(s); }
+    if (s != nullptr) { delete_unode(s); }
     s = tmp;
   }
 
   delete_unode(n);
 }
 
-inline bool unode_is_rooted(const corax_unode_t *root)
+inline auto unode_is_rooted(const corax_unode_t *root) -> bool
 {
-  return (root->next && root->next->next == root) ? 1 : 0;
+  return ((root->next != nullptr) && root->next->next == root) ? 1 : 0 != 0;
 }
 
 static void fill_nodes_recursive(corax_unode_t  *node,
@@ -92,8 +93,8 @@ static void fill_nodes_recursive(corax_unode_t  *node,
                                  unsigned int   *inner_index,
                                  unsigned int    level)
 {
-  unsigned int index;
-  if (!node->next)
+  unsigned int index = 0;
+  if (node->next == nullptr)
   {
     /* tip node */
     index = *tip_index;
@@ -102,7 +103,7 @@ static void fill_nodes_recursive(corax_unode_t  *node,
   else
   {
     /* inner node */
-    corax_unode_t *snode = level ? node->next : node;
+    corax_unode_t *snode = level != 0u ? node->next : node;
     do {
       fill_nodes_recursive(
           snode->back, array, array_size, tip_index, inner_index, level + 1);
@@ -117,9 +118,10 @@ static void fill_nodes_recursive(corax_unode_t  *node,
   array[index] = node;
 }
 
-corax_unode_t *trim_node(corax_unode_t *node)
+static auto trim_node(corax_unode_t *node) -> corax_unode_t *
 {
-  corax_unode_t *next, *prev;
+  corax_unode_t *next = nullptr;
+  corax_unode_t *prev = nullptr;
   next = node->next;
   prev = node;
 
@@ -133,11 +135,12 @@ corax_unode_t *trim_node(corax_unode_t *node)
   return prev->next;
 }
 
-corax_unode_t *unode_unroot(corax_unode_t *vroot)
+static auto unode_unroot(corax_unode_t *vroot) -> corax_unode_t *
 {
   if (vroot->next->next != vroot) { return vroot; }
 
-  corax_unode_t *lchild, *rchild;
+  corax_unode_t *lchild = nullptr;
+  corax_unode_t *rchild = nullptr;
   lchild = vroot->back;
   rchild = vroot->next->back;
 
@@ -156,7 +159,7 @@ corax_unode_t *unode_unroot(corax_unode_t *vroot)
   return rchild;
 }
 
-std::string corax_newick_lexer_t::consume_value_as_string()
+auto corax_newick_lexer_t::consume_value_as_string() -> std::string
 {
   std::string tmp;
   std::swap(tmp, _value);
@@ -164,7 +167,7 @@ std::string corax_newick_lexer_t::consume_value_as_string()
 }
 
 /* WARNING, ALLOCATES MEMORY */
-char *corax_newick_lexer_t::consume_value_as_cstring()
+auto corax_newick_lexer_t::consume_value_as_cstring() -> char *
 {
   char *label = (char *)calloc(
       sizeof(char), (_value.size() + 1) /* Need to include space for the null */
@@ -175,7 +178,7 @@ char *corax_newick_lexer_t::consume_value_as_cstring()
   return label;
 }
 
-double corax_newick_lexer_t::consume_value_as_float()
+auto corax_newick_lexer_t::consume_value_as_float() -> double
 {
   auto   f_str = consume_value_as_string();
   size_t pos   = 0;
@@ -188,20 +191,20 @@ double corax_newick_lexer_t::consume_value_as_float()
   return val;
 }
 
-std::string corax_newick_lexer_t::describe_position() const
+auto corax_newick_lexer_t::describe_position() const -> std::string
 {
   std::stringstream builder;
   builder << "position " << _current_index;
   return builder.str();
 }
 
-bool corax_newick_lexer_t::is_punct(char c)
+auto corax_newick_lexer_t::is_punct(char c) -> bool
 {
   return c == '[' || c == ']' || c == '(' || c == ')' || c == ':' || c == ';'
          || c == ',' || c == 0 || c == EOF;
 }
 
-std::pair<corax_lexeme_t, size_t> corax_newick_lexer_t::consume_token_pos()
+auto corax_newick_lexer_t::consume_token_pos() -> std::pair<corax_lexeme_t, size_t>
 {
   auto start_index = _current_index;
   auto token       = consume();
@@ -213,7 +216,7 @@ void corax_newick_lexer_t::skip_whitespace()
   while (_current_index < _input.size())
   {
     char c = _input[_current_index];
-    if (!std::isspace(c)) { break; }
+    if (std::isspace(c) == 0) { break; }
     _current_index++;
   }
 }
@@ -230,7 +233,7 @@ void corax_newick_lexer_t::expect(corax_lexeme_t token_type)
   }
 }
 
-std::string corax_newick_lexer_t::describe_token(corax_lexeme_t token_type)
+auto corax_newick_lexer_t::describe_token(corax_lexeme_t token_type) -> std::string
 {
   switch (token_type)
   {
@@ -257,7 +260,7 @@ std::string corax_newick_lexer_t::describe_token(corax_lexeme_t token_type)
   }
 }
 
-corax_lexeme_t corax_newick_lexer_t::peak()
+auto corax_newick_lexer_t::peak() -> corax_lexeme_t
 {
   size_t tmp_index    = _current_index;
   char   current_char = _input[tmp_index++];
@@ -289,7 +292,7 @@ corax_lexeme_t corax_newick_lexer_t::peak()
   else { return VALUE; }
 }
 
-corax_lexeme_t corax_newick_lexer_t::consume()
+auto corax_newick_lexer_t::consume() -> corax_lexeme_t
 {
   auto token = peak();
   if (token == VALUE)
@@ -305,22 +308,21 @@ corax_lexeme_t corax_newick_lexer_t::consume()
     }
 
     _value = builder.str();
-    while (std::isspace(*(_value.end() - 1)))
+    while (std::isspace(*(_value.end() - 1)) != 0)
     {
       _value.resize(_value.size() - 1);
     }
     return token;
   }
-  else
-  {
-    _current_index++;
+  
+      _current_index++;
     skip_whitespace();
     return token;
-  }
+ 
 }
 
-corax_utree_t *corax_newick_parser_t::parse_utree(bool auto_unroot,
-                                                  bool allow_rooted)
+auto corax_newick_parser_t::parse_utree(bool auto_unroot,
+                                                  bool allow_rooted) -> corax_utree_t *
 {
   corax_unode_t *root_node = nullptr;
 
@@ -370,9 +372,7 @@ corax_utree_t *corax_newick_parser_t::parse_utree(bool auto_unroot,
   current_tree->inner_count = _inner_count;
   current_tree->edge_count  = _edge_count;
   current_tree->binary =
-      (_inner_count == (_tip_count - (unode_is_rooted(root_node) ? 1 : 2)))
-          ? true
-          : false;
+      static_cast<int>(_inner_count == (_tip_count - (unode_is_rooted(root_node) ? 1 : 2)));
   size_t node_array_size = _tip_count + _inner_count;
   current_tree->nodes =
       (corax_unode_t **)malloc(sizeof(corax_unode_t *) * node_array_size);
@@ -404,7 +404,7 @@ corax_utree_t *corax_newick_parser_t::parse_utree(bool auto_unroot,
   return current_tree;
 }
 
-corax_unode_t *corax_newick_parser_t::parse_subtree()
+auto corax_newick_parser_t::parse_subtree() -> corax_unode_t *
 {
   auto token = _lexer.peak();
   _edge_count++;
@@ -415,15 +415,14 @@ corax_unode_t *corax_newick_parser_t::parse_subtree()
     /* error checking on tmp here */
     return tmp;
   }
-  else
-  {
-    auto tmp = parse_leaf();
+  
+      auto tmp = parse_leaf();
     /* error checking on tmp here */
     return tmp;
-  }
+ 
 }
 
-corax_unode_t *corax_newick_parser_t::parse_internal()
+auto corax_newick_parser_t::parse_internal() -> corax_unode_t *
 {
   corax_unode_t *extra_node   = nullptr;
   corax_unode_t *current_node = nullptr;
@@ -456,7 +455,7 @@ corax_unode_t *corax_newick_parser_t::parse_internal()
   }
 }
 
-corax_unode_t *corax_newick_parser_t::parse_node_set()
+auto corax_newick_parser_t::parse_node_set() -> corax_unode_t *
 {
   corax_unode_t *current_node = nullptr;
   corax_unode_t *child        = nullptr;
@@ -490,7 +489,7 @@ void corax_newick_parser_t::parse_node_attrs(corax_unode_t *current_node)
   parse_comment();
 }
 
-corax_unode_t *corax_newick_parser_t::parse_leaf()
+auto corax_newick_parser_t::parse_leaf() -> corax_unode_t *
 {
   corax_unode_t *current_node = nullptr;
   try
@@ -534,17 +533,17 @@ void corax_newick_parser_t::parse_name(corax_unode_t *current_node)
   }
 }
 
-std::string corax_newick_parser_t::parse_string()
+auto corax_newick_parser_t::parse_string() -> std::string
 {
   return _lexer.consume_value_as_string();
 }
 
-char *corax_newick_parser_t::parse_cstring()
+auto corax_newick_parser_t::parse_cstring() -> char *
 {
   return _lexer.consume_value_as_cstring();
 }
 
-double corax_newick_parser_t::parse_number()
+auto corax_newick_parser_t::parse_number() -> double
 {
   return _lexer.consume_value_as_float();
 }
@@ -561,13 +560,13 @@ void corax_newick_parser_t::parse_comment()
 
 /* Legacy C wrappers */
 
-corax_utree_t *utree_parse_newick_string(std::string newick_string,
+static auto utree_parse_newick_string(std::string newick_string,
                                          bool        auto_unroot,
-                                         bool        allow_rooted)
+                                         bool        allow_rooted) -> corax_utree_t *
 {
   try
   {
-    corax_newick_parser_t np(newick_string);
+    corax_newick_parser_t np(std::move(newick_string));
     return np.parse(auto_unroot, allow_rooted);
   }
   catch (std::invalid_argument &e)
@@ -582,8 +581,8 @@ corax_utree_t *utree_parse_newick_string(std::string newick_string,
   }
 }
 
-corax_utree_t *
-utree_parse_newick(const char *filename, bool auto_unroot, bool allow_rooted)
+static auto
+utree_parse_newick(const char *filename, bool auto_unroot, bool allow_rooted) -> corax_utree_t *
 {
   std::ifstream newick_file(filename);
   std::string   newick_string((std::istreambuf_iterator<char>(newick_file)),
@@ -591,43 +590,43 @@ utree_parse_newick(const char *filename, bool auto_unroot, bool allow_rooted)
   return utree_parse_newick_string(newick_string, auto_unroot, allow_rooted);
 }
 
-CORAX_EXPORT corax_utree_t *corax_utree_parse_newick(const char *filename)
+CORAX_EXPORT auto corax_utree_parse_newick(const char *filename) -> corax_utree_t *
 {
   return utree_parse_newick(
       filename, /*auto_unroot=*/false, /*allow_rooted=*/false);
 }
 
-CORAX_EXPORT corax_utree_t *
-corax_utree_parse_newick_rooted(const char *filename)
+CORAX_EXPORT auto
+corax_utree_parse_newick_rooted(const char *filename) -> corax_utree_t *
 {
   return utree_parse_newick(
       filename, /*auto_unroot=*/false, /*allow_rooted=*/true);
 }
 
-CORAX_EXPORT corax_utree_t *
-corax_utree_parse_newick_unroot(const char *filename)
+CORAX_EXPORT auto
+corax_utree_parse_newick_unroot(const char *filename) -> corax_utree_t *
 {
   return utree_parse_newick(
       filename, /*auto_unroot=*/true, /*allow_rooted=*/false);
 }
 
-CORAX_EXPORT corax_utree_t *corax_utree_parse_newick_string(const char *s)
+CORAX_EXPORT auto corax_utree_parse_newick_string(const char *s) -> corax_utree_t *
 {
   return utree_parse_newick_string(std::string(s),
                                    /*auto_unroot=*/false,
                                    /*allow_rooted=*/false);
 }
 
-CORAX_EXPORT corax_utree_t *
-corax_utree_parse_newick_string_rooted(const char *s)
+CORAX_EXPORT auto
+corax_utree_parse_newick_string_rooted(const char *s) -> corax_utree_t *
 {
   return utree_parse_newick_string(std::string(s),
                                    /*auto_unroot=*/false,
                                    /*allow_rooted=*/true);
 }
 
-CORAX_EXPORT corax_utree_t *
-corax_utree_parse_newick_string_unroot(const char *s)
+CORAX_EXPORT auto
+corax_utree_parse_newick_string_unroot(const char *s) -> corax_utree_t *
 {
   return utree_parse_newick_string(std::string(s),
                                    /*auto_unroot=*/true,

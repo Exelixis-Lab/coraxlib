@@ -83,7 +83,7 @@
 #define CORAX_OPT_MAX_ALPHA 100.
 #define CORAX_OPT_MIN_PINV 0
 #define CORAX_OPT_MAX_PINV 0.99
-#define CORAX_OPT_LNL_UNLIKELY -1e+80
+#define CORAX_OPT_LNL_UNLIKELY (-1e+80)
 
 /* mixture models limits */
 #define CORAX_OPT_MIN_RATE 0.02
@@ -124,7 +124,7 @@
 /** @} */
 
 /* special options */
-#define CORAX_OPT_BRLEN_OPTIMIZE_ALL -1
+#define CORAX_OPT_BRLEN_OPTIMIZE_ALL (-1)
 
 /* Structure with information necessary for evaluating the likelihood */
 
@@ -155,7 +155,7 @@ typedef struct
     } unrooted_t;
   } where;
 
-  char   __padding__[4];
+  char   _padding_[4];
   double alpha_value;
 } corax_likelihood_info_t;
 

@@ -43,6 +43,7 @@
  * these are the reference implementation from Netlib)
  * */
 #include "lbfgsb.h"
+#include "math.h"
 
 #define DY(I) dy[(I)-1]
 #define DX(I) dx[(I)-1]
@@ -51,7 +52,11 @@ int daxpyRef(int *n, double *da, double *dx,
 	int *incx, double *dy, int *incy)
 {
   /* Local variables */
-  int i, m, ix, iy, mp1;
+  int i = 0;
+  int m = 0;
+  int ix = 0;
+  int iy = 0;
+  int mp1 = 0;
 
   /*     constant times a vector plus a vector.
    uses unrolled loops for increments equal to one.
@@ -61,8 +66,9 @@ int daxpyRef(int *n, double *da, double *dx,
    Parameter adjustments
    Function Body */
 
-  if (*n <= 0 || *da == 0.)
+  if (*n <= 0 || *da == 0.) {
     return 0;
+}
 
   if (*incx != 1 || *incy != 1)
   {
@@ -99,8 +105,9 @@ int daxpyRef(int *n, double *da, double *dx,
       DY(i)+= *da * DX(i);
       /* L30: */
     }
-    if (*n < 4)
+    if (*n < 4) {
     return 0;
+}
   }
   mp1 = m + 1;
   for (i = mp1; i <= *n; i += 4)
@@ -119,7 +126,11 @@ int dcopyRef(int *n, double *dx, int *incx,
         double *dy, int *incy)
 {
   /* Local variables */
-  int i, m, ix, iy, mp1;
+  int i = 0;
+  int m = 0;
+  int ix = 0;
+  int iy = 0;
+  int mp1 = 0;
 
   /*     copies a vector, x, to a vector, y.
    uses unrolled loops for increments equal to one.
@@ -129,8 +140,9 @@ int dcopyRef(int *n, double *dx, int *incx,
    Parameter adjustments
    Function Body */
 
-  if (*n <= 0)
+  if (*n <= 0) {
     return 0;
+}
 
   if (*incx != 1 || *incy != 1)
   {
@@ -190,9 +202,11 @@ double ddotRef(int *n, double *dx, int *incx, double *dy,
         int *incy)
 {
   /* Local variables */
-  int i, m;
-  double dtemp;
-  int ix, iy;
+  int i = 0;
+  int m = 0;
+  double dtemp = NAN;
+  int ix = 0;
+  int iy = 0;
 
   /* forms the dot product of two vectors.
    uses unrolled loops for increments equal to one.
@@ -235,11 +249,13 @@ double ddotRef(int *n, double *dx, int *incx, double *dy,
   m = *n % 5;
   if (m != 0)
   {
-    for (i = 1; i <= m; ++i)
+    for (i = 1; i <= m; ++i) {
       dtemp += DX(i)* DY(i);
+}
 
-    if (*n < 5)
+    if (*n < 5) {
       return dtemp;
+}
   }
 
   for (i = m+1; i <= *n; i += 5)
@@ -256,7 +272,10 @@ int dscalRef(int *n, double *da, double *dx,
 {
 
   /* Local variables */
-  int i, m, nincx, mp1;
+  int i = 0;
+  int m = 0;
+  int nincx = 0;
+  int mp1 = 0;
 
   /*     scales a vector by a constant.
    uses unrolled loops for increment equal to one.
@@ -267,8 +286,9 @@ int dscalRef(int *n, double *da, double *dx,
    Parameter adjustments
    Function Body */
 
-  if (*n <= 0 || *incx <= 0)
+  if (*n <= 0 || *incx <= 0) {
     return 0;
+}
 
   if (*incx != 1)
   {

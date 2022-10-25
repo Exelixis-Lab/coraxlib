@@ -107,7 +107,7 @@ static int utree_insert_tips_random(corax_unode_t **nodes,
                                     unsigned int    start_tip,
                                     unsigned int    random_seed)
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int start_inner_count     = start_tip - 2;
   unsigned int start_branches        = 2 * start_tip - 3;
   unsigned int max_branches          = 2 * taxa_count - 3;
@@ -135,8 +135,9 @@ static int utree_insert_tips_random(corax_unode_t **nodes,
   }
 
   // check pmatrix indices on tip branches
-  for (i = 0; i < taxa_count; ++i)
+  for (i = 0; i < taxa_count; ++i) {
     last_branch_id = CORAX_MAX(last_branch_id, nodes[i]->pmatrix_index);
+}
 
   for (i = taxa_count; i < taxa_count + start_inner_count; ++i)
   {
@@ -214,8 +215,8 @@ CORAX_EXPORT int corax_utree_random_extend(corax_utree_t *    tree,
   unsigned int last_node_id    = 0;
   int          next_scaler_id  = 0;
 
-  unsigned int i;
-  int          retval;
+  unsigned int i = 0;
+  int          retval = 0;
 
   corax_unode_t **old_nodes = tree->nodes;
   corax_unode_t **new_nodes =
@@ -228,7 +229,8 @@ CORAX_EXPORT int corax_utree_random_extend(corax_utree_t *    tree,
   }
 
   // 1:1 mapping for old tips
-  for (i = 0; i < old_taxa_count; ++i) new_nodes[i] = old_nodes[i];
+  for (i = 0; i < old_taxa_count; ++i) { new_nodes[i] = old_nodes[i];
+}
 
   // copy old inner nodes and adjust clvs
   for (i = old_taxa_count; i < old_node_count; ++i)
@@ -287,11 +289,10 @@ CORAX_EXPORT int corax_utree_random_extend(corax_utree_t *    tree,
     tree->edge_count += 2 * ext_taxa_count;
     return CORAX_SUCCESS;
   }
-  else
-  {
-    free(new_nodes);
+  
+      free(new_nodes);
     return CORAX_FAILURE;
-  }
+ 
 }
 
 /**
@@ -308,7 +309,7 @@ CORAX_EXPORT corax_utree_t *corax_utree_random_create(unsigned int taxa_count,
    *    3. Connect next tip to that branch
    *    4. Repeat 2 and 3 until no tips left
    */
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int tip_node_count   = taxa_count;
   unsigned int inner_node_count = taxa_count - 2;
   unsigned int node_count       = tip_node_count + inner_node_count;
@@ -316,9 +317,9 @@ CORAX_EXPORT corax_utree_t *corax_utree_random_create(unsigned int taxa_count,
   corax_unode_t **nodes =
       (corax_unode_t **)calloc(node_count, sizeof(corax_unode_t *));
 
-  corax_unode_t *tree_root;
+  corax_unode_t *tree_root = NULL;
 
-  corax_utree_t *wrapped_tree;
+  corax_utree_t *wrapped_tree = NULL;
 
   unsigned int node_id = 0;
 
@@ -414,9 +415,11 @@ corax_utree_t *corax_utree_random_resolve_multi(const corax_utree_t *multi_tree,
     }
   }
 
-  if (bin_tree->binary) return bin_tree;
+  if (bin_tree->binary) { return bin_tree;
+}
 
-  if (random_seed) shuffle_tree_nodes(bin_tree, random_seed);
+  if (random_seed) { shuffle_tree_nodes(bin_tree, random_seed);
+}
 
   bin_tree->nodes = (corax_unode_t **)realloc(
       bin_tree->nodes, bin_node_count * sizeof(corax_unode_t *));

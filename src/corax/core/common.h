@@ -50,8 +50,8 @@
 #define CORAX_SWAP(x, y)                                                       \
   do {                                                                         \
     __typeof__(x) _t = x;                                                      \
-    x                = y;                                                      \
-    y                = _t;                                                     \
+    (x)                = y;                                                      \
+    (y)                = _t;                                                     \
   } while (0)
 #define CORAX_HAS_CPU_FEATURE(x)                                               \
   ((corax_hardware.is_initialized || corax_hardware_probe())                   \
@@ -61,8 +61,8 @@
     (void)(expr);                                                              \
   } while (0)
 
-#define CORAX_SUBST_RATE_COUNT(states) (states * (states - 1) / 2)
-#define CORAX_SUBST_RATE_COUNT_NONREV(states) (states * (states - 1))
+#define CORAX_SUBST_RATE_COUNT(states) ((states) * ((states) - 1) / 2)
+#define CORAX_SUBST_RATE_COUNT_NONREV(states) ((states) * ((states) - 1))
 
 /** @defgroup corax_defines Constant Definitions
  * @{
@@ -101,7 +101,7 @@
 #define CORAX_SCALE_FACTOR_SQRT                                                \
   340282366920938463463374607431768211456.0 /* 2**128 */
 #define CORAX_SCALE_THRESHOLD_SQRT (1.0 / CORAX_SCALE_FACTOR_SQRT)
-#define CORAX_SCALE_BUFFER_NONE -1
+#define CORAX_SCALE_BUFFER_NONE (-1)
 
 /* in per-rate scaling mode, maximum difference between scalers
  * please see https://github.com/xflouris/libpll/issues/44  */

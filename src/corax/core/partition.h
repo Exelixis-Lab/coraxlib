@@ -374,15 +374,15 @@ extern "C"
    *
    * @param partition The partition for which the frequencies will be set for.
    *
-   * @param params_index The model index to set the frequencies for.
+   * @param freqs_index The model index to set the frequencies for.
    *
-   * @params frequencies The array of frequencies which will be used to compute
+   * @param frequencies The array of frequencies which will be used to compute
    * a likelihood.
    *
    * @ingroup corax_partition_t
    */
   CORAX_EXPORT void corax_set_frequencies(corax_partition_t *partition,
-                                          unsigned int       params_index,
+                                          unsigned int       freqs_index,
                                           const double *     frequencies);
 
   CORAX_EXPORT void corax_set_category_rates(corax_partition_t *partition,

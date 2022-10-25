@@ -34,12 +34,12 @@ class corax_newick_lexer_t
 {
 public:
   corax_newick_lexer_t(std::string input) :
-      _input{std::move(input)}, _current_index{0} {};
+      _input{std::move(input)}, _current_index{0} {}
 
-  corax_lexeme_t consume();
-  corax_lexeme_t peak();
+  auto consume() -> corax_lexeme_t;
+  auto peak() -> corax_lexeme_t;
 
-  std::string consume_value_as_string();
+  auto consume_value_as_string() -> std::string;
 
   /* WARNING, ALLOCATES MEMORY */
   /**
@@ -48,11 +48,11 @@ public:
    * The user of this function is responsible for deallocating the memory
    * allocated by this function
    */
-  char *consume_value_as_cstring();
+  auto consume_value_as_cstring() -> char *;
 
-  double consume_value_as_float();
+  auto consume_value_as_float() -> double;
 
-  std::string describe_position() const;
+  auto describe_position() const -> std::string;
 
   void expect(corax_lexeme_t token_type);
 
@@ -61,14 +61,14 @@ public:
     while (token_type != consume()) {}
   }
 
-  bool at_end() { return _input.size() == _current_index; }
+  auto at_end() -> bool { return _input.size() == _current_index; }
 
 private:
-  bool is_punct(char c);
+  static auto is_punct(char c) -> bool;
 
-  std::pair<corax_lexeme_t, size_t> consume_token_pos();
+  auto consume_token_pos() -> std::pair<corax_lexeme_t, size_t>;
 
-  std::string describe_token(corax_lexeme_t token_type);
+  static auto describe_token(corax_lexeme_t token_type) -> std::string;
 
   void skip_whitespace();
 
@@ -127,12 +127,12 @@ public:
       _lexer{std::move(input)},
       _tip_count{0},
       _inner_count{0},
-      _edge_count{0} {};
+      _edge_count{0} {}
 
   /**
    * Parse the newick tree which was passed to the constructor.
    */
-  corax_utree_t *parse() { return parse_utree(false, false); }
+  auto parse() -> corax_utree_t * { return parse_utree(false, false); }
 
   /**
    * Parse the newick tree which was passed to the constructor. Includes flags
@@ -142,7 +142,7 @@ public:
    * allow_rooted.
    * @param allow_rooted Don't throw an error when encountering a rooted tree.
    */
-  corax_utree_t *parse(bool auto_unroot, bool allow_rooted)
+  auto parse(bool auto_unroot, bool allow_rooted) -> corax_utree_t *
   {
     return parse_utree(auto_unroot, allow_rooted);
   }
@@ -156,7 +156,7 @@ private:
    *     <subtree> ";"
    * ```
    */
-  corax_utree_t *parse_utree(bool auto_unroot, bool allow_rooted);
+  auto parse_utree(bool auto_unroot, bool allow_rooted) -> corax_utree_t *;
 
   /**
    * Function corresponding to the rule
@@ -167,7 +167,7 @@ private:
    *     <internal>
    * ```
    */
-  corax_unode_t *parse_subtree();
+  auto parse_subtree() -> corax_unode_t *;
 
   /**
    * Function corresponding to the rule
@@ -179,7 +179,7 @@ private:
    * Allocates memory by creating a `corax_unode_t`
    * ```
    */
-  corax_unode_t *parse_internal(); // creates node
+  auto parse_internal() -> corax_unode_t *; // creates node
 
   /**
    * Function corresponding to the rules
@@ -191,7 +191,7 @@ private:
    *     <subtree> <node_attrs>
    * ```
    */
-  corax_unode_t *parse_node_set();
+  auto parse_node_set() -> corax_unode_t *;
 
   /**
    * Function corresponding to the rule
@@ -211,7 +211,7 @@ private:
    *
    * Allocates memory by creating a `corax_unode_t`
    */
-  corax_unode_t *parse_leaf(); // creates node
+  auto parse_leaf() -> corax_unode_t *; // creates node
 
   /**
    * Function corresponding to the rule
@@ -240,7 +240,7 @@ private:
    *     anything but punctuation
    * ```
    */
-  std::string parse_string();
+  auto parse_string() -> std::string;
 
   /**
    * Function corresponding to the rule
@@ -249,7 +249,7 @@ private:
    *     anything but punctuation
    * ```
    */
-  char *parse_cstring();
+  auto parse_cstring() -> char *;
 
   /**
    * Function corresponding to the rule
@@ -258,7 +258,7 @@ private:
    *     [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?
    * ```
    */
-  double parse_number();
+  auto parse_number() -> double;
 
   /**
    * Function corresponding to the rule

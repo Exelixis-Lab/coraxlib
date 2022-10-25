@@ -1,11 +1,24 @@
 #include "corax/corax.h"
+#include "math.h"
 
 static int mytqli(double *d, double *e, const unsigned int n, double **z)
 {
-  unsigned int m, l, iter, i, k;
-  double       s, r, p, g, f, dd, c, b;
+  unsigned int m = 0;
+  unsigned int l = 0;
+  unsigned int iter = 0;
+  unsigned int i = 0;
+  unsigned int k = 0;
+  double       s = NAN;
+  double       r = NAN;
+  double       p = NAN;
+  double       g = NAN;
+  double       f = NAN;
+  double       dd = NAN;
+  double       c = NAN;
+  double       b = NAN;
 
-  for (i = 2; i <= n; i++) e[i - 2] = e[i - 1];
+  for (i = 2; i <= n; i++) { e[i - 2] = e[i - 1];
+}
 
   e[n - 1] = 0.0;
 
@@ -16,7 +29,8 @@ static int mytqli(double *d, double *e, const unsigned int n, double **z)
       for (m = l; m <= n - 1; m++)
       {
         dd = fabs(d[m - 1]) + fabs(d[m]);
-        if (fabs(e[m - 1]) + dd == dd) break;
+        if (fabs(e[m - 1]) + dd == dd) { break;
+}
       }
       if (m != l)
       {
@@ -73,8 +87,15 @@ static int mytqli(double *d, double *e, const unsigned int n, double **z)
 
 static void mytred2(double **a, const unsigned int n, double *d, double *e)
 {
-  unsigned int l, k, j, i;
-  double       scale, hh, h, g, f;
+  unsigned int l = 0;
+  unsigned int k = 0;
+  unsigned int j = 0;
+  unsigned int i = 0;
+  double       scale = NAN;
+  double       hh = NAN;
+  double       h = NAN;
+  double       g = NAN;
+  double       f = NAN;
 
   for (i = n; i > 1; i--)
   {
@@ -84,10 +105,11 @@ static void mytred2(double **a, const unsigned int n, double *d, double *e)
 
     if (l > 1)
     {
-      for (k = 1; k <= l; k++) scale += fabs(a[k - 1][i - 1]);
-      if (scale == 0.0)
+      for (k = 1; k <= l; k++) { scale += fabs(a[k - 1][i - 1]);
+}
+      if (scale == 0.0) {
         e[i - 1] = a[l - 1][i - 1];
-      else
+      } else
       {
         for (k = 1; k <= l; k++)
         {
@@ -104,8 +126,10 @@ static void mytred2(double **a, const unsigned int n, double *d, double *e)
         {
           a[i - 1][j - 1] = a[j - 1][i - 1] / h;
           g               = 0.0;
-          for (k = 1; k <= j; k++) g += a[k - 1][j - 1] * a[k - 1][i - 1];
-          for (k = j + 1; k <= l; k++) g += a[j - 1][k - 1] * a[k - 1][i - 1];
+          for (k = 1; k <= j; k++) { g += a[k - 1][j - 1] * a[k - 1][i - 1];
+}
+          for (k = j + 1; k <= l; k++) { g += a[j - 1][k - 1] * a[k - 1][i - 1];
+}
           e[j - 1] = g / h;
           f += e[j - 1] * a[j - 1][i - 1];
         }
@@ -115,13 +139,15 @@ static void mytred2(double **a, const unsigned int n, double *d, double *e)
           f        = a[j - 1][i - 1];
           g        = e[j - 1] - hh * f;
           e[j - 1] = g;
-          for (k = 1; k <= j; k++)
+          for (k = 1; k <= j; k++) {
             a[k - 1][j - 1] -= (f * e[k - 1] + g * a[k - 1][i - 1]);
+}
         }
       }
     }
-    else
+    else {
       e[i - 1] = a[l - 1][i - 1];
+}
     d[i - 1] = h;
   }
   d[0] = 0.0;
@@ -135,13 +161,16 @@ static void mytred2(double **a, const unsigned int n, double *d, double *e)
       for (j = 1; j <= l; j++)
       {
         g = 0.0;
-        for (k = 1; k <= l; k++) g += a[k - 1][i - 1] * a[j - 1][k - 1];
-        for (k = 1; k <= l; k++) a[j - 1][k - 1] -= g * a[i - 1][k - 1];
+        for (k = 1; k <= l; k++) { g += a[k - 1][i - 1] * a[j - 1][k - 1];
+}
+        for (k = 1; k <= l; k++) { a[j - 1][k - 1] -= g * a[i - 1][k - 1];
+}
       }
     }
     d[i - 1]        = a[i - 1][i - 1];
     a[i - 1][i - 1] = 1.0;
-    for (j = 1; j <= l; j++) a[i - 1][j - 1] = a[j - 1][i - 1] = 0.0;
+    for (j = 1; j <= l; j++) { a[i - 1][j - 1] = a[j - 1][i - 1] = 0.0;
+}
   }
 }
 
@@ -151,21 +180,26 @@ static double **create_ratematrix(const double *params,
                                   const double *freqs,
                                   unsigned int  states)
 {
-  unsigned int i, j, k, success;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int success = 0;
 
-  double **qmatrix;
+  double **qmatrix = NULL;
 
   /* normalize substitution parameters */
   unsigned int params_count = CORAX_SUBST_RATE_COUNT(states);
   double *params_normalized = (double *)malloc(sizeof(double) * params_count);
-  if (!params_normalized) return NULL;
+  if (!params_normalized) { return NULL;
+}
 
   memcpy(params_normalized, params, params_count * sizeof(double));
 
   if (params_normalized[params_count - 1] > 0.0)
   {
-    for (i = 0; i < params_count; ++i)
+    for (i = 0; i < params_count; ++i) {
       params_normalized[i] /= params_normalized[params_count - 1];
+}
   }
 
   /* allocate qmatrix */
@@ -177,12 +211,15 @@ static double **create_ratematrix(const double *params,
   }
 
   success = 1;
-  for (i = 0; i < states; ++i)
-    if (!(qmatrix[i] = (double *)malloc(states * sizeof(double)))) success = 0;
+  for (i = 0; i < states; ++i) {
+    if (!(qmatrix[i] = (double *)malloc(states * sizeof(double)))) { success = 0;
+}
+}
 
   if (!success)
   {
-    for (i = 0; i < states; ++i) free(qmatrix[i]);
+    for (i = 0; i < states; ++i) { free(qmatrix[i]);
+}
     free(qmatrix);
     free(params_normalized);
     return NULL;
@@ -191,7 +228,8 @@ static double **create_ratematrix(const double *params,
   /* construct a matrix equal to sqrt(pi) * Q sqrt(pi)^-1 in order to ensure
      it is symmetric */
 
-  for (i = 0; i < states; ++i) qmatrix[i][i] = 0;
+  for (i = 0; i < states; ++i) { qmatrix[i][i] = 0;
+}
 
   k = 0;
   for (i = 0; i < states; ++i)
@@ -210,10 +248,12 @@ static double **create_ratematrix(const double *params,
   }
 
   double mean = 0;
-  for (i = 0; i < states; ++i) mean += freqs[i] * (-qmatrix[i][i]);
+  for (i = 0; i < states; ++i) { mean += freqs[i] * (-qmatrix[i][i]);
+}
   for (i = 0; i < states; ++i)
   {
-    for (j = 0; j < states; ++j) qmatrix[i][j] /= mean;
+    for (j = 0; j < states; ++j) { qmatrix[i][j] /= mean;
+}
   }
 
   free(params_normalized);
@@ -226,11 +266,15 @@ static unsigned int eliminate_zero_states(double **     mat,
                                           unsigned int  states,
                                           double *      new_forg)
 {
-  unsigned int i, j, inew, jnew;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int inew = 0;
+  unsigned int jnew = 0;
   unsigned int new_states = 0;
   for (i = 0; i < states; i++)
   {
-    if (forg[i] > CORAX_EIGEN_MINFREQ) new_forg[new_states++] = forg[i];
+    if (forg[i] > CORAX_EIGEN_MINFREQ) { new_forg[new_states++] = forg[i];
+}
   }
 
   assert(new_states <= states);
@@ -260,9 +304,11 @@ static unsigned int eliminate_zero_states(double **     mat,
 CORAX_EXPORT int corax_update_eigen(corax_partition_t *partition,
                                     unsigned int       params_index)
 {
-  unsigned int i, j;
-  double *     e, *d;
-  double **    a;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  double *     e = NULL;
+  double *d = NULL;
+  double **    a = NULL;
 
   double *eigenvecs     = partition->eigenvecs[params_index];
   double *inv_eigenvecs = partition->inv_eigenvecs[params_index];
@@ -273,8 +319,9 @@ CORAX_EXPORT int corax_update_eigen(corax_partition_t *partition,
   unsigned int states        = partition->states;
   unsigned int states_padded = partition->states_padded;
 
-  unsigned int inew, jnew;
-  unsigned int new_states;
+  unsigned int inew = 0;
+  unsigned int jnew = 0;
+  unsigned int new_states = 0;
   double *     new_freqs = NULL;
 
   a = create_ratematrix(subst_params, freqs, states);
@@ -289,10 +336,14 @@ CORAX_EXPORT int corax_update_eigen(corax_partition_t *partition,
   new_freqs = (double *)malloc(states * sizeof(double));
   if (!d || !e || !new_freqs)
   {
-    if (d) free(d);
-    if (e) free(e);
-    if (new_freqs) free(new_freqs);
-    for (i = 0; i < states; ++i) free(a[i]);
+    if (d) { free(d);
+}
+    if (e) { free(e);
+}
+    if (new_freqs) { free(new_freqs);
+}
+    for (i = 0; i < states; ++i) { free(a[i]);
+}
     free(a);
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
@@ -307,13 +358,15 @@ CORAX_EXPORT int corax_update_eigen(corax_partition_t *partition,
   mytred2(a, new_states, d, e);
   mytqli(d, e, new_states, a);
 
-  for (i = 0, inew = 0; i < states; i++)
+  for (i = 0, inew = 0; i < states; i++) {
     eigenvals[i] = (freqs[i] > CORAX_EIGEN_MINFREQ) ? d[inew++] : 0;
+}
 
   assert(inew == new_states);
 
   /* pre-compute square roots of frequencies */
-  for (i = 0; i < new_states; i++) new_freqs[i] = sqrt(new_freqs[i]);
+  for (i = 0; i < new_states; i++) { new_freqs[i] = sqrt(new_freqs[i]);
+}
 
   if (new_states < states)
   {
@@ -367,7 +420,8 @@ CORAX_EXPORT int corax_update_eigen(corax_partition_t *partition,
   free(d);
   free(e);
   free(new_freqs);
-  for (i = 0; i < states; ++i) free(a[i]);
+  for (i = 0; i < states; ++i) { free(a[i]);
+}
   free(a);
 
   return CORAX_SUCCESS;

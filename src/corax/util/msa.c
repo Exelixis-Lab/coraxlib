@@ -41,7 +41,10 @@
 CORAX_EXPORT double *
 corax_msa_empirical_frequencies(const corax_partition_t *partition)
 {
-  unsigned int         i, j, k, n;
+  unsigned int         i = 0;
+  unsigned int         j = 0;
+  unsigned int         k = 0;
+  unsigned int         n = 0;
   unsigned int         states        = partition->states;
   unsigned int         states_padded = partition->states_padded;
   unsigned int         sites         = partition->sites;
@@ -49,7 +52,7 @@ corax_msa_empirical_frequencies(const corax_partition_t *partition)
   unsigned int         tips          = partition->tips;
   const corax_state_t *tipmap        = partition->tipmap;
   const unsigned int * w             = partition->pattern_weights;
-  double *             frequencies;
+  double *             frequencies = NULL;
 
   if ((frequencies = (double *)calloc((size_t)states, sizeof(double))) == NULL)
   {
@@ -71,7 +74,8 @@ corax_msa_empirical_frequencies(const corax_partition_t *partition)
           double       sum_site = 1.0 * CORAX_POPCNT32(state);
           for (k = 0; k < states; ++k)
           {
-            if (state & 1) frequencies[k] += w[n] / sum_site;
+            if (state & 1) { frequencies[k] += w[n] / sum_site;
+}
             state >>= 1;
           }
         }
@@ -88,7 +92,8 @@ corax_msa_empirical_frequencies(const corax_partition_t *partition)
           double        sum_site = 1.0 * CORAX_STATE_POPCNT(state);
           for (k = 0; k < states; ++k)
           {
-            if (state & 1) frequencies[k] += w[n] / sum_site;
+            if (state & 1) { frequencies[k] += w[n] / sum_site;
+}
             state >>= 1;
           }
         }
@@ -111,10 +116,12 @@ corax_msa_empirical_frequencies(const corax_partition_t *partition)
         j = site_to_id ? site_to_id[n] : n;
         j *= (states_padded * rate_cats);
         double sum_site = 0.0;
-        for (k = 0; k < states; ++k) sum_site += partition->clv[i][j + k];
+        for (k = 0; k < states; ++k) { sum_site += partition->clv[i][j + k];
+}
 
-        for (k = 0; k < states; ++k)
+        for (k = 0; k < states; ++k) {
           frequencies[k] += w[n] * partition->clv[i][j + k] / sum_site;
+}
       }
     }
   }
@@ -123,9 +130,11 @@ corax_msa_empirical_frequencies(const corax_partition_t *partition)
    * pattern compression), since we previously multiplied our base counts with
    * the respective column weights! */
   unsigned int uncomp_sites = 0;
-  for (i = 0; i < sites; ++i) uncomp_sites += w[i];
+  for (i = 0; i < sites; ++i) { uncomp_sites += w[i];
+}
 
-  for (k = 0; k < states; ++k) frequencies[k] /= uncomp_sites * tips;
+  for (k = 0; k < states; ++k) { frequencies[k] /= uncomp_sites * tips;
+}
 
 #ifndef NDEBUG
   double sum_test = 0.0;
@@ -136,7 +145,7 @@ corax_msa_empirical_frequencies(const corax_partition_t *partition)
   return frequencies;
 }
 
-void compute_pair_rates(unsigned int         states,
+static void compute_pair_rates(unsigned int         states,
                         unsigned int         tips,
                         unsigned long        sites,
                         unsigned char **     tipchars,
@@ -145,8 +154,10 @@ void compute_pair_rates(unsigned int         states,
                         size_t *             state_freq,
                         size_t *             pair_rates)
 {
-  unsigned int  i, j, k;
-  unsigned long n;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
+  unsigned long n = 0;
   corax_state_t undef_state = (corax_state_t)(pow(2, states)) - 1;
 
   for (n = 0; n < sites; ++n)
@@ -156,17 +167,20 @@ void compute_pair_rates(unsigned int         states,
     {
       const unsigned int c     = (unsigned int)tipchars[i][n];
       corax_state_t      state = tipmap ? tipmap[c] : c;
-      if (state == undef_state) continue;
+      if (state == undef_state) { continue;
+}
       for (k = 0; k < states; ++k)
       {
-        if (state & 1) state_freq[k]++;
+        if (state & 1) { state_freq[k]++;
+}
         state >>= 1;
       }
     }
 
     for (i = 0; i < states; i++)
     {
-      if (state_freq[i] == 0) continue;
+      if (state_freq[i] == 0) { continue;
+}
       for (j = i + 1; j < states; j++)
       {
         pair_rates[i * states + j] += state_freq[i] * state_freq[j] * w[n];
@@ -178,7 +192,10 @@ void compute_pair_rates(unsigned int         states,
 CORAX_EXPORT double *
 corax_msa_empirical_subst_rates(const corax_partition_t *partition)
 {
-  unsigned int         i, j, k, n;
+  unsigned int         i = 0;
+  unsigned int         j = 0;
+  unsigned int         k = 0;
+  unsigned int         n = 0;
   unsigned int         states        = partition->states;
   unsigned int         states_padded = partition->states_padded;
   unsigned int         sites         = partition->sites;
@@ -198,9 +215,12 @@ corax_msa_empirical_subst_rates(const corax_partition_t *partition)
   {
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for empirical subst rates");
-    if (subst_rates) free(subst_rates);
-    if (pair_rates) free(pair_rates);
-    if (state_freq) free(state_freq);
+    if (subst_rates) { free(subst_rates);
+}
+    if (pair_rates) { free(pair_rates);
+}
+    if (state_freq) { free(state_freq);
+}
     return NULL;
   }
 
@@ -219,13 +239,15 @@ corax_msa_empirical_subst_rates(const corax_partition_t *partition)
       for (i = 0; i < tips; ++i)
       {
         int unstate = 1;
-        for (k = 0; k < states; ++k)
+        for (k = 0; k < states; ++k) {
           if (partition->clv[i][n + k] < 1e-7)
           {
             unstate = 0;
             break;
           }
-        if (unstate) continue;
+}
+        if (unstate) { continue;
+}
         for (k = 0; k < states; ++k)
         {
           if (partition->clv[i][n + k] > 0) { state_freq[k]++; }
@@ -234,7 +256,8 @@ corax_msa_empirical_subst_rates(const corax_partition_t *partition)
 
       for (i = 0; i < states; i++)
       {
-        if (state_freq[i] == 0) continue;
+        if (state_freq[i] == 0) { continue;
+}
         for (j = i + 1; j < states; j++)
         {
           pair_rates[i * states + j] +=
@@ -247,14 +270,17 @@ corax_msa_empirical_subst_rates(const corax_partition_t *partition)
 
   k                = 0;
   double last_rate = pair_rates[(states - 2) * states + states - 1];
-  if (last_rate < 1e-7) last_rate = 1;
+  if (last_rate < 1e-7) { last_rate = 1;
+}
   for (i = 0; i < states - 1; i++)
   {
     for (j = i + 1; j < states; j++)
     {
       subst_rates[k++] = pair_rates[i * states + j] / last_rate;
-      if (subst_rates[k - 1] < 0.01) subst_rates[k - 1] = 0.01;
-      if (subst_rates[k - 1] > 50.0) subst_rates[k - 1] = 50.0;
+      if (subst_rates[k - 1] < 0.01) { subst_rates[k - 1] = 0.01;
+}
+      if (subst_rates[k - 1] > 50.0) { subst_rates[k - 1] = 50.0;
+}
     }
   }
   subst_rates[k - 1] = 1.0;
@@ -268,7 +294,7 @@ corax_msa_empirical_subst_rates(const corax_partition_t *partition)
 CORAX_EXPORT double
 corax_msa_empirical_invariant_sites(corax_partition_t *partition)
 {
-  unsigned int        n;
+  unsigned int        n = 0;
   unsigned int        n_inv = 0;
   unsigned int        sites = partition->sites;
   const unsigned int *w     = partition->pattern_weights;
@@ -276,15 +302,18 @@ corax_msa_empirical_invariant_sites(corax_partition_t *partition)
   /* reset errno */
   corax_errno = 0;
 
-  if (!partition->invariant)
-    if (!corax_update_invariant_sites(partition)) return (double)-INFINITY;
+  if (!partition->invariant) {
+    if (!corax_update_invariant_sites(partition)) { return (double)-INFINITY;
+}
+}
 
   const int *invariant = partition->invariant;
 
   unsigned int uncomp_sites = 0;
   for (n = 0; n < sites; ++n)
   {
-    if (invariant[n] > -1) n_inv += w[n];
+    if (invariant[n] > -1) { n_inv += w[n];
+}
     uncomp_sites += w[n];
   }
 
@@ -314,14 +343,16 @@ corax_msa_column_entropies(const corax_msa_t *   msa,
   const unsigned long msa_count  = (unsigned long)msa->count;
   const unsigned long msa_length = (unsigned long)msa->length;
 
-  unsigned long  i, j, k;
+  unsigned long  i = 0;
+  unsigned long  j = 0;
+  unsigned long  k = 0;
 
   corax_state_t gap_state = 0;
 
   double * const column_entropies = (double *)calloc(msa_length, sizeof(double));
 
   /* gap state has always all bits set to one */
-  gap_state = (1ul << (states)) - 1;
+  gap_state = (1UL << (states)) - 1;
 
   for (j = 0; j < msa_length; ++j) // site loop msa_length
   {
@@ -341,7 +372,7 @@ corax_msa_column_entropies(const corax_msa_t *   msa,
 
       for (k = 0; k < states; ++k)
       {
-        if (state & (1ll << k)) {
+        if (state & (1LL << k)) {
           state_counts[k]++;
         }
       }
@@ -385,7 +416,7 @@ corax_msa_entropy(const corax_msa_t *         msa,
 
   const unsigned long msa_length = (unsigned long)msa->length;
 
-  unsigned long  i;
+  unsigned long  i = 0;
 
   double* column_entropies = corax_msa_column_entropies(msa, states, tipmap);
 
@@ -428,7 +459,7 @@ corax_msa_bollback_multinomial(corax_msa_t *         msa,
   }
 
   int number_of_sites = 0;
-  int i;
+  int i = 0;
 
   double sum = 0.0;
 
@@ -527,7 +558,8 @@ static int find_duplicate_strings(char **const    strings,
                                   unsigned long **duplicates,
                                   unsigned long * duplicate_count)
 {
-  if (!strings) return CORAX_FAILURE;
+  if (!strings) { return CORAX_FAILURE;
+}
 
   unsigned long *tmpdup =
       (unsigned long *)malloc(string_count * 2 * sizeof(unsigned long));
@@ -540,9 +572,12 @@ static int find_duplicate_strings(char **const    strings,
 
   if (!hash || !tmpdup || !dupflag)
   {
-    if (hash) free(hash);
-    if (tmpdup) free(tmpdup);
-    if (dupflag) free(dupflag);
+    if (hash) { free(hash);
+}
+    if (tmpdup) { free(tmpdup);
+}
+    if (dupflag) { free(dupflag);
+}
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for duplicates array");
     return CORAX_FAILURE;
@@ -550,20 +585,22 @@ static int find_duplicate_strings(char **const    strings,
 
   *duplicate_count = 0;
 
-  unsigned long i;
-  unsigned long j;
+  unsigned long i = 0;
+  unsigned long j = 0;
 
   for (i = 0; i < string_count; ++i)
   {
-    for (j = 0; j < (string_len ? string_len : strlen(strings[i])); ++j)
+    for (j = 0; j < (string_len ? string_len : strlen(strings[i])); ++j) {
       hash[i] = hash[i] + (j + 1) * (unsigned long)strings[i][j];
+}
   }
 
   int coll = 0;
 
   for (i = 0; i < string_count; ++i)
   {
-    if (dupflag[i]) continue;
+    if (dupflag[i]) { continue;
+}
     for (j = i + 1; j < string_count; ++j)
     {
       if (hash[i] == hash[j])
@@ -610,7 +647,8 @@ static int find_duplicate_strings(char **const    strings,
 CORAX_EXPORT corax_msa_errors_t *corax_msa_check(const corax_msa_t *  msa,
                                                  const corax_state_t *tipmap)
 {
-  unsigned long i, j;
+  unsigned long i = 0;
+  unsigned long j = 0;
 
   if (!msa)
   {
@@ -663,7 +701,8 @@ CORAX_EXPORT corax_msa_errors_t *corax_msa_check(const corax_msa_t *  msa,
         errs->invalid_char_seq[errs->invalid_char_count] = i;
         errs->invalid_char_pos[errs->invalid_char_count] = j;
         errs->invalid_char_count++;
-        if (errs->invalid_char_count >= CORAX_MSA_MAX_ERRORS) return errs;
+        if (errs->invalid_char_count >= CORAX_MSA_MAX_ERRORS) { return errs;
+}
       }
     }
   }
@@ -673,13 +712,17 @@ CORAX_EXPORT corax_msa_errors_t *corax_msa_check(const corax_msa_t *  msa,
 
 CORAX_EXPORT void corax_msa_destroy_errors(corax_msa_errors_t *errs)
 {
-  if (!errs) return;
+  if (!errs) { return;
+}
 
-  if (errs->invalid_chars) free(errs->invalid_chars);
+  if (errs->invalid_chars) { free(errs->invalid_chars);
+}
 
-  if (errs->invalid_char_seq) free(errs->invalid_char_seq);
+  if (errs->invalid_char_seq) { free(errs->invalid_char_seq);
+}
 
-  if (errs->invalid_char_pos) free(errs->invalid_char_pos);
+  if (errs->invalid_char_pos) { free(errs->invalid_char_pos);
+}
 }
 
 /**
@@ -687,7 +730,7 @@ CORAX_EXPORT void corax_msa_destroy_errors(corax_msa_errors_t *errs)
  *
  *  @param msa Multiple Sequence Alignment
  *  @param states Number of states (e.g., DNA=4, AA=20 etc.)
- *  @param charmap Mapping from chars to states (e.g., corax_map_nt for DNA)
+ *  @param tipmap Mapping from chars to states (e.g., corax_map_nt for DNA)
  *  @param weights Alignment site weights, NULL=equal weights
  *  @param stats_mask Statistics to be computed, any combination of:
  *      CORAX_MSA_STATS_DUP_TAXA   duplicate taxon names
@@ -733,7 +776,9 @@ CORAX_EXPORT corax_msa_stats_t *
   const unsigned int  msa_count  = msa->count;
   const unsigned long msa_length = (unsigned long)msa->length;
 
-  unsigned long  i, j, k;
+  unsigned long  i = 0;
+  unsigned long  j = 0;
+  unsigned long  k = 0;
   unsigned long  sum_weights     = 0;
   unsigned long  total_gap_count = 0;
   unsigned long *col_gap_weight  = NULL;
@@ -826,14 +871,17 @@ CORAX_EXPORT corax_msa_stats_t *
 
     k                = 0;
     double last_rate = pair_rates[(states - 2) * states + states - 1];
-    if (last_rate < 1e-7) last_rate = 1;
+    if (last_rate < 1e-7) { last_rate = 1;
+}
     for (i = 0; i < states - 1; i++)
     {
       for (j = i + 1; j < states; j++)
       {
         stats->subst_rates[k++] = pair_rates[i * states + j] / last_rate;
-        if (stats->subst_rates[k - 1] < 0.01) stats->subst_rates[k - 1] = 0.01;
-        if (stats->subst_rates[k - 1] > 50.0) stats->subst_rates[k - 1] = 50.0;
+        if (stats->subst_rates[k - 1] < 0.01) { stats->subst_rates[k - 1] = 0.01;
+}
+        if (stats->subst_rates[k - 1] > 50.0) { stats->subst_rates[k - 1] = 50.0;
+}
       }
     }
     stats->subst_rates[k - 1] = 1.0;
@@ -848,8 +896,9 @@ CORAX_EXPORT corax_msa_stats_t *
   /* if we were asked to find duplicates only, no need to loop over sites */
   if (!(stats_mask
         & ~(CORAX_MSA_STATS_DUP_SEQS | CORAX_MSA_STATS_DUP_TAXA
-            | CORAX_MSA_STATS_SUBST_RATES)))
+            | CORAX_MSA_STATS_SUBST_RATES))) {
     return stats;
+}
 
   if (stats_mask & CORAX_MSA_STATS_FREQS)
   {
@@ -886,7 +935,8 @@ CORAX_EXPORT corax_msa_stats_t *
     }
 
     /* initialize all elements to the gap state */
-    for (i = 0; i < msa_length; ++i) inv_state[i] = gap_state;
+    for (i = 0; i < msa_length; ++i) { inv_state[i] = gap_state;
+}
   }
 
   /* check memory allocation */
@@ -931,25 +981,31 @@ CORAX_EXPORT corax_msa_stats_t *
       }
 
       /* compute sum of weights (=alignment length before pattern compression)*/
-      if (i == 0) sum_weights += w;
+      if (i == 0) { sum_weights += w;
+}
 
       if (stats_mask & (CORAX_MSA_STATS_GAP_PROP | CORAX_MSA_STATS_FREQS))
       {
-        if (is_gap) total_gap_count += w;
+        if (is_gap) { total_gap_count += w;
+}
       }
 
       if (stats_mask & CORAX_MSA_STATS_GAP_COLS)
       {
-        if (is_gap) col_gap_weight[j] += 1;
-        if (i == msa_count - 1 && col_gap_weight[j] == msa_count)
+        if (is_gap) { col_gap_weight[j] += 1;
+}
+        if (i == msa_count - 1 && col_gap_weight[j] == msa_count) {
           stats->gap_cols_count++;
+}
       }
 
       if (stats_mask & CORAX_MSA_STATS_GAP_SEQS)
       {
-        if (is_gap) seq_gap_weight[i] += w;
-        if (j == msa_length - 1 && seq_gap_weight[i] == sum_weights)
+        if (is_gap) { seq_gap_weight[i] += w;
+}
+        if (j == msa_length - 1 && seq_gap_weight[i] == sum_weights) {
           stats->gap_seqs_count++;
+}
       }
 
       if (stats_mask & (CORAX_MSA_STATS_INV_COLS | CORAX_MSA_STATS_INV_PROP))
@@ -970,7 +1026,8 @@ CORAX_EXPORT corax_msa_stats_t *
           double state_prob = ((double)w) / site_states;
           for (k = 0; k < states; ++k)
           {
-            if (state & (1ll << k)) stats->freqs[k] += state_prob;
+            if (state & (1LL << k)) { stats->freqs[k] += state_prob;
+}
           }
         }
       }
@@ -993,13 +1050,15 @@ CORAX_EXPORT corax_msa_stats_t *
   /* normalize frequencies */
   if (stats_mask & CORAX_MSA_STATS_FREQS)
   {
-    for (k = 0; k < states; ++k)
+    for (k = 0; k < states; ++k) {
       stats->freqs[k] /= total_chars - total_gap_count;
+}
   }
 
   /* compute proportion of gaps */
-  if (stats_mask & CORAX_MSA_STATS_GAP_PROP)
+  if (stats_mask & CORAX_MSA_STATS_GAP_PROP) {
     stats->gap_prop = ((double)total_gap_count) / total_chars;
+}
 
   /* detect gap-only columns */
   if ((stats_mask & CORAX_MSA_STATS_GAP_COLS))
@@ -1019,7 +1078,8 @@ CORAX_EXPORT corax_msa_stats_t *
       unsigned long c = 0;
       for (j = 0; j < msa_length; ++j)
       {
-        if (col_gap_weight[j] == msa_count) stats->gap_cols[c++] = j;
+        if (col_gap_weight[j] == msa_count) { stats->gap_cols[c++] = j;
+}
       }
       assert(c == stats->gap_cols_count);
     }
@@ -1045,7 +1105,8 @@ CORAX_EXPORT corax_msa_stats_t *
       unsigned long c = 0;
       for (i = 0; i < msa_count; ++i)
       {
-        if (seq_gap_weight[i] == sum_weights) stats->gap_seqs[c++] = i;
+        if (seq_gap_weight[i] == sum_weights) { stats->gap_seqs[c++] = i;
+}
       }
       assert(c == stats->gap_seqs_count);
     }
@@ -1065,11 +1126,16 @@ CORAX_EXPORT corax_msa_stats_t *
   return stats;
 
 error_exit:
-  if (inv_state) free(inv_state);
-  if (col_gap_weight) free(col_gap_weight);
-  if (seq_gap_weight) free(seq_gap_weight);
-  if (col_state_freq) free(col_state_freq);
-  if (pair_rates) free(pair_rates);
+  if (inv_state) { free(inv_state);
+}
+  if (col_gap_weight) { free(col_gap_weight);
+}
+  if (seq_gap_weight) { free(seq_gap_weight);
+}
+  if (col_state_freq) { free(col_state_freq);
+}
+  if (pair_rates) { free(pair_rates);
+}
   corax_msa_destroy_stats(stats);
 
   return NULL;
@@ -1077,21 +1143,29 @@ error_exit:
 
 CORAX_EXPORT void corax_msa_destroy_stats(corax_msa_stats_t *stats)
 {
-  if (stats->dup_taxa_pairs) free(stats->dup_taxa_pairs);
+  if (stats->dup_taxa_pairs) { free(stats->dup_taxa_pairs);
+}
 
-  if (stats->dup_seqs_pairs) free(stats->dup_seqs_pairs);
+  if (stats->dup_seqs_pairs) { free(stats->dup_seqs_pairs);
+}
 
-  if (stats->gap_seqs) free(stats->gap_seqs);
+  if (stats->gap_seqs) { free(stats->gap_seqs);
+}
 
-  if (stats->gap_cols) free(stats->gap_cols);
+  if (stats->gap_cols) { free(stats->gap_cols);
+}
 
-  if (stats->inv_cols) free(stats->inv_cols);
+  if (stats->inv_cols) { free(stats->inv_cols);
+}
 
-  if (stats->freqs) free(stats->freqs);
+  if (stats->freqs) { free(stats->freqs);
+}
 
-  if (stats->subst_rates) free(stats->subst_rates);
+  if (stats->subst_rates) { free(stats->subst_rates);
+}
 
-  if (stats->column_entropies) free(stats->column_entropies);
+  if (stats->column_entropies) { free(stats->column_entropies);
+}
 
   free(stats);
 }
@@ -1137,7 +1211,8 @@ CORAX_EXPORT corax_msa_t *corax_msa_filter(corax_msa_t *  msa,
   const unsigned long old_count  = (unsigned long)msa->count;
   const unsigned long old_length = (unsigned long)msa->length;
 
-  unsigned long i, j;
+  unsigned long i = 0;
+  unsigned long j = 0;
 
   unsigned char *seqflag = NULL;
   unsigned char *colflag = NULL;
@@ -1148,9 +1223,9 @@ CORAX_EXPORT corax_msa_t *corax_msa_filter(corax_msa_t *  msa,
     seqflag = (unsigned char *)calloc(old_count, sizeof(unsigned char));
     for (i = 0; i < remove_seqs_count; ++i)
     {
-      if (remove_seqs[i] < old_count)
+      if (remove_seqs[i] < old_count) {
         seqflag[remove_seqs[i]] = 1;
-      else
+      } else
       {
         corax_set_error(CORAX_ERROR_INVALID_PARAM,
                         "Invalid sequence number in remove list: %lu",
@@ -1165,9 +1240,9 @@ CORAX_EXPORT corax_msa_t *corax_msa_filter(corax_msa_t *  msa,
     colflag = (unsigned char *)calloc(old_length, sizeof(unsigned char));
     for (i = 0; i < remove_cols_count; ++i)
     {
-      if (remove_cols[i] < old_length)
+      if (remove_cols[i] < old_length) {
         colflag[remove_cols[i]] = 1;
-      else
+      } else
       {
         corax_set_error(CORAX_ERROR_INVALID_PARAM,
                         "Invalid column number in remove list: %lu",
@@ -1180,49 +1255,54 @@ CORAX_EXPORT corax_msa_t *corax_msa_filter(corax_msa_t *  msa,
   const unsigned long new_count  = old_count - remove_seqs_count;
   const unsigned long new_length = old_length - remove_cols_count;
 
-  if (inplace)
+  if (inplace) {
     new_msa = msa;
-  else
+  } else
   {
     new_msa           = (corax_msa_t *)calloc(1, sizeof(corax_msa_t));
     new_msa->count    = (int)new_count;
     new_msa->length   = (int)new_length;
     new_msa->label    = (char **)calloc(new_count, sizeof(char *));
     new_msa->sequence = (char **)calloc(new_count, sizeof(char *));
-    if (!msa->label || !new_msa->sequence) goto error_exit;
+    if (!msa->label || !new_msa->sequence) { goto error_exit;
+}
   }
 
   unsigned long seq_idx = 0;
   for (i = 0; i < old_count; ++i)
   {
     /* check if we should skip this sequence */
-    if (seqflag && seqflag[i]) continue;
+    if (seqflag && seqflag[i]) { continue;
+}
 
-    if (inplace)
+    if (inplace) {
       new_msa->label[seq_idx] = msa->label[i];
-    else
+    } else
     {
       new_msa->label[seq_idx] = strdup(msa->label[i]);
       new_msa->sequence[seq_idx] =
           (char *)malloc((new_length + 1) * sizeof(char));
-      if (!new_msa->label[seq_idx] || !new_msa->sequence[seq_idx])
+      if (!new_msa->label[seq_idx] || !new_msa->sequence[seq_idx]) {
         goto error_exit;
+}
     }
 
     if (!colflag)
     {
       /* no columns to remove, just copy/assign the old sequence*/
-      if (inplace)
+      if (inplace) {
         new_msa->sequence[seq_idx] = msa->sequence[i];
-      else
+      } else {
         strcpy(new_msa->sequence[seq_idx], msa->sequence[i]);
+}
     }
     else
     {
       unsigned long col_idx = 0;
       for (j = 0; j < old_length; ++j)
       {
-        if (colflag[j]) continue;
+        if (colflag[j]) { continue;
+}
 
         new_msa->sequence[seq_idx][col_idx++] = msa->sequence[i][j];
       }
@@ -1253,23 +1333,31 @@ CORAX_EXPORT corax_msa_t *corax_msa_filter(corax_msa_t *  msa,
         (char **)realloc(new_msa->label, new_count * sizeof(char *));
   }
 
-  if (seqflag) free(seqflag);
-  if (colflag) free(colflag);
+  if (seqflag) { free(seqflag);
+}
+  if (colflag) { free(colflag);
+}
 
   return new_msa;
 
 error_exit:
-  if (seqflag) free(seqflag);
-  if (colflag) free(colflag);
+  if (seqflag) { free(seqflag);
+}
+  if (colflag) { free(colflag);
+}
   if (new_msa)
   {
     for (i = 0; i < (unsigned long)new_msa->count; ++i)
     {
-      if (msa->sequence && msa->sequence[i]) free(msa->sequence[i]);
-      if (msa->label && msa->label[i]) free(msa->label[i]);
+      if (msa->sequence && msa->sequence[i]) { free(msa->sequence[i]);
+}
+      if (msa->label && msa->label[i]) { free(msa->label[i]);
+}
     }
-    if (msa->sequence) free(msa->sequence);
-    if (msa->label) free(msa->label);
+    if (msa->sequence) { free(msa->sequence);
+}
+    if (msa->label) { free(msa->label);
+}
 
     free(new_msa);
   }
@@ -1303,15 +1391,17 @@ CORAX_EXPORT corax_msa_t **corax_msa_split(const corax_msa_t * msa,
                                            const unsigned int *site_part,
                                            unsigned int        part_count)
 {
-  unsigned int  p;
-  unsigned long i, j;
+  unsigned int  p = 0;
+  unsigned long i = 0;
+  unsigned long j = 0;
 
   corax_msa_t **part_msa_list =
       (corax_msa_t **)calloc(part_count, sizeof(corax_msa_t *));
   unsigned int *part_len =
       (unsigned int *)calloc(part_count, sizeof(unsigned int));
 
-  if (!part_msa_list || !part_len) goto malloc_error;
+  if (!part_msa_list || !part_len) { goto malloc_error;
+}
 
   /* compute partition sizes */
   for (j = 0; j < (unsigned long)msa->length; j++)
@@ -1319,9 +1409,9 @@ CORAX_EXPORT corax_msa_t **corax_msa_split(const corax_msa_t * msa,
     if (site_part[j])
     {
       p = site_part[j] - 1;
-      if (p < part_count)
+      if (p < part_count) {
         part_len[p]++;
-      else
+      } else
       {
         corax_set_error(
             CORAX_ERROR_INVALID_INDEX, "Partition index out of bounds: %u", p);
@@ -1333,20 +1423,23 @@ CORAX_EXPORT corax_msa_t **corax_msa_split(const corax_msa_t * msa,
   for (p = 0; p < part_count; ++p)
   {
     part_msa_list[p] = (corax_msa_t *)calloc(1, sizeof(corax_msa_t));
-    if (!part_msa_list[p]) goto malloc_error;
+    if (!part_msa_list[p]) { goto malloc_error;
+}
 
     part_msa_list[p]->count  = msa->count;
     part_msa_list[p]->length = 0;
     part_msa_list[p]->label  = NULL;
     part_msa_list[p]->sequence =
         (char **)calloc((size_t)msa->count, sizeof(char *));
-    if (!part_msa_list[p]->sequence) goto malloc_error;
+    if (!part_msa_list[p]->sequence) { goto malloc_error;
+}
 
     for (i = 0; i < (unsigned long)msa->count; i++)
     {
       part_msa_list[p]->sequence[i] =
           (char *)malloc(part_len[p] * sizeof(char));
-      if (!part_msa_list[p]->sequence[i]) goto malloc_error;
+      if (!part_msa_list[p]->sequence[i]) { goto malloc_error;
+}
     }
   }
 
@@ -1359,8 +1452,9 @@ CORAX_EXPORT corax_msa_t **corax_msa_split(const corax_msa_t * msa,
       assert(p < part_count);
       const unsigned int len = (unsigned int)part_msa_list[p]->length;
       part_msa_list[p]->length++;
-      for (i = 0; i < (unsigned long)msa->count; i++)
+      for (i = 0; i < (unsigned long)msa->count; i++) {
         part_msa_list[p]->sequence[i][len] = msa->sequence[i][j];
+}
     }
   }
 
@@ -1372,7 +1466,8 @@ malloc_error:
   corax_set_error(CORAX_ERROR_MEM_ALLOC,
                   "Cannot allocate memory needed for MSA splitting");
 error_exit:
-  if (part_len) free(part_len);
+  if (part_len) { free(part_len);
+}
   if (part_msa_list)
   {
     for (p = 0; p < part_count; ++p)
@@ -1383,8 +1478,9 @@ error_exit:
         {
           for (i = 0; i < (unsigned long)msa->count; i++)
           {
-            if (part_msa_list[p]->sequence[i])
+            if (part_msa_list[p]->sequence[i]) {
               free(part_msa_list[p]->sequence[i]);
+}
           }
           free(part_msa_list[p]->sequence);
         }

@@ -40,13 +40,13 @@ typedef struct tbe_data
   unsigned int         tip_count_div_2;
 } tbe_data_t;
 
-int cb_full_traversal(corax_unode_t *node)
+static int cb_full_traversal(corax_unode_t *node)
 {
   (void)node;
   return 1;
 }
 
-void postorder_init_recursive(const corax_unode_t *node,
+static void postorder_init_recursive(const corax_unode_t *node,
                               unsigned int *       index,
                               unsigned int *       subtree_size,
                               index_information_t *idx_infos)
@@ -71,7 +71,7 @@ void postorder_init_recursive(const corax_unode_t *node,
   *index            = *index + 1;
 }
 
-void postorder_init(const corax_unode_t *root,
+static void postorder_init(const corax_unode_t *root,
                     unsigned int *       trav_size,
                     unsigned int *       subtree_size,
                     index_information_t *idx_infos)
@@ -81,7 +81,7 @@ void postorder_init(const corax_unode_t *root,
   postorder_init_recursive(root, trav_size, subtree_size, idx_infos);
 }
 
-tbe_data_t *init_tbe_data(corax_unode_t *root, unsigned int tip_count)
+static tbe_data_t *init_tbe_data(corax_unode_t *root, unsigned int tip_count)
 {
   tbe_data_t *data      = (tbe_data_t *)malloc(sizeof(tbe_data_t));
   data->tip_count       = tip_count;
@@ -98,7 +98,7 @@ tbe_data_t *init_tbe_data(corax_unode_t *root, unsigned int tip_count)
   return data;
 }
 
-void free_tbe_data(tbe_data_t *data)
+static void free_tbe_data(tbe_data_t *data)
 {
   free(data->subtree_size);
   free(data->idx_infos);
@@ -106,7 +106,7 @@ void free_tbe_data(tbe_data_t *data)
   free(data);
 }
 
-unsigned int search_mindist(const corax_tbe_split_info_t *query,
+static unsigned int search_mindist(const corax_tbe_split_info_t *query,
                             tbe_data_t *                  data)
 {
   unsigned int  min_dist   = query->p - 1;
@@ -163,7 +163,7 @@ static unsigned int utree_split_hamming_distance_lbound(corax_split_t s1,
                                                         unsigned int  min_hdist)
 {
   unsigned int hdist = 0;
-  unsigned int i;
+  unsigned int i = 0;
 
   for (i = 0; (i < split_len) && (hdist <= min_hdist); ++i)
   {
@@ -201,14 +201,16 @@ corax_utree_tbe_nature_init(corax_unode_t *       ref_root,
 
   if (!split_info || !travbuffer)
   {
-    if (split_info) free(split_info);
-    if (travbuffer) free(travbuffer);
+    if (split_info) { free(split_info);
+}
+    if (travbuffer) { free(travbuffer);
+}
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory\n");
     return CORAX_FAILURE;
   }
 
   // do a post-order traversal of the reference tree.
-  unsigned int trav_size;
+  unsigned int trav_size = 0;
   corax_utree_traverse(ref_root,
                        CORAX_TREE_TRAVERSE_POSTORDER,
                        cb_full_traversal,
@@ -268,7 +270,7 @@ CORAX_EXPORT int corax_utree_tbe_nature(corax_split_t *         ref_splits,
                                         double *                support,
                                         corax_tbe_split_info_t *split_info)
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int split_count = tip_count - 3;
 
   if (!ref_splits || !bs_splits || !support || !split_info)
@@ -280,7 +282,8 @@ CORAX_EXPORT int corax_utree_tbe_nature(corax_split_t *         ref_splits,
   bitv_hashtable_t *bs_splits_hash = corax_utree_split_hashtable_insert(
       NULL, bs_splits, tip_count, split_count, NULL, 0);
 
-  if (!bs_splits_hash) return CORAX_FAILURE;
+  if (!bs_splits_hash) { return CORAX_FAILURE;
+}
 
   tbe_data_t *tbe_data = NULL;
 
@@ -303,7 +306,8 @@ CORAX_EXPORT int corax_utree_tbe_nature(corax_split_t *         ref_splits,
       continue;
     }
 
-    if (!tbe_data) tbe_data = init_tbe_data(bs_root, tip_count);
+    if (!tbe_data) { tbe_data = init_tbe_data(bs_root, tip_count);
+}
 
     // else, we are in the search for minimum distance...
     unsigned int min_hdist = search_mindist(&split_info[i], tbe_data);
@@ -313,7 +317,8 @@ CORAX_EXPORT int corax_utree_tbe_nature(corax_split_t *         ref_splits,
 
   corax_utree_split_hashtable_destroy(bs_splits_hash);
 
-  if (tbe_data) free_tbe_data(tbe_data);
+  if (tbe_data) { free_tbe_data(tbe_data);
+}
 
   return CORAX_SUCCESS;
 }
@@ -325,12 +330,14 @@ CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
                                        unsigned int   tip_count,
                                        double *       support)
 {
-  unsigned int i, j, k;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   unsigned int split_count  = tip_count - 3;
   unsigned int split_len    = bitv_length(tip_count);
   unsigned int split_size   = sizeof(corax_split_base_t) * 8;
   unsigned int split_offset = tip_count % split_size;
-  unsigned int split_mask   = split_offset ? (1u << split_offset) - 1 : ~0u;
+  unsigned int split_mask   = split_offset ? (1U << split_offset) - 1 : ~0U;
 
   corax_split_t inv_split = NULL;
   unsigned int *bs_light  = NULL;
@@ -351,8 +358,10 @@ CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
 
   if (!inv_split || !bs_light)
   {
-    if (inv_split) free(inv_split);
-    if (bs_light) free(bs_light);
+    if (inv_split) { free(inv_split);
+}
+    if (bs_light) { free(bs_light);
+}
     corax_utree_split_hashtable_destroy(bs_splits_hash);
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory\n");
     return CORAX_FAILURE;
@@ -387,11 +396,12 @@ CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
     /* iterate over all splits of the bootstrap tree */
     for (j = 0; j < split_count; j++)
     {
-      unsigned int hdist, hdist_inv;
+      unsigned int hdist = 0;
+      unsigned int hdist_inv = 0;
 
       /* this split is too far away -> skip it */
-      if (abs(bs_light[j] - p) > min_hdist
-          && abs(tip_count - bs_light[j] - p) > min_hdist)
+      if ((bs_light[j] - p) > min_hdist
+          && (tip_count - bs_light[j] - p) > min_hdist)
       {
         continue;
       }

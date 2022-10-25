@@ -21,6 +21,8 @@
 #include <time.h>
 #include <assert.h>
 
+#include "math.h"
+
 __thread int c__1 = 1;
 
 #ifdef DEBUG
@@ -46,10 +48,22 @@ int setulb (int *n, int *m, double *x, double *l, double *u, int *nbd,
             int *isave, double *dsave) /* ftnlen task_len, ftnlen csave_len) */
 {
   /* System generated locals */
-  int i__1;
+  int i__1 = 0;
 
   /* Local variables */
-  int ld, lr, lt, lz, lwa, lwn, lss, lxp, lws, lwt, lsy, lwy, lsnd;
+  int ld = 0;
+  int lr = 0;
+  int lt = 0;
+  int lz = 0;
+  int lwa = 0;
+  int lwn = 0;
+  int lss = 0;
+  int lxp = 0;
+  int lws = 0;
+  int lwt = 0;
+  int lsy = 0;
+  int lwy = 0;
+  int lsnd = 0;
 
   /* -jlm-jn */
   /*
@@ -315,49 +329,74 @@ int mainlb (int *n, int *m, double *x, double *l, double *u, int *nbd,
 /* 	task_len, ftnlen csave_len) */
 {
   /* System generated locals */
-  int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, ss_dim1,
-      ss_offset, wt_dim1, wt_offset, wn_dim1, wn_offset, snd_dim1, snd_offset,
-      i__1 = 0;
-  double d__1, d__2;
+  int ws_dim1 = 0;
+  int ws_offset = 0;
+  int wy_dim1 = 0;
+  int wy_offset = 0;
+  int sy_dim1 = 0;
+  int sy_offset = 0;
+  int ss_dim1 = 0;
+  int ss_offset = 0;
+  int wt_dim1 = 0;
+  int wt_offset = 0;
+  int wn_dim1 = 0;
+  int wn_offset = 0;
+  int snd_dim1 = 0;
+  int snd_offset = 0;
+  int i__1 = 0;
+  double d__1 = NAN;
+  double d__2 = NAN;
 
   /* Local variables */
-  int i__, k;
-  double gd, dr, rr, dtd;
-  int col;
-  double tol;
-  logical wrk;
-  double stp, cpu1, cpu2;
-  int head;
-  double fold;
-  int nact;
-  double ddum;
-  int info, nseg;
-  int nfgv, ifun, iter;
-  int wordTemp;
+  int i__ = 0;
+  int k = 0;
+  double gd = NAN;
+  double dr = NAN;
+  double rr = NAN;
+  double dtd = NAN;
+  int col = 0;
+  double tol = NAN;
+  logical wrk = 0;
+  double stp = NAN;
+  double cpu1 = NAN;
+  double cpu2 = NAN;
+  int head = 0;
+  double fold = NAN;
+  int nact = 0;
+  double ddum = NAN;
+  int info = 0;
+  int nseg = 0;
+  int nfgv = 0;
+  int ifun = 0;
+  int iter = 0;
+  int wordTemp = 0;
   int *word = &wordTemp;
-  double time1, time2;
-  int iback;
-  double gdold;
-  int nfree;
-  logical boxed;
-  int itail;
-  double theta;
-  double dnorm;
-  int nskip, iword;
-  double xstep, stpmx;
-  int ileave;
-  double cachyt;
-  int itfile;
-  double epsmch;
-  logical updatd;
-  double sbtime;
-  logical prjctd;
-  int iupdat;
-  double sbgnrm;
-  logical cnstnd;
-  int nenter;
-  double lnscht;
-  int nintol;
+  double time1 = NAN;
+  double time2 = NAN;
+  int iback = 0;
+  double gdold = NAN;
+  int nfree = 0;
+  logical boxed = 0;
+  int itail = 0;
+  double theta = NAN;
+  double dnorm = NAN;
+  int nskip = 0;
+  int iword = 0;
+  double xstep = NAN;
+  double stpmx = NAN;
+  int ileave = 0;
+  double cachyt = NAN;
+  int itfile = 0;
+  double epsmch = NAN;
+  logical updatd = 0;
+  double sbtime = NAN;
+  logical prjctd = 0;
+  int iupdat = 0;
+  double sbgnrm = NAN;
+  logical cnstnd = 0;
+  int nenter = 0;
+  double lnscht = NAN;
+  int nintol = 0;
 #ifdef DEBUG
   double cur_time;
 #endif
@@ -669,8 +708,9 @@ int mainlb (int *n, int *m, double *x, double *l, double *u, int *nbd,
   /* Line search and optimality tests. */
   /* Generate the search direction d:=z-x. */
   i__1 = *n;
-  for (i__ = 1; i__ <= i__1; ++i__)
+  for (i__ = 1; i__ <= i__1; ++i__) {
     d__[i__] = z__[i__] - x[i__];
+}
   timer (&cpu1);
   L666: lnsrlb (n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1],
                 &d__[1], &r__[1], &t[1], &z__[1], &stp, &dnorm, &dtd, &xstep,
@@ -747,7 +787,7 @@ int mainlb (int *n, int *m, double *x, double *l, double *u, int *nbd,
     goto L999;
   }
   /* Computing MAX */
-  d__1 = abs(fold), d__2 = abs(*f), d__1 = max(d__1, d__2);
+  (void)(d__1 = abs(fold)), (void)(d__2 = abs(*f)), d__1 = max(d__1, d__2);
   ddum = max(d__1, 1.);
   if (fold - *f <= tol * ddum)
   {
@@ -1064,15 +1104,18 @@ int prn3lb (int *n, double *x, double *f, int * task, int *iprint, int *info,
 int errclb (int *n, int *m, double *factr, double *l, double *u, int *nbd,
             int *task, int *info, int *k)
 {
-  int i;
+  int i = 0;
 
   /* Function Body */
-  if (*n <= 0)
+  if (*n <= 0) {
     *task = ERROR_N0;
-  if (*m <= 0)
+}
+  if (*m <= 0) {
     *task = ERROR_M0;
-  if (*factr < 0.)
+}
+  if (*factr < 0.) {
     *task = ERROR_FACTR;
+}
   /*     Check the validity of the arrays nbd(i), u(i), and l(i). */
   for (i = 0; i < *n; ++i)
   {
@@ -1099,7 +1142,7 @@ int errclb (int *n, int *m, double *factr, double *l, double *u, int *nbd,
 
 int timer (double *ttime)
 {
-  clock_t temp;
+  clock_t temp = 0;
   temp = clock ();
   *ttime = ((double) temp) / CLOCKS_PER_SEC;
   return 0;

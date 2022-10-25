@@ -13,7 +13,8 @@ corax_opt_minimize_em(double *             w,
                       void *               params,
                       double (*update_sitecatlk_funk)(void *, double *))
 {
-  unsigned int i, c;
+  unsigned int i = 0;
+  unsigned int c = 0;
   unsigned int max_steps   = 10;
   int          converged   = 0;
   int          ratio_scale = 0;
@@ -36,8 +37,9 @@ corax_opt_minimize_em(double *             w,
         this_lk_cat += w_count;
       }
     }
-    else
+    else {
       ratio_scale = 1;
+}
 
     memset(new_prop, 0, w_count * sizeof(double));
 

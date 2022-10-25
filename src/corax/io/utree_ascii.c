@@ -4,14 +4,20 @@ static int indent_space = 4;
 
 static void print_node_info(const corax_unode_t *node, int options)
 {
-  if (options & CORAX_UTREE_SHOW_LABEL) printf(" %s", node->label);
-  if (options & CORAX_UTREE_SHOW_BRANCH_LENGTH) printf(" %f", node->length);
-  if (options & CORAX_UTREE_SHOW_CLV_INDEX) printf(" %u", node->clv_index);
-  if (options & CORAX_UTREE_SHOW_SCALER_INDEX)
+  if (options & CORAX_UTREE_SHOW_LABEL) { printf(" %s", node->label);
+}
+  if (options & CORAX_UTREE_SHOW_BRANCH_LENGTH) { printf(" %f", node->length);
+}
+  if (options & CORAX_UTREE_SHOW_CLV_INDEX) { printf(" %u", node->clv_index);
+}
+  if (options & CORAX_UTREE_SHOW_SCALER_INDEX) {
     printf(" %d", node->scaler_index);
-  if (options & CORAX_UTREE_SHOW_PMATRIX_INDEX)
+}
+  if (options & CORAX_UTREE_SHOW_PMATRIX_INDEX) {
     printf(" %u", node->pmatrix_index);
-  if (options & CORAX_UTREE_SHOW_DATA) printf(" %p", node->data);
+}
+  if (options & CORAX_UTREE_SHOW_DATA) { printf(" %p", node->data);
+}
   printf("\n");
 }
 
@@ -20,39 +26,48 @@ static void print_tree_recurse(corax_unode_t *node,
                                int *          active_node_order,
                                int            options)
 {
-  int i, j;
+  int i = 0;
+  int j = 0;
 
-  if (!node) return;
+  if (!node) { return;
+}
 
   for (i = 0; i < indent_level; ++i)
   {
-    if (active_node_order[i])
+    if (active_node_order[i]) {
       printf("|");
-    else
+    } else {
       printf(" ");
+}
 
-    for (j = 0; j < indent_space - 1; ++j) printf(" ");
+    for (j = 0; j < indent_space - 1; ++j) { printf(" ");
+}
   }
   printf("\n");
 
   for (i = 0; i < indent_level - 1; ++i)
   {
-    if (active_node_order[i])
+    if (active_node_order[i]) {
       printf("|");
-    else
+    } else {
       printf(" ");
+}
 
-    for (j = 0; j < indent_space - 1; ++j) printf(" ");
+    for (j = 0; j < indent_space - 1; ++j) { printf(" ");
+}
   }
 
   printf("+");
-  for (j = 0; j < indent_space - 1; ++j) printf("-");
-  if (node->next) printf("+");
+  for (j = 0; j < indent_space - 1; ++j) { printf("-");
+}
+  if (node->next) { printf("+");
+}
 
   print_node_info(node, options);
 
-  if (active_node_order[indent_level - 1] == 2)
+  if (active_node_order[indent_level - 1] == 2) {
     active_node_order[indent_level - 1] = 0;
+}
 
   if (node->next)
   {
@@ -69,7 +84,8 @@ static void print_tree_recurse(corax_unode_t *node,
 static unsigned int tree_indent_level(const corax_unode_t *node,
                                       unsigned int         indent)
 {
-  if (!node->next) return indent + 1;
+  if (!node->next) { return indent + 1;
+}
 
   unsigned int   ind   = 0;
   corax_unode_t *snode = node->next;
@@ -84,9 +100,11 @@ static unsigned int tree_indent_level(const corax_unode_t *node,
 
 CORAX_EXPORT void corax_utree_show_ascii(const corax_unode_t *root, int options)
 {
-  unsigned int a, b;
+  unsigned int a = 0;
+  unsigned int b = 0;
 
-  if (!root->next) root = root->back;
+  if (!root->next) { root = root->back;
+}
 
   a                             = tree_indent_level(root->back, 1);
   b                             = tree_indent_level(root, 0);

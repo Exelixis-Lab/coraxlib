@@ -20,11 +20,12 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 
 #define ONESTEP4(x)                                                            \
   /* compute pmat row x/4 */                                                   \
-  xmm12 = _mm_load_pd(inv_evecs + x);                                          \
-  xmm13 = _mm_load_pd(inv_evecs + x + 2);                                      \
+  xmm12 = _mm_load_pd(inv_evecs + (x));                                          \
+  xmm13 = _mm_load_pd(inv_evecs + (x) + 2);                                      \
   xmm12 = _mm_mul_pd(xmm12, xmm1); /* temp row x/4 (0-1) */                    \
   xmm13 = _mm_mul_pd(xmm13, xmm2); /* temp row x/4 (2-3) */                    \
                                                                                \
@@ -39,7 +40,7 @@
   xmm15 = _mm_add_pd(xmm15, xmm16);                                            \
                                                                                \
   xmm16 = _mm_hadd_pd(xmm14, xmm15);                                           \
-  _mm_store_pd(pmat + x, xmm16);                                               \
+  _mm_store_pd(pmat + (x), xmm16);                                               \
                                                                                \
   /* multiply with row 2 of transposed eigenvector */                          \
   xmm14 = _mm_mul_pd(xmm12, xmm6);                                             \
@@ -52,19 +53,19 @@
   xmm15 = _mm_add_pd(xmm15, xmm16);                                            \
                                                                                \
   xmm16 = _mm_hadd_pd(xmm14, xmm15);                                           \
-  _mm_store_pd(pmat + x + 2, xmm16);
+  _mm_store_pd(pmat + (x) + 2, xmm16);
 
 #define ONESTEP20(x, baseptr)                                                  \
-  ymm0 = _mm_load_pd(baseptr + 0);                                             \
-  ymm1 = _mm_load_pd(baseptr + 2);                                             \
-  ymm2 = _mm_load_pd(baseptr + 4);                                             \
-  ymm3 = _mm_load_pd(baseptr + 6);                                             \
-  ymm4 = _mm_load_pd(baseptr + 8);                                             \
-  ymm5 = _mm_load_pd(baseptr + 10);                                            \
-  ymm6 = _mm_load_pd(baseptr + 12);                                            \
-  ymm7 = _mm_load_pd(baseptr + 14);                                            \
-  ymm8 = _mm_load_pd(baseptr + 16);                                            \
-  ymm9 = _mm_load_pd(baseptr + 18);                                            \
+  ymm0 = _mm_load_pd((baseptr) + 0);                                             \
+  ymm1 = _mm_load_pd((baseptr) + 2);                                             \
+  ymm2 = _mm_load_pd((baseptr) + 4);                                             \
+  ymm3 = _mm_load_pd((baseptr) + 6);                                             \
+  ymm4 = _mm_load_pd((baseptr) + 8);                                             \
+  ymm5 = _mm_load_pd((baseptr) + 10);                                            \
+  ymm6 = _mm_load_pd((baseptr) + 12);                                            \
+  ymm7 = _mm_load_pd((baseptr) + 14);                                            \
+  ymm8 = _mm_load_pd((baseptr) + 16);                                            \
+  ymm9 = _mm_load_pd((baseptr) + 18);                                            \
                                                                                \
   ymm0 = _mm_mul_pd(xmm0, ymm0);                                               \
   ymm1 = _mm_mul_pd(xmm1, ymm1);                                               \
@@ -77,15 +78,15 @@
   ymm8 = _mm_mul_pd(xmm8, ymm8);                                               \
   ymm9 = _mm_mul_pd(xmm9, ymm9);                                               \
                                                                                \
-  x = _mm_add_pd(ymm0, ymm1);                                                  \
-  x = _mm_add_pd(x, ymm2);                                                     \
-  x = _mm_add_pd(x, ymm3);                                                     \
-  x = _mm_add_pd(x, ymm4);                                                     \
-  x = _mm_add_pd(x, ymm5);                                                     \
-  x = _mm_add_pd(x, ymm6);                                                     \
-  x = _mm_add_pd(x, ymm7);                                                     \
-  x = _mm_add_pd(x, ymm8);                                                     \
-  x = _mm_add_pd(x, ymm9);
+  (x) = _mm_add_pd(ymm0, ymm1);                                                  \
+  (x) = _mm_add_pd(x, ymm2);                                                     \
+  (x) = _mm_add_pd(x, ymm3);                                                     \
+  (x) = _mm_add_pd(x, ymm4);                                                     \
+  (x) = _mm_add_pd(x, ymm5);                                                     \
+  (x) = _mm_add_pd(x, ymm6);                                                     \
+  (x) = _mm_add_pd(x, ymm7);                                                     \
+  (x) = _mm_add_pd(x, ymm8);                                                     \
+  (x) = _mm_add_pd(x, ymm9);
 
 CORAX_EXPORT int
 corax_core_update_pmatrix_4x4_sse(double **           pmatrix,
@@ -100,14 +101,16 @@ corax_core_update_pmatrix_4x4_sse(double **           pmatrix,
                                   double *const *     inv_eigenvecs,
                                   unsigned int        count)
 {
-  unsigned int i, j, n;
-  double *     expd;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int n = 0;
+  double *     expd = NULL;
 
-  double  pinvar;
-  double *evecs;
-  double *inv_evecs;
-  double *evals;
-  double *pmat;
+  double  pinvar = NAN;
+  double *evecs = NULL;
+  double *inv_evecs = NULL;
+  double *evals = NULL;
+  double *pmat = NULL;
 
   expd = (double *)corax_aligned_alloc(4 * sizeof(double), CORAX_ALIGNMENT_SSE);
 
@@ -117,8 +120,23 @@ corax_core_update_pmatrix_4x4_sse(double **           pmatrix,
     return CORAX_FAILURE;
   }
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9;
-  __m128d xmm10, xmm11, xmm12, xmm13, xmm14, xmm15, xmm16;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
+  __m128d xmm7;
+  __m128d xmm8;
+  __m128d xmm9;
+  __m128d xmm10;
+  __m128d xmm11;
+  __m128d xmm12;
+  __m128d xmm13;
+  __m128d xmm14;
+  __m128d xmm15;
+  __m128d xmm16;
 
   xmm0 = _mm_setzero_pd();
 
@@ -202,10 +220,10 @@ corax_core_update_pmatrix_4x4_sse(double **           pmatrix,
         xmm2 = _mm_set_pd(expm1(expd[3]), expm1(expd[2]));
 
         /* compute pmatrix */
-        ONESTEP4(0);
-        ONESTEP4(4);
-        ONESTEP4(8);
-        ONESTEP4(12);
+        ONESTEP4(0)
+        ONESTEP4(4)
+        ONESTEP4(8)
+        ONESTEP4(12)
 
         /* add identity matrix */
         for (j = 0; j < 4; ++j)
@@ -255,17 +273,20 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
                                     double *const *     inv_eigenvecs,
                                     unsigned int        count)
 {
-  unsigned int i, n, j, k;
-  double       pinvar;
+  unsigned int i = 0;
+  unsigned int n = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  double       pinvar = NAN;
 
-  int *    transposed;
-  double * evecs;
-  double * inv_evecs;
-  double * evals;
-  double * pmat;
-  double * expd;
-  double * temp;
-  double **tran_evecs;
+  int *    transposed = NULL;
+  double * evecs = NULL;
+  double * inv_evecs = NULL;
+  double * evals = NULL;
+  double * pmat = NULL;
+  double * expd = NULL;
+  double * temp = NULL;
+  double **tran_evecs = NULL;
 
   expd =
       (double *)corax_aligned_alloc(20 * sizeof(double), CORAX_ALIGNMENT_SSE);
@@ -278,10 +299,14 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
 
   if (!expd || !temp || !transposed || !tran_evecs)
   {
-    if (expd) corax_aligned_free(expd);
-    if (temp) corax_aligned_free(temp);
-    if (transposed) free(transposed);
-    if (tran_evecs) free(tran_evecs);
+    if (expd) { corax_aligned_free(expd);
+}
+    if (temp) { corax_aligned_free(temp);
+}
+    if (transposed) { free(transposed);
+}
+    if (tran_evecs) { free(tran_evecs);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
@@ -304,8 +329,10 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
         corax_aligned_free(expd);
         corax_aligned_free(temp);
         free(transposed);
-        for (i = 0; i < n; ++i)
-          if (tran_evecs[i]) corax_aligned_free(tran_evecs[i]);
+        for (i = 0; i < n; ++i) {
+          if (tran_evecs[i]) { corax_aligned_free(tran_evecs[i]);
+}
+}
         free(tran_evecs);
 
         corax_set_error(CORAX_ERROR_MEM_ALLOC,
@@ -317,7 +344,8 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
       evecs = eigenvecs[index];
       for (i = 0; i < 20; ++i)
       {
-        for (j = 0; j < 20; ++j) tran[i * 20 + j] = evecs[j * 20 + i];
+        for (j = 0; j < 20; ++j) { tran[i * 20 + j] = evecs[j * 20 + i];
+}
       }
 
       /* update pointers and indicate that the eigen vector for the current
@@ -328,10 +356,31 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
   }
   free(transposed);
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9;
-  __m128d ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
-  __m128d zmm0, zmm1, zmm2;
-  __m128d brlen, rate;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
+  __m128d xmm7;
+  __m128d xmm8;
+  __m128d xmm9;
+  __m128d ymm0;
+  __m128d ymm1;
+  __m128d ymm2;
+  __m128d ymm3;
+  __m128d ymm4;
+  __m128d ymm5;
+  __m128d ymm6;
+  __m128d ymm7;
+  __m128d ymm8;
+  __m128d ymm9;
+  __m128d zmm0;
+  __m128d zmm1;
+  __m128d zmm2;
+  __m128d brlen;
+  __m128d rate;
 
   double *tran = NULL;
   for (i = 0; i < count; ++i)
@@ -373,7 +422,8 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
 
       rate = _mm_set1_pd(rates[n]);
 
-      if (pinvar > CORAX_MISC_EPSILON) xmm6 = _mm_set1_pd(1.0 - pinvar);
+      if (pinvar > CORAX_MISC_EPSILON) { xmm6 = _mm_set1_pd(1.0 - pinvar);
+}
 
       for (k = 0; k < 20; k += 2)
       {
@@ -397,7 +447,8 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
        * for this by adding an identity matrix I in the very end */
 
       /* exponentiate eigenvalues */
-      for (k = 0; k < 20; ++k) expd[k] = expm1(expd[k]);
+      for (k = 0; k < 20; ++k) { expd[k] = expm1(expd[k]);
+}
 
       /* load expd */
       xmm0 = _mm_load_pd(expd + 0);
@@ -465,10 +516,10 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
         for (k = 0; k < 400; k += 40)
         {
           /* row 0 */
-          ONESTEP20(zmm0, tran + k + 0);
+          ONESTEP20(zmm0, tran + k + 0)
 
           /* row 1 */
-          ONESTEP20(zmm1, tran + k + 20);
+          ONESTEP20(zmm1, tran + k + 20)
 
           zmm2 = _mm_hadd_pd(zmm0, zmm1);
 
@@ -491,8 +542,10 @@ corax_core_update_pmatrix_20x20_sse(double **           pmatrix,
   corax_aligned_free(expd);
   corax_aligned_free(temp);
 
-  for (i = 0; i < rate_cats; ++i)
-    if (tran_evecs[i]) corax_aligned_free(tran_evecs[i]);
+  for (i = 0; i < rate_cats; ++i) {
+    if (tran_evecs[i]) { corax_aligned_free(tran_evecs[i]);
+}
+}
 
   free(tran_evecs);
   return CORAX_SUCCESS;

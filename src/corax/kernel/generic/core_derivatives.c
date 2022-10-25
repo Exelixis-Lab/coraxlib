@@ -20,6 +20,7 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 #include <limits.h>
 
 CORAX_EXPORT int
@@ -66,10 +67,11 @@ corax_core_update_sumtable_repeats(unsigned int        states,
     core_update_sumtable = corax_core_update_sumtable_repeats_generic_avx;
     if (states == 4)
     {
-      if (use_bclv)
+      if (use_bclv) {
         core_update_sumtable = corax_core_update_sumtable_repeatsbclv_4x4_avx;
-      else
+      } else {
         core_update_sumtable = corax_core_update_sumtable_repeats_4x4_avx;
+}
     }
   }
 #endif
@@ -86,10 +88,11 @@ corax_core_update_sumtable_repeats(unsigned int        states,
     if (states == 4)
     {
       // avx is good enough
-      if (use_bclv)
+      if (use_bclv) {
         core_update_sumtable = corax_core_update_sumtable_repeatsbclv_4x4_avx;
-      else
+      } else {
         core_update_sumtable = corax_core_update_sumtable_repeats_4x4_avx;
+}
     }
   }
 #endif
@@ -126,20 +129,23 @@ corax_core_update_sumtable_ti_4x4(unsigned int         sites,
                                   double *             sumtable,
                                   unsigned int         attrib)
 {
-  unsigned int i, j, k, n;
-  unsigned int tipstate;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
+  unsigned int tipstate = 0;
   double       lefterm  = 0;
   double       righterm = 0;
 
   double *      sum    = sumtable;
   const double *t_clvc = parent_clv;
-  const double *t_eigenvecs;
-  const double *t_inv_eigenvecs;
-  const double *t_freqs;
+  const double *t_eigenvecs = NULL;
+  const double *t_inv_eigenvecs = NULL;
+  const double *t_freqs = NULL;
 
   unsigned int states = 4;
 
-  unsigned int  min_scaler;
+  unsigned int  min_scaler = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -168,7 +174,8 @@ corax_core_update_sumtable_ti_4x4(unsigned int         sites,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -199,8 +206,9 @@ corax_core_update_sumtable_ti_4x4(unsigned int         sites,
         }
         sum[j] = lefterm * righterm;
 
-        if (rate_scalings && rate_scalings[i] > 0)
+        if (rate_scalings && rate_scalings[i] > 0) {
           sum[j] *= scale_minlh[rate_scalings[i] - 1];
+}
       }
 
       t_clvc += states;
@@ -208,7 +216,8 @@ corax_core_update_sumtable_ti_4x4(unsigned int         sites,
     }
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -235,18 +244,21 @@ corax_core_update_sumtable_repeats_generic(unsigned int        states,
   CORAX_UNUSED(parent_sites);
   CORAX_UNUSED(bclv_buffer);
   CORAX_UNUSED(inv);
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
   double       lefterm  = 0;
   double       righterm = 0;
 
   double *      sum = sumtable;
-  const double *t_eigenvecs;
-  const double *t_inv_eigenvecs;
-  const double *t_freqs;
+  const double *t_eigenvecs = NULL;
+  const double *t_inv_eigenvecs = NULL;
+  const double *t_freqs = NULL;
 
   unsigned int  states_padded = states;
   unsigned int  span_padded   = states_padded * rate_cats;
-  unsigned int  min_scaler;
+  unsigned int  min_scaler = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -281,7 +293,8 @@ corax_core_update_sumtable_repeats_generic(unsigned int        states,
             (parent_scaler) ? parent_scaler[pid * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[cid * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -310,8 +323,9 @@ corax_core_update_sumtable_repeats_generic(unsigned int        states,
         }
         sum[j] = lefterm * righterm;
 
-        if (rate_scalings && rate_scalings[i] > 0)
+        if (rate_scalings && rate_scalings[i] > 0) {
           sum[j] *= scale_minlh[rate_scalings[i] - 1];
+}
       }
       t_clvc += states;
       t_clvp += states;
@@ -319,7 +333,8 @@ corax_core_update_sumtable_repeats_generic(unsigned int        states,
     }
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -337,16 +352,19 @@ corax_core_update_sumtable_ii(unsigned int        states,
                               double *            sumtable,
                               unsigned int        attrib)
 {
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
   double       lefterm  = 0;
   double       righterm = 0;
 
   double *      sum    = sumtable;
   const double *t_clvp = parent_clv;
   const double *t_clvc = child_clv;
-  const double *t_eigenvecs;
-  const double *t_inv_eigenvecs;
-  const double *t_freqs;
+  const double *t_eigenvecs = NULL;
+  const double *t_inv_eigenvecs = NULL;
+  const double *t_freqs = NULL;
 
   unsigned int states_padded = states;
 
@@ -402,7 +420,7 @@ corax_core_update_sumtable_ii(unsigned int        states,
   }
 #endif
 
-  unsigned int  min_scaler;
+  unsigned int  min_scaler = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -433,7 +451,8 @@ corax_core_update_sumtable_ii(unsigned int        states,
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
         rate_scalings[i] +=
             (child_scaler) ? child_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -462,8 +481,9 @@ corax_core_update_sumtable_ii(unsigned int        states,
         }
         sum[j] = lefterm * righterm;
 
-        if (rate_scalings && rate_scalings[i] > 0)
+        if (rate_scalings && rate_scalings[i] > 0) {
           sum[j] *= scale_minlh[rate_scalings[i] - 1];
+}
       }
       t_clvc += states;
       t_clvp += states;
@@ -471,7 +491,8 @@ corax_core_update_sumtable_ii(unsigned int        states,
     }
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -491,16 +512,19 @@ corax_core_update_sumtable_ti(unsigned int         states,
                               double *             sumtable,
                               unsigned int         attrib)
 {
-  unsigned int  i, j, k, n;
-  corax_state_t tipstate;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
+  unsigned int  n = 0;
+  corax_state_t tipstate = 0;
   double        lefterm  = 0;
   double        righterm = 0;
 
   double *      sum    = sumtable;
   const double *t_clvc = parent_clv;
-  const double *t_eigenvecs;
-  const double *t_inv_eigenvecs;
-  const double *t_freqs;
+  const double *t_eigenvecs = NULL;
+  const double *t_inv_eigenvecs = NULL;
+  const double *t_freqs = NULL;
 
   unsigned int states_padded = states;
 
@@ -573,7 +597,7 @@ corax_core_update_sumtable_ti(unsigned int         states,
                                              attrib);
   }
 
-  unsigned int  min_scaler;
+  unsigned int  min_scaler = 0;
   unsigned int *rate_scalings    = NULL;
   int           per_rate_scaling = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 1 : 0;
 
@@ -602,7 +626,8 @@ corax_core_update_sumtable_ti(unsigned int         states,
       {
         rate_scalings[i] =
             (parent_scaler) ? parent_scaler[n * rate_cats + i] : 0;
-        if (rate_scalings[i] < min_scaler) min_scaler = rate_scalings[i];
+        if (rate_scalings[i] < min_scaler) { min_scaler = rate_scalings[i];
+}
       }
 
       /* compute relative capped per-rate scalers */
@@ -633,15 +658,17 @@ corax_core_update_sumtable_ti(unsigned int         states,
         }
         sum[j] = lefterm * righterm;
 
-        if (rate_scalings && rate_scalings[i] > 0)
+        if (rate_scalings && rate_scalings[i] > 0) {
           sum[j] *= scale_minlh[rate_scalings[i] - 1];
+}
       }
       t_clvc += states_padded;
       sum += states_padded;
     }
   }
 
-  if (rate_scalings) free(rate_scalings);
+  if (rate_scalings) { free(rate_scalings);
+}
 
   return CORAX_SUCCESS;
 }
@@ -657,13 +684,14 @@ static void core_site_likelihood_derivatives(unsigned int   states,
                                              const double * diagptable,
                                              double *       site_lk)
 {
-  unsigned int  i, j;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
   double        inv_site_lk = 0.0;
   double        cat_sitelk[3];
   const double *sum   = sumtable;
   const double *diagp = diagptable;
-  const double *t_freqs;
-  double        t_prop_invar;
+  const double *t_freqs = NULL;
+  double        t_prop_invar = NAN;
 
   site_lk[0] = site_lk[1] = site_lk[2] = 0;
   for (i = 0; i < rate_cats; ++i)
@@ -720,20 +748,24 @@ corax_core_likelihood_derivatives(unsigned int        states,
                                   double *            dd_f,
                                   unsigned int        attrib)
 {
-  unsigned int n, i, j;
-  unsigned int ef_sites;
+  unsigned int n = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int ef_sites = 0;
 
-  const double *sum;
-  double        deriv1, deriv2;
+  const double *sum = NULL;
+  double        deriv1 = NAN;
+  double        deriv2 = NAN;
   double        site_lk[3];
 
-  const double *t_eigenvals;
-  double        t_branch_length;
-  unsigned int  scale_factors;
+  const double *t_eigenvals = NULL;
+  double        t_branch_length = NAN;
+  unsigned int  scale_factors = 0;
 
-  double *   diagptable, *diagp;
-  const int *invariant_ptr;
-  double     ki;
+  double *   diagptable = NULL;
+  double *diagp = NULL;
+  const int *invariant_ptr = NULL;
+  double     ki = NAN;
 
   unsigned int states_padded = states;
 
@@ -859,7 +891,7 @@ corax_core_likelihood_derivatives(unsigned int        states,
   {
     double       asc_Lk[3] = {0.0, 0.0, 0.0};
     unsigned int sum_w_inv = 0;
-    double       asc_scaling;
+    double       asc_scaling = NAN;
     int          asc_bias_type = attrib & CORAX_ATTRIB_AB_MASK;
 
     if (asc_bias_type != CORAX_ATTRIB_AB_STAMATAKIS)
@@ -904,7 +936,8 @@ corax_core_likelihood_derivatives(unsigned int        states,
       {
         // TODO: pattern_weight_sum should be stored somewhere!
         unsigned int pattern_weight_sum = 0;
-        for (n = 0; n < ef_sites; ++n) pattern_weight_sum += pattern_weights[n];
+        for (n = 0; n < ef_sites; ++n) { pattern_weight_sum += pattern_weights[n];
+}
 
         /* derivatives of log(1.0 - (sum Li(s) over states 's')) */
         *d_f += pattern_weight_sum * (asc_Lk[1] / (asc_Lk[0] - 1.0));

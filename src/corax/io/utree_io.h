@@ -113,7 +113,7 @@ extern "C"
 
   /* functions in utree_ascii.c */
 
-  CORAX_EXPORT void corax_utree_show_ascii(const corax_unode_t *tree,
+  CORAX_EXPORT void corax_utree_show_ascii(const corax_unode_t *root,
                                            int                  options);
 
   /* functions in utree_svg.c */

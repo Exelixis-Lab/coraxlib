@@ -132,17 +132,28 @@ static void cpu_features_detect()
 static void cpu_features_show()
 {
   fprintf(stderr, "CPU features:");
-  if (corax_hardware.altivec_present) fprintf(stderr, " altivec");
-  if (corax_hardware.mmx_present) fprintf(stderr, " mmx");
-  if (corax_hardware.sse_present) fprintf(stderr, " sse");
-  if (corax_hardware.sse2_present) fprintf(stderr, " sse2");
-  if (corax_hardware.sse3_present) fprintf(stderr, " sse3");
-  if (corax_hardware.ssse3_present) fprintf(stderr, " ssse3");
-  if (corax_hardware.sse41_present) fprintf(stderr, " sse4.1");
-  if (corax_hardware.sse42_present) fprintf(stderr, " sse4.2");
-  if (corax_hardware.popcnt_present) fprintf(stderr, " popcnt");
-  if (corax_hardware.avx_present) fprintf(stderr, " avx");
-  if (corax_hardware.avx2_present) fprintf(stderr, " avx2");
+  if (corax_hardware.altivec_present) { fprintf(stderr, " altivec");
+}
+  if (corax_hardware.mmx_present) { fprintf(stderr, " mmx");
+}
+  if (corax_hardware.sse_present) { fprintf(stderr, " sse");
+}
+  if (corax_hardware.sse2_present) { fprintf(stderr, " sse2");
+}
+  if (corax_hardware.sse3_present) { fprintf(stderr, " sse3");
+}
+  if (corax_hardware.ssse3_present) { fprintf(stderr, " ssse3");
+}
+  if (corax_hardware.sse41_present) { fprintf(stderr, " sse4.1");
+}
+  if (corax_hardware.sse42_present) { fprintf(stderr, " sse4.2");
+}
+  if (corax_hardware.popcnt_present) { fprintf(stderr, " popcnt");
+}
+  if (corax_hardware.avx_present) { fprintf(stderr, " avx");
+}
+  if (corax_hardware.avx2_present) { fprintf(stderr, " avx2");
+}
   fprintf(stderr, "\n");
 }
 

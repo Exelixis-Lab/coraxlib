@@ -82,7 +82,7 @@ extern "C"
   double corax_core_edge_loglikelihood_repeats_generic_avx2(
       unsigned int         states,
       unsigned int         sites,
-      const unsigned int   child_sites,
+      unsigned int   child_sites,
       unsigned int         rate_cats,
       const double *       parent_clv,
       const unsigned int * parent_scaler,

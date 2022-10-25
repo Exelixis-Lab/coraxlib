@@ -40,9 +40,11 @@ static int dlist_insert(corax_dlist_t **dlist, void *data, int insert_end)
   }
 
   /* go to the last element if we chose to append */
-  if (insert_end)
-    for (; (*dlist)->next; dlist = &(*dlist)->next)
-      ;
+  if (insert_end) {
+    for (; (*dlist)->next; dlist = &(*dlist)->next) {
+      
+}
+}
 
   (*dlist)->next = (corax_dlist_t *)malloc(sizeof(corax_dlist_t));
   if (!(*dlist)->next)
@@ -70,13 +72,17 @@ CORAX_EXPORT int corax_dlist_prepend(corax_dlist_t **dlist, void *data)
 
 CORAX_EXPORT int corax_dlist_remove(corax_dlist_t **dlist, void *data)
 {
-  for (; (*dlist) && (*dlist)->data != data; dlist = &((*dlist)->next))
-    ;
+  for (; (*dlist) && (*dlist)->data != data; dlist = &((*dlist)->next)) {
+    
+}
 
-  if (!*dlist) return CORAX_FAILURE;
+  if (!*dlist) { return CORAX_FAILURE;
+}
 
-  if ((*dlist)->next) (*dlist)->next->prev = (*dlist)->prev;
-  if ((*dlist)->prev) (*dlist)->prev->next = (*dlist)->next;
+  if ((*dlist)->next) { (*dlist)->next->prev = (*dlist)->prev;
+}
+  if ((*dlist)->prev) { (*dlist)->prev->next = (*dlist)->next;
+}
 
   free(*dlist);
   *dlist = NULL;

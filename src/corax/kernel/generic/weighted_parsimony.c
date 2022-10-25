@@ -20,22 +20,26 @@
 */
 
 #include "corax/corax.h"
+#include "math.h"
 
 CORAX_EXPORT double
 corax_parsimony_build(corax_parsimony_t *         pars,
                       const corax_pars_buildop_t *operations,
                       unsigned int                count)
 {
-  unsigned int                i, j, k, n;
-  const corax_pars_buildop_t *op;
+  unsigned int                i = 0;
+  unsigned int                j = 0;
+  unsigned int                k = 0;
+  unsigned int                n = 0;
+  const corax_pars_buildop_t *op = NULL;
 
   unsigned int sites  = pars->sites;
   unsigned int states = pars->states;
-  double       minimum;
+  double       minimum = NAN;
 
-  double *score_buffer;
-  double *child1_score_buffer;
-  double *child2_score_buffer;
+  double *score_buffer = NULL;
+  double *child1_score_buffer = NULL;
+  double *child2_score_buffer = NULL;
 
   double *score_matrix = pars->score_matrix;
 
@@ -74,18 +78,20 @@ corax_parsimony_build(corax_parsimony_t *         pars,
         /* process child 1 */
 
         minimum = child1_score_buffer[0] + score_matrix[n];
-        for (k = 1; k < states; ++k)
+        for (k = 1; k < states; ++k) {
           minimum = fmin(child1_score_buffer[k] + score_matrix[k * states + n],
                          minimum);
+}
 
         score_buffer[n] = minimum;
 
         /* process child 2 */
 
         minimum = child2_score_buffer[0] + score_matrix[n];
-        for (k = 1; k < states; ++k)
+        for (k = 1; k < states; ++k) {
           minimum = fmin(child2_score_buffer[k] + score_matrix[k * states + n],
                          minimum);
+}
 
         score_buffer[n] += minimum;
       }
@@ -106,18 +112,21 @@ corax_parsimony_build(corax_parsimony_t *         pars,
 CORAX_EXPORT double corax_parsimony_score(corax_parsimony_t *pars,
                                           unsigned int       score_buffer_index)
 {
-  unsigned int i, j, k;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
   unsigned int states = pars->states;
   unsigned int sites  = pars->sites;
   double       sum    = 0;
-  double       minimum;
+  double       minimum = NAN;
 
   double *score_buffer = pars->sbuffer[score_buffer_index];
 
   for (k = 0, i = 0; i < sites; ++i)
   {
     minimum = score_buffer[k++];
-    for (j = 1; j < states; ++j) minimum = fmin(score_buffer[k++], minimum);
+    for (j = 1; j < states; ++j) { minimum = fmin(score_buffer[k++], minimum);
+}
 
     sum += minimum;
   }
@@ -131,20 +140,23 @@ corax_parsimony_reconstruct(corax_parsimony_t *       pars,
                             const corax_pars_recop_t *operations,
                             unsigned int              count)
 {
-  unsigned int i, j, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int n = 0;
   unsigned int revmap[256];
 
-  double *      score_buffer;
-  unsigned int *ancestral_buffer;
-  double *      parent_score_buffer;
-  unsigned int *parent_ancestral_buffer;
-  unsigned int  minindex;
+  double *      score_buffer = NULL;
+  unsigned int *ancestral_buffer = NULL;
+  double *      parent_score_buffer = NULL;
+  unsigned int *parent_ancestral_buffer = NULL;
+  unsigned int  minindex = 0;
 
   unsigned int states = pars->states;
 
-  const corax_pars_recop_t *op;
+  const corax_pars_recop_t *op = NULL;
 
-  for (i = 0; i < 256; ++i) revmap[i] = 0;
+  for (i = 0; i < 256; ++i) { revmap[i] = 0;
+}
   for (i = 0; i < 256; ++i)
   {
     if (CORAX_STATE_POPCNT(map[i]) == 1)
@@ -162,8 +174,9 @@ corax_parsimony_reconstruct(corax_parsimony_t *       pars,
     minindex = 0;
     for (i = 1; i < pars->states; ++i)
     {
-      if (score_buffer[n * states + i] < score_buffer[n * states + minindex])
+      if (score_buffer[n * states + i] < score_buffer[n * states + minindex]) {
         minindex = i;
+}
     }
     ancestral_buffer[n] = revmap[minindex];
   }
@@ -187,17 +200,19 @@ corax_parsimony_reconstruct(corax_parsimony_t *       pars,
       minindex = 0;
       for (j = 1; j < pars->states; ++j)
       {
-        if (score_buffer[n * states + j] < score_buffer[n * states + minindex])
+        if (score_buffer[n * states + j] < score_buffer[n * states + minindex]) {
           minindex = j;
+}
       }
 
       double parent_val = parent_score_buffer
           [n * states + CORAX_STATE_CTZ(map[parent_ancestral_buffer[n]])];
 
-      if (score_buffer[n * states + minindex] + 1 > parent_val)
+      if (score_buffer[n * states + minindex] + 1 > parent_val) {
         ancestral_buffer[n] = parent_ancestral_buffer[n];
-      else
+      } else {
         ancestral_buffer[n] = revmap[minindex];
+}
     }
   }
 }

@@ -57,9 +57,10 @@ static char *xstrdup(const char *const s)
 /* Fisher-Yates shuffle */
 static unsigned int *create_shuffled(unsigned int n, unsigned int seed)
 {
-  unsigned int              i, j;
-  char *                    statebuf;
-  struct corax_random_data *buf;
+  unsigned int              i = 0;
+  unsigned int              j = 0;
+  char *                    statebuf = NULL;
+  struct corax_random_data *buf = NULL;
 
   unsigned int *x = (unsigned int *)malloc(n * sizeof(unsigned int));
   if (!x)
@@ -68,10 +69,12 @@ static unsigned int *create_shuffled(unsigned int n, unsigned int seed)
     return NULL;
   }
 
-  for (i = 0; i < n; ++i) x[i] = i;
+  for (i = 0; i < n; ++i) { x[i] = i;
+}
 
   /* if seed == 0 then do not shuffle! */
-  if (!seed) return x;
+  if (!seed) { return x;
+}
 
   /* init re-entrant randomizer */
   buf = (struct corax_random_data *)calloc(1, sizeof(struct corax_random_data));
@@ -86,14 +89,15 @@ static unsigned int *create_shuffled(unsigned int n, unsigned int seed)
     i = n - 1;
     while (1)
     {
-      int rint;
+      int rint = 0;
       corax_random_r(buf, &rint);
       double r = ((double)rint / RAND_MAX);
       j        = (unsigned int)(r * (i + 1));
 
       CORAX_SWAP(x[i], x[j]);
 
-      if (i == 0) break;
+      if (i == 0) { break;
+}
       --i;
     }
   }
@@ -123,16 +127,18 @@ static void dealloc_data(corax_unode_t *node)
 static pars_info_t * create_pars_info(corax_parsimony_t ** pars_list,
                                       unsigned int pars_count)
 {
-  if (!pars_list)
+  if (!pars_list) {
     return NULL;
+}
 
   unsigned int tip_count = pars_list[0]->tips;
 
 
   pars_info_t * pars_info = (pars_info_t *) calloc(1, sizeof(pars_info_t));
 
-  if (!pars_info)
+  if (!pars_info) {
     return NULL;
+}
 
   pars_info->pars_list = pars_list;
   pars_info->pars_count = pars_count;
@@ -158,11 +164,12 @@ static void destroy_pars_info(pars_info_t * pars_info)
 /* a callback function for performing a partial traversal */
 static int cb_partial_traversal(corax_unode_t *node)
 {
-  node_info_t *node_info;
+  node_info_t *node_info = NULL;
 
   /* if we don't want tips in the traversal we must return 0 here. For now,
      allow tips */
-  if (!node->next) return 1;
+  if (!node->next) { return 1;
+}
 
   /* get the data element from the node -> all inner nodes must have
    * pre-allocated data */
@@ -172,7 +179,8 @@ static int cb_partial_traversal(corax_unode_t *node)
 
   /* if the CLV is valid, we instruct the traversal routine not to
      traverse the subtree rooted in this node/direction by returning 0 */
-  if (node_info->clv_valid) return 0;
+  if (node_info->clv_valid) { return 0;
+}
 
   /* otherwise, mark CLV as valid since it will be updated */
   node_info->clv_valid = 1;
@@ -194,7 +202,8 @@ static int cb_validate(corax_unode_t *node)
 static corax_unode_t *utree_inner_create(unsigned int i, unsigned int tip_count)
 {
   corax_unode_t *node = (corax_unode_t *)calloc(1, sizeof(corax_unode_t));
-  if (!node) return NULL;
+  if (!node) { return NULL;
+}
 
   node->next = (corax_unode_t *)calloc(1, sizeof(corax_unode_t));
   if (!node->next)
@@ -294,7 +303,7 @@ utree_edgesplit(corax_unode_t *a, corax_unode_t *b, corax_unode_t *c)
 
 static void invalidate_node(corax_unode_t *node)
 {
-  node_info_t *info;
+  node_info_t *info = NULL;
 
   info            = (node_info_t *)(node->data);
   info->clv_valid = 0;
@@ -311,16 +320,17 @@ static unsigned int utree_iterate(corax_parsimony_t **list,
                                   unsigned int        edge_count,
                                   unsigned int        partition_count)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
   unsigned int min_cost   = 0;
   unsigned int best_index = 0;
-  unsigned int cost;
-  unsigned int ops_count;
-  unsigned int traversal_size;
+  unsigned int cost = 0;
+  unsigned int ops_count = 0;
+  unsigned int traversal_size = 0;
   size_t       total_ops = 0;
 
   /* set min cost to maximum possible value */
-  min_cost = ~0u;
+  min_cost = ~0U;
 
   /* find first empty slot in edge_list */
   corax_unode_t **empty_slot = edge_list + edge_count;
@@ -333,15 +343,17 @@ static unsigned int utree_iterate(corax_parsimony_t **list,
     corax_unode_t *root =
         edge_list[i]->next ? edge_list[i] : edge_list[i]->back;
 
-    if (root->back->next) continue;
+    if (root->back->next) { continue;
+}
 
     /* make a partial traversal */
     if (!corax_utree_traverse(root,
                               CORAX_TREE_TRAVERSE_POSTORDER,
                               cb_partial_traversal,
                               travbuffer,
-                              &traversal_size))
+                              &traversal_size)) {
       assert(0);
+}
 
     /* create parsimony operations */
     corax_utree_create_pars_buildops(
@@ -410,15 +422,17 @@ static unsigned int utree_iterate(corax_parsimony_t **list,
   empty_slot[1] = inner_node->next->next;
 
   /* invalidate all CLVs */
-  for (j = 0; j < edge_count; ++j) invalidate_node(edge_list[j]);
+  for (j = 0; j < edge_count; ++j) { invalidate_node(edge_list[j]);
+}
 
   /* re-validate CLVs that remain correct after new tip insertion */
   if (!corax_utree_traverse(tip_node->back,
                             CORAX_TREE_TRAVERSE_POSTORDER,
                             cb_validate,
                             travbuffer,
-                            &traversal_size))
+                            &traversal_size)) {
     assert(0);
+}
 
   /* reset direction for the newly placed inner node */
   invalidate_node(inner_node);
@@ -440,8 +454,9 @@ static int cb_full_subtree(corax_unode_t * node)
 
 static int cb_invalidate(corax_unode_t * node)
 {
-  if (!node->next)
+  if (!node->next) {
     node = node->back;
+}
 
   invalidate_node(node);
 
@@ -454,19 +469,21 @@ static int utree_collect_edges(corax_unode_t * root,
                                corax_unode_t ** edge_list,
                                unsigned int * edge_count)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   if (!corax_utree_traverse(root,
                           CORAX_TREE_TRAVERSE_POSTORDER,
                           cb_full,
                           edge_list,
-                          edge_count))
+                          edge_count)) {
     return CORAX_FAILURE;
+}
 
   for (i = 0; i < *edge_count; ++i)
   {
-    if (!edge_list[i]->next)
+    if (!edge_list[i]->next) {
       edge_list[i] = edge_list[i]->back;
+}
   }
 
   // root edge is traversed twice -> correct for this
@@ -479,7 +496,7 @@ static int utree_update_pars_vectors(corax_unode_t * root,
                                      pars_info_t * pars_info,
                                      int trav_type)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   if (trav_type == CORAX_TREE_TRAVERSE_NONE)
   {
@@ -495,8 +512,9 @@ static int utree_update_pars_vectors(corax_unode_t * root,
                             trav_type == CORAX_TREE_TRAVERSE_PARTIAL ?
                                 cb_partial_traversal : cb_full_subtree,
                             pars_info->travbuffer,
-                            &pars_info->traversal_size))
+                            &pars_info->traversal_size)) {
       return CORAX_FAILURE;
+}
   }
 
   /* create parsimony operations */
@@ -519,7 +537,7 @@ static int utree_update_pars_vectors(corax_unode_t * root,
 static unsigned int utree_pars_edge_score(corax_unode_t * edge,
                                           pars_info_t * pars_info)
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int cost = 0;
 
   for (i = 0; i < pars_info->pars_count; ++i)
@@ -540,17 +558,17 @@ static unsigned int utree_insert_best(pars_info_t * pars_info,
                                       const unsigned int * constraint,
                                       corax_unode_t * prune_edge)
 {
-  unsigned int i;
-  unsigned int min_cost;
-  unsigned int best_index;
-  unsigned int cost;
+  unsigned int i = 0;
+  unsigned int min_cost = 0;
+  unsigned int best_index = 0;
+  unsigned int cost = 0;
   size_t total_ops = 0;
 
   /* subtree must be pruned  / not inserted yet */
   assert(!inner_node->next->back && !inner_node->next->next->back);
 
   /* set min cost to maximum possible value */
-  min_cost = ~0u;
+  min_cost = ~0U;
 
   /* find first empty slot in edge_list */
   corax_unode_t ** empty_slot = edge_list + edge_count;
@@ -563,8 +581,9 @@ static unsigned int utree_insert_best(pars_info_t * pars_info,
     corax_unode_t * root = edge_list[i]->next ? edge_list[i] : edge_list[i]->back;
 
     /* traverse from every OUTER branch */
-    if (root->back->next)
+    if (root->back->next) {
       continue;
+}
 
     /* make a partial traversal - here */ 
     utree_update_pars_vectors(root, pars_info, CORAX_TREE_TRAVERSE_PARTIAL);
@@ -574,8 +593,9 @@ static unsigned int utree_insert_best(pars_info_t * pars_info,
 
   /* if we insert a subtree, recompute all CLVs in this subtree
    * in the direction of re-insertion point */
-  if (!CORAX_UTREE_IS_TIP(inner_node->back))
+  if (!CORAX_UTREE_IS_TIP(inner_node->back)) {
     utree_update_pars_vectors(inner_node->back, pars_info, CORAX_TREE_TRAVERSE_FULL);
+}
 
   cost = corax_fastparsimony_edge_score(pars_info->pars_list[0],
                                       edge_list[0]->node_index,
@@ -596,8 +616,9 @@ static unsigned int utree_insert_best(pars_info_t * pars_info,
       unsigned int r2 = constraint[regraft_back->clv_index];
 
       assert(s);
-      if (s && s != r1 && s != r2)
+      if (s && s != r1 && s != r2) {
         continue;
+}
     }
 
     /* split the regraft edge and insert subtree rooted at inner_node */
@@ -659,8 +680,9 @@ static unsigned int utree_insert_best(pars_info_t * pars_info,
                           CORAX_TREE_TRAVERSE_POSTORDER,
                           cb_invalidate,
                           pars_info->travbuffer,
-                          &pars_info->traversal_size))
+                          &pars_info->traversal_size)) {
     assert(0);
+}
 
   /* re-validate CLVs that remain correct after new tip insertion -> not for SPR! */
   if (!prune_edge)
@@ -669,15 +691,17 @@ static unsigned int utree_insert_best(pars_info_t * pars_info,
                             CORAX_TREE_TRAVERSE_POSTORDER,
                             cb_validate,
                             pars_info->travbuffer,
-                            &pars_info->traversal_size))
+                            &pars_info->traversal_size)) {
       assert(0);
+}
   }
 
   /* reset direction for the newly placed inner node */
   invalidate_node(inner_node);
 
-  if (!CORAX_UTREE_IS_TIP(inner_node->back))
+  if (!CORAX_UTREE_IS_TIP(inner_node->back)) {
     invalidate_node(inner_node->back);
+}
 
   return min_cost;
 }
@@ -689,7 +713,8 @@ CORAX_EXPORT corax_utree_t *
                                           unsigned int        count,
                                           unsigned int        seed)
 {
-  unsigned int i, j;
+  unsigned int i = 0;
+  unsigned int j = 0;
 
   unsigned int tips_count  = list[0]->tips;
   unsigned int inner_nodes = list[0]->inner_nodes;
@@ -710,9 +735,9 @@ CORAX_EXPORT corax_utree_t *
     return NULL;
   }
 
-  *cost = ~0u;
+  *cost = ~0U;
 
-  corax_unode_t *root;
+  corax_unode_t *root = NULL;
 
   /* check that all parsimony structures have the same number of tips and
      inner nodes */
@@ -770,8 +795,9 @@ CORAX_EXPORT corax_utree_t *
       free(parsops);
       free(tip_node_list);
       free(travbuffer);
-      for (j = 0; j < i; ++j)
+      for (j = 0; j < i; ++j) {
         corax_utree_graph_destroy(inner_node_list[j], NULL);
+}
       free(inner_node_list);
 
       corax_set_error(CORAX_ERROR_MEM_ALLOC,
@@ -782,14 +808,16 @@ CORAX_EXPORT corax_utree_t *
 
   /* shuffle the order of iterating tip sequences */
   unsigned int *order = create_shuffled(tips_count, seed);
-  if (!order) return NULL;
+  if (!order) { return NULL;
+}
 
   /* allocate all tips */
   for (i = 0; i < tips_count; ++i)
   {
     unsigned int index = order[i];
     tip_node_list[i]   = utree_tip_create(index);
-    if (tip_node_list[i]) tip_node_list[i]->label = xstrdup(labels[index]);
+    if (tip_node_list[i]) { tip_node_list[i]->label = xstrdup(labels[index]);
+}
 
     if (!tip_node_list[i] || !tip_node_list[i]->label)
     {
@@ -799,7 +827,8 @@ CORAX_EXPORT corax_utree_t *
       free(parsops);
       free(inner_node_list);
       free(travbuffer);
-      for (j = 0; j < i; ++j) corax_utree_graph_destroy(tip_node_list[j], NULL);
+      for (j = 0; j < i; ++j) { corax_utree_graph_destroy(tip_node_list[j], NULL);
+}
       free(tip_node_list);
 
       corax_set_error(CORAX_ERROR_MEM_ALLOC,
@@ -859,11 +888,13 @@ CORAX_EXPORT corax_utree_t *
   else
   {
     *cost = 0;
-    for (i = 0; i < count; ++i) *cost += list[i]->const_cost;
+    for (i = 0; i < count; ++i) { *cost += list[i]->const_cost;
+}
   }
 
   /* delete data elements */
-  for (i = 0; i < tips_count - 3; ++i) dealloc_data(inner_node_list[i]);
+  for (i = 0; i < tips_count - 3; ++i) { dealloc_data(inner_node_list[i]);
+}
   dealloc_data(root);
 
   /* deallocate auxiliary arrays */
@@ -887,7 +918,7 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_spr_round(corax_utree_t * tree,
                                                    const int * clv_index_map,
                                                    unsigned int * cost)
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int old_edge_count = tree->edge_count;
   unsigned int tip_count = tree->tip_count;
   unsigned int inner_count = tree->inner_count;
@@ -941,8 +972,9 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_spr_round(corax_utree_t * tree,
   }
 
   unsigned int * order = create_shuffled(subtree_count, seed);
-  if (!order)
+  if (!order) {
     return CORAX_FAILURE;
+}
 
   /* collect all nodes */
   for (i = 0; i < inner_count; ++i)
@@ -970,8 +1002,9 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_spr_round(corax_utree_t * tree,
 
     /* if remaining pruned tree would only contain 2 taxa, skip this node */
     if (CORAX_UTREE_IS_TIP(new_inner->next->back) &&
-        CORAX_UTREE_IS_TIP(new_inner->next->next->back))
+        CORAX_UTREE_IS_TIP(new_inner->next->next->back)) {
       continue;
+}
 
     /* prune a subtree */
     prune_edge = corax_utree_prune(new_inner);
@@ -1015,8 +1048,9 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_spr_round(corax_utree_t * tree,
   destroy_pars_info(pars_info);
 
   /* delete data elements */
-  for (i = 0; i < node_count; ++i)
+  for (i = 0; i < node_count; ++i) {
     dealloc_data(tree->nodes[i]);
+}
 
   free(order);
   free(edge_list);
@@ -1035,7 +1069,8 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_extend(corax_utree_t * tree,
                                                  unsigned int seed,
                                                  unsigned int * cost)
 {
-  unsigned int i,j;
+  unsigned int i = 0;
+  unsigned int j = 0;
   unsigned int new_tip_count = pars_list[0]->tips;
   unsigned int new_inner_count = new_tip_count - 2;
   unsigned int new_node_count = new_tip_count + new_inner_count;
@@ -1045,7 +1080,7 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_extend(corax_utree_t * tree,
   unsigned int old_node_count = old_tip_count + old_inner_count;
   unsigned int old_edge_count = tree->edge_count;
   unsigned int ext_tip_count = new_tip_count - old_tip_count;
-  unsigned int edge_count;
+  unsigned int edge_count = 0;
 
   pars_info_t * pars_info = create_pars_info(pars_list, pars_count);
 
@@ -1069,8 +1104,9 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_extend(corax_utree_t * tree,
   }
 
   /* 1:1 mapping for old tips */
-  for (i = 0; i < old_tip_count; ++i)
+  for (i = 0; i < old_tip_count; ++i) {
     new_nodes[i] = old_nodes[i];
+}
 
   /* copy old inner nodes and adjust CLVs */
   for (i = old_tip_count; i < old_node_count; ++i)
@@ -1169,8 +1205,9 @@ CORAX_EXPORT int corax_fastparsimony_stepwise_extend(corax_utree_t * tree,
   destroy_pars_info(pars_info);
 
   /* delete data elements */
-  for (i = 0; i < new_node_count; ++i)
+  for (i = 0; i < new_node_count; ++i) {
     dealloc_data(new_nodes[i]);
+}
 
   free(edge_list);
   free(old_nodes);

@@ -1,11 +1,15 @@
 #include "opt_generic.h"
 #include "corax/corax.h"
+#include "math.h"
 
 static int v_int_max(int *v, int n)
 {
-  int i, max = v[0];
-  for (i = 1; i < n; i++)
-    if (v[i] > max) max = v[i];
+  int i = 0;
+  int max = v[0];
+  for (i = 1; i < n; i++) {
+    if (v[i] > max) { max = v[i];
+}
+}
   return max;
 }
 
@@ -71,7 +75,8 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   const unsigned int *matrix_indices = params->lk_params.matrix_indices;
   unsigned int        params_index   = params->params_index;
   const unsigned int *params_indices = params->lk_params.params_indices;
-  unsigned int        n_branches, n_inner_nodes;
+  unsigned int        n_branches = 0;
+  unsigned int        n_inner_nodes = 0;
   double *            xptr = x;
 
   if (params->lk_params.rooted)
@@ -88,9 +93,9 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   /* update substitution rate parameters */
   if (params->which_parameters & CORAX_OPT_PARAM_SUBST_RATES)
   {
-    int *   symm;
-    int     n_subst_rates;
-    double *subst_rates;
+    int *   symm = NULL;
+    int     n_subst_rates = 0;
+    double *subst_rates = NULL;
 
     symm          = params->subst_params_symmetries;
     n_subst_rates = partition->states * (partition->states - 1) / 2;
@@ -107,7 +112,9 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
 
     if (symm)
     {
-      int i, j, k;
+      int i = 0;
+      int j = 0;
+      int k = 0;
       int n_subst_free_params = 0;
 
       /* compute the number of free parameters */
@@ -118,8 +125,9 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
       for (i = 0; i <= n_subst_free_params; i++)
       {
         double next_value = (i == symm[n_subst_rates - 1]) ? 1.0 : xptr[k++];
-        for (j = 0; j < n_subst_rates; j++)
+        for (j = 0; j < n_subst_rates; j++) {
           if (symm[j] == i) { subst_rates[j] = next_value; }
+}
       }
       xptr += n_subst_free_params;
     }
@@ -137,11 +145,11 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   /* update stationary frequencies */
   if (params->which_parameters & CORAX_OPT_PARAM_FREQUENCIES)
   {
-    unsigned int i;
+    unsigned int i = 0;
     unsigned int n_states = partition->states;
-    unsigned int cur_index;
+    unsigned int cur_index = 0;
     double       sum_ratios = 1.0;
-    double *     freqs;
+    double *     freqs = NULL;
     if ((freqs = (double *)malloc((size_t)n_states * sizeof(double))) == NULL)
     {
       corax_set_error(CORAX_ERROR_MEM_ALLOC,
@@ -173,7 +181,7 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   if (params->which_parameters & CORAX_OPT_PARAM_PINV)
   {
     assert(!isnan(xptr[0]));
-    unsigned int i;
+    unsigned int i = 0;
     for (i = 0; i < (partition->rate_cats); ++i)
     {
       if (!corax_update_invariant_sites_proportion(
@@ -189,7 +197,7 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   {
     assert(!isnan(xptr[0]));
     /* assign discrete rates */
-    double *rate_cats;
+    double *rate_cats = NULL;
     if ((rate_cats = malloc((size_t)partition->rate_cats * sizeof(double)))
         == NULL)
     {
@@ -221,11 +229,11 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   /* update rate weights */
   if (params->which_parameters & CORAX_OPT_PARAM_RATE_WEIGHTS)
   {
-    unsigned int i;
+    unsigned int i = 0;
     unsigned int rate_cats = params->lk_params.partition->rate_cats;
-    unsigned int cur_index;
+    unsigned int cur_index = 0;
     double       sum_ratios = 1.0;
-    double *     weights;
+    double *     weights = NULL;
     if ((weights = (double *)malloc((size_t)rate_cats * sizeof(double)))
         == NULL)
     {
@@ -290,9 +298,10 @@ static double compute_negative_lnl_unrooted(void *p, double *x)
 {
   corax_optimize_options_t *params    = (corax_optimize_options_t *)p;
   corax_partition_t *       partition = params->lk_params.partition;
-  double                    score;
+  double                    score = NAN;
 
-  if (x && !set_x_to_parameters(params, x)) return (double)-INFINITY;
+  if (x && !set_x_to_parameters(params, x)) { return (double)-INFINITY;
+}
 
   if (params->lk_params.rooted)
   {
@@ -341,14 +350,17 @@ static unsigned int count_n_free_variables(corax_optimize_options_t *params)
                              params->subst_params_symmetries, n_subst_rates)
                          : (unsigned int)n_subst_rates - 1;
   }
-  if (params->which_parameters & CORAX_OPT_PARAM_FREQUENCIES)
+  if (params->which_parameters & CORAX_OPT_PARAM_FREQUENCIES) {
     num_variables += partition->states - 1;
+}
   num_variables += (params->which_parameters & CORAX_OPT_PARAM_PINV) != 0;
   num_variables += (params->which_parameters & CORAX_OPT_PARAM_ALPHA) != 0;
-  if (params->which_parameters & CORAX_OPT_PARAM_FREE_RATES)
+  if (params->which_parameters & CORAX_OPT_PARAM_FREE_RATES) {
     num_variables += partition->rate_cats;
-  if (params->which_parameters & CORAX_OPT_PARAM_RATE_WEIGHTS)
+}
+  if (params->which_parameters & CORAX_OPT_PARAM_RATE_WEIGHTS) {
     num_variables += partition->rate_cats - 1;
+}
   num_variables +=
       (params->which_parameters & CORAX_OPT_PARAM_BRANCHES_SINGLE) != 0;
   if (params->which_parameters & CORAX_OPT_PARAM_BRANCHES_ALL)
@@ -380,10 +392,10 @@ CORAX_EXPORT double corax_opt_optimize_onedim(corax_optimize_options_t *params,
   double score = 0;
 
   /* Brent parameters */
-  double xmin;
-  double xguess;
-  double xmax;
-  double f2x;
+  double xmin = NAN;
+  double xguess = NAN;
+  double xmax = NAN;
+  double f2x = NAN;
 
   switch (params->which_parameters)
   {
@@ -440,15 +452,17 @@ CORAX_EXPORT double corax_opt_optimize_onedim(corax_optimize_options_t *params,
 CORAX_EXPORT double corax_opt_optimize_multidim(
     corax_optimize_options_t *params, const double *umin, const double *umax)
 {
-  unsigned int       i;
+  unsigned int       i = 0;
   corax_partition_t *partition = params->lk_params.partition;
 
   /* L-BFGS-B parameters */
   //  double initial_score;
-  unsigned int num_variables;
+  unsigned int num_variables = 0;
   double       score = 0;
-  double *     x, *lower_bounds, *upper_bounds;
-  int *        bound_type;
+  double *     x = NULL;
+  double *lower_bounds = NULL;
+  double *upper_bounds = NULL;
+  int *        bound_type = NULL;
 
   /* ensure that the 2 branch optimization modes are not set together */
   assert(!((params->which_parameters & CORAX_OPT_PARAM_BRANCHES_ALL)
@@ -465,26 +479,32 @@ CORAX_EXPORT double corax_opt_optimize_multidim(
   {
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for l-bfgs-b parameters");
-    if (x) free(x);
-    if (lower_bounds) free(lower_bounds);
-    if (upper_bounds) free(upper_bounds);
-    if (bound_type) free(bound_type);
+    if (x) { free(x);
+}
+    if (lower_bounds) { free(lower_bounds);
+}
+    if (upper_bounds) { free(upper_bounds);
+}
+    if (bound_type) { free(bound_type);
+}
     return (double)-INFINITY;
   }
 
   {
     int *nbd_ptr = bound_type;
     /* effective boundaries */
-    double *l_ptr = lower_bounds, *u_ptr = upper_bounds;
+    double *l_ptr = lower_bounds;
+    double *u_ptr = upper_bounds;
     /* user defined boundaries */
-    const double *     ul_ptr = umin, *uu_ptr = umax;
+    const double *     ul_ptr = umin;
+    const double *uu_ptr = umax;
     unsigned int check_n = 0;
 
     /* substitution rate parameters */
     if (params->which_parameters & CORAX_OPT_PARAM_SUBST_RATES)
     {
-      unsigned int n_subst_rates;
-      unsigned int n_subst_free_params;
+      unsigned int n_subst_rates = 0;
+      unsigned int n_subst_free_params = 0;
 
       n_subst_rates = partition->states * (partition->states - 1) / 2;
       if (params->subst_params_symmetries)
@@ -505,11 +525,13 @@ CORAX_EXPORT double corax_opt_optimize_multidim(
         if (params->subst_params_symmetries)
         {
           if (params->subst_params_symmetries[n_subst_rates - 1]
-              == current_rate)
+              == current_rate) {
             current_rate++;
+}
           for (j = 0; j < n_subst_rates; j++)
           {
-            if (params->subst_params_symmetries[j] == current_rate) break;
+            if (params->subst_params_symmetries[j] == current_rate) { break;
+}
           }
           current_rate++;
         }
@@ -529,15 +551,17 @@ CORAX_EXPORT double corax_opt_optimize_multidim(
     {
       unsigned int states              = params->lk_params.partition->states;
       unsigned int n_freqs_free_params = states - 1;
-      unsigned int cur_index;
+      unsigned int cur_index = 0;
 
       double *frequencies =
           params->lk_params.partition->frequencies[params->params_index];
 
       params->highest_freq_state = 3;
-      for (i = 1; i < states; i++)
-        if (frequencies[i] > frequencies[params->highest_freq_state])
+      for (i = 1; i < states; i++) {
+        if (frequencies[i] > frequencies[params->highest_freq_state]) {
           params->highest_freq_state = i;
+}
+}
 
       cur_index = 0;
       for (i = 0; i < states; i++)
@@ -606,14 +630,16 @@ CORAX_EXPORT double corax_opt_optimize_multidim(
     {
       unsigned int rate_cats = params->lk_params.partition->rate_cats;
       unsigned int n_weights_free_params = rate_cats - 1;
-      unsigned int cur_index;
+      unsigned int cur_index = 0;
 
       double *rate_weights = params->lk_params.partition->rate_weights;
 
       params->highest_weight_state = rate_cats - 1;
-      for (i = 1; i < rate_cats; i++)
-        if (rate_weights[i] > rate_weights[params->highest_weight_state])
+      for (i = 1; i < rate_cats; i++) {
+        if (rate_weights[i] > rate_weights[params->highest_weight_state]) {
           params->highest_weight_state = i;
+}
+}
 
       cur_index = 0;
       for (i = 0; i < rate_cats; i++)

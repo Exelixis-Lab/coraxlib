@@ -31,7 +31,8 @@
 static char *xstrchrnul(char *s, int c)
 {
   char *r = strchr(s, c);
-  if (r) return r;
+  if (r) { return r;
+}
 
   return (char *)s + strlen(s);
 }
@@ -39,7 +40,7 @@ static char *xstrchrnul(char *s, int c)
 CORAX_EXPORT corax_fasta_t *corax_fasta_open(const char *        filename,
                                              const unsigned int *map)
 {
-  int            i;
+  int            i = 0;
   corax_fasta_t *fd = (corax_fasta_t *)malloc(sizeof(corax_fasta_t));
   if (!fd)
   {
@@ -80,7 +81,8 @@ CORAX_EXPORT corax_fasta_t *corax_fasta_open(const char *        filename,
 
   /* reset stripped char frequencies */
   fd->stripped_count = 0;
-  for (i = 0; i < 256; i++) fd->stripped[i] = 0;
+  for (i = 0; i < 256; i++) { fd->stripped[i] = 0;
+}
 
   fd->line[0] = 0;
   if (!fgets(fd->line, CORAX_LINEALLOC, fd->fp))
@@ -98,13 +100,14 @@ CORAX_EXPORT corax_fasta_t *corax_fasta_open(const char *        filename,
 
 CORAX_EXPORT int corax_fasta_rewind(corax_fasta_t *fd)
 {
-  int i;
+  int i = 0;
 
   rewind(fd->fp);
 
   /* reset stripped char frequencies */
   fd->stripped_count = 0;
-  for (i = 0; i < 256; i++) fd->stripped[i] = 0;
+  for (i = 0; i < 256; i++) { fd->stripped[i] = 0;
+}
 
   fd->line[0] = 0;
   if (!fgets(fd->line, CORAX_LINEALLOC, fd->fp))
@@ -130,7 +133,7 @@ CORAX_EXPORT int corax_fasta_getnext(corax_fasta_t *fd,
                                      long *         seq_len,
                                      long *         seqno)
 {
-  void *mem;
+  void *mem = NULL;
   long  head_alloc = MEMCHUNK;
   long  seq_alloc  = MEMCHUNK;
 
@@ -168,11 +171,12 @@ CORAX_EXPORT int corax_fasta_getnext(corax_fasta_t *fd,
       return CORAX_FAILURE;
     }
 
-    long headerlen;
-    if (strchr(fd->line + 1, '\r'))
+    long headerlen = 0;
+    if (strchr(fd->line + 1, '\r')) {
       headerlen = xstrchrnul(fd->line + 1, '\r') - (fd->line + 1);
-    else
+    } else {
       headerlen = xstrchrnul(fd->line + 1, '\n') - (fd->line + 1);
+}
 
     *head_len = headerlen;
 
@@ -208,8 +212,8 @@ CORAX_EXPORT int corax_fasta_getnext(corax_fasta_t *fd,
 
     while (fd->line[0] && (fd->line[0] != '>'))
     {
-      char  c;
-      char  m;
+      char  c = 0;
+      char  m = 0;
       char *p = fd->line;
 
       while ((c = *p++))
@@ -320,13 +324,13 @@ CORAX_EXPORT long corax_fasta_getfilepos(const corax_fasta_t *fd)
 
 CORAX_EXPORT corax_msa_t *corax_fasta_load(const char *fname)
 {
-  int i;
+  int i = 0;
 
   char *seq = NULL;
   char *hdr = NULL;
-  long  seqlen;
-  long  hdrlen;
-  long  seqno;
+  long  seqlen = 0;
+  long  hdrlen = 0;
+  long  seqno = 0;
 
   long   alloc_count = 0;
   long   alloc_chunk = 0;

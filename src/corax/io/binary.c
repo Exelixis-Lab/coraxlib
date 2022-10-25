@@ -106,7 +106,7 @@ CORAX_EXPORT FILE *corax_binary_create(const char *           filename,
 CORAX_EXPORT FILE *corax_binary_open(const char *           filename,
                                      corax_binary_header_t *header)
 {
-  FILE *file;
+  FILE *file = NULL;
 
   file = fopen(filename, "rb");
 
@@ -140,8 +140,8 @@ CORAX_EXPORT FILE *corax_binary_open(const char *           filename,
 FILE *corax_binary_append_open(const char *           filename,
                                corax_binary_header_t *header)
 {
-  FILE *file;
-  long  fpos;
+  FILE *file = NULL;
+  long  fpos = 0;
 
   file = fopen(filename, "r+b");
 
@@ -166,7 +166,8 @@ FILE *corax_binary_append_open(const char *           filename,
     return NULL;
   }
   fpos = ftell(file);
-  if (header->map_offset > fpos) fpos = header->map_offset;
+  if (header->map_offset > fpos) { fpos = header->map_offset;
+}
   if (fseek(file, fpos, SEEK_SET) == -1)
   {
     file_io_error(file, fpos, "update position to last block");
@@ -207,7 +208,8 @@ CORAX_EXPORT int corax_binary_partition_dump(FILE *             bin_file,
   // unsigned long partition_len = partition_size(partition),
   //               clv_len = 0,
   //               wgt_len = 0;
-  long int start_pos = ftell(bin_file), end_pos;
+  long int start_pos = ftell(bin_file);
+  long int end_pos = 0;
 
   /* fill block header */
   block_header.block_id   = block_id;
@@ -282,10 +284,10 @@ CORAX_EXPORT corax_partition_t *
                                          long int           offset)
 {
   corax_block_header_t block_header;
-  corax_partition_t *  local_partition;
+  corax_partition_t *  local_partition = NULL;
   assert(offset >= 0 || offset == CORAX_BIN_ACCESS_SEEK);
-  unsigned int sites_alloc;
-  unsigned int i;
+  unsigned int sites_alloc = 0;
+  unsigned int i = 0;
 
   const int load_skeleton =
       *attributes & CORAX_BIN_ATTRIB_PARTITION_LOAD_SKELETON;
@@ -309,8 +311,9 @@ CORAX_EXPORT corax_partition_t *
     fseek(bin_file, offset, SEEK_SET);
   }
 
-  if (!binary_block_header_apply(bin_file, &block_header, &bin_fread))
+  if (!binary_block_header_apply(bin_file, &block_header, &bin_fread)) {
     return NULL;
+}
 
   if (block_header.type != CORAX_BIN_BLOCK_PARTITION)
   {
@@ -358,20 +361,23 @@ CORAX_EXPORT corax_partition_t *
                 : 0;
         for (i = start;
              i < local_partition->clv_buffers + local_partition->tips;
-             ++i)
+             ++i) {
           corax_aligned_free(local_partition->clv[i]);
+}
       }
       free(local_partition->clv);
       local_partition->clv_buffers = aux_partition.clv_buffers;
       local_partition->tips        = aux_partition.tips;
       local_partition->nodes = aux_partition.clv_buffers + aux_partition.tips;
-      ;
+      
       local_partition->clv = (double **)calloc(local_partition->clv_buffers
                                                    + local_partition->tips,
                                                sizeof(double *));
-      if (local_partition->scale_buffer)
-        for (i = 0; i < local_partition->scale_buffers; ++i)
+      if (local_partition->scale_buffer) {
+        for (i = 0; i < local_partition->scale_buffers; ++i) {
           free(local_partition->scale_buffer[i]);
+}
+}
       free(local_partition->scale_buffer);
       local_partition->scale_buffers = aux_partition.scale_buffers;
       local_partition->scale_buffer  = (unsigned int **)calloc(
@@ -515,7 +521,7 @@ CORAX_EXPORT int corax_binary_clv_dump(FILE *             bin_file,
                                        unsigned int       clv_index,
                                        unsigned int       attributes)
 {
-  int                  retval;
+  int                  retval = 0;
   corax_block_header_t block_header;
   size_t               clv_size = corax_get_clv_size(partition, clv_index);
   /* fill block header */
@@ -539,8 +545,9 @@ CORAX_EXPORT int corax_binary_clv_dump(FILE *             bin_file,
   if (!binary_update_header(bin_file, &block_header)) { return CORAX_FAILURE; }
 
   /* dump block header */
-  if (!binary_block_header_apply(bin_file, &block_header, &bin_fwrite))
+  if (!binary_block_header_apply(bin_file, &block_header, &bin_fwrite)) {
     return CORAX_FAILURE;
+}
 
   /* dump data */
   retval = binary_clv_apply(
@@ -572,7 +579,7 @@ CORAX_EXPORT int corax_binary_clv_load(FILE *             bin_file,
                                        unsigned int *     attributes,
                                        long int           offset)
 {
-  int                  retval;
+  int                  retval = 0;
   corax_block_header_t block_header;
 
   assert(partition);
@@ -599,8 +606,9 @@ CORAX_EXPORT int corax_binary_clv_load(FILE *             bin_file,
   }
 
   /* read and validate header */
-  if (!binary_block_header_apply(bin_file, &block_header, &bin_fread))
+  if (!binary_block_header_apply(bin_file, &block_header, &bin_fread)) {
     return CORAX_FAILURE;
+}
 
   if (block_header.type != CORAX_BIN_BLOCK_CLV)
   {
@@ -661,10 +669,14 @@ CORAX_EXPORT int corax_binary_utree_dump(FILE *         bin_file,
                                          unsigned int   tip_count,
                                          unsigned int   attributes)
 {
-  corax_unode_t **     travbuffer;
+  corax_unode_t **     travbuffer = NULL;
   corax_block_header_t block_header;
-  unsigned int         i, n_nodes, n_inner, n_utrees, trav_size;
-  int                  retval;
+  unsigned int         i = 0;
+  unsigned int         n_nodes = 0;
+  unsigned int         n_inner = 0;
+  unsigned int         n_utrees = 0;
+  unsigned int         trav_size = 0;
+  int                  retval = 0;
 
   /* reset error */
   corax_errno = 0;
@@ -757,13 +769,16 @@ CORAX_EXPORT corax_unode_t *corax_binary_utree_load(FILE *        bin_file,
                                                     unsigned int *attributes,
                                                     long int      offset)
 {
-  unsigned int         i, n_tips, n_tip_check, n_nodes;
-  long                 n_utrees;
+  unsigned int         i = 0;
+  unsigned int         n_tips = 0;
+  unsigned int         n_tip_check = 0;
+  unsigned int         n_nodes = 0;
+  long                 n_utrees = 0;
   corax_block_header_t block_header;
-  corax_unode_t **     tree_stack;
-  corax_unode_t *      tree;
-  unsigned int         tree_stack_top;
-  int                  retval;
+  corax_unode_t **     tree_stack = NULL;
+  corax_unode_t *      tree = NULL;
+  unsigned int         tree_stack_top = 0;
+  int                  retval = 0;
 
   assert(offset >= 0 || offset == CORAX_BIN_ACCESS_SEEK);
 
@@ -827,7 +842,10 @@ CORAX_EXPORT corax_unode_t *corax_binary_utree_load(FILE *        bin_file,
     if (t->next)
     {
       /* build inner node and connect */
-      corax_unode_t *t_l, *t_r, *t_cl, *t_cr;
+      corax_unode_t *t_l = NULL;
+      corax_unode_t *t_r = NULL;
+      corax_unode_t *t_cl = NULL;
+      corax_unode_t *t_cr = NULL;
       t_l    = (corax_unode_t *)malloc(sizeof(corax_unode_t));
       t_r    = (corax_unode_t *)malloc(sizeof(corax_unode_t));
       retval = 1;
@@ -857,8 +875,9 @@ CORAX_EXPORT corax_unode_t *corax_binary_utree_load(FILE *        bin_file,
       t_l->back  = t_cl;
       t_cl->back = t_l;
     }
-    else
+    else {
       --n_tip_check;
+}
 
     /* push */
     tree_stack[tree_stack_top++] = t;
@@ -897,7 +916,7 @@ CORAX_EXPORT int corax_binary_custom_dump(FILE *       bin_file,
                                           size_t       size,
                                           unsigned int attributes)
 {
-  int                  retval;
+  int                  retval = 0;
   corax_block_header_t block_header;
   memset(&block_header, 0, sizeof(corax_block_header_t));
 
@@ -912,8 +931,9 @@ CORAX_EXPORT int corax_binary_custom_dump(FILE *       bin_file,
   if (!binary_update_header(bin_file, &block_header)) { return CORAX_FAILURE; }
 
   /* dump block header */
-  if (!binary_block_header_apply(bin_file, &block_header, &bin_fwrite))
+  if (!binary_block_header_apply(bin_file, &block_header, &bin_fwrite)) {
     return CORAX_FAILURE;
+}
 
   /* dump data */
   retval = bin_fwrite(data, size, 1, bin_file);
@@ -925,7 +945,7 @@ CORAX_EXPORT corax_block_map_t *corax_binary_get_map(FILE *        bin_file,
                                                      unsigned int *n_blocks)
 {
   corax_binary_header_t bin_header;
-  corax_block_map_t *   map;
+  corax_block_map_t *   map = NULL;
 
   /* get header */
   fseek(bin_file, 0, SEEK_SET);
@@ -938,7 +958,8 @@ CORAX_EXPORT corax_block_map_t *corax_binary_get_map(FILE *        bin_file,
   /* get map */
   map = (corax_block_map_t *)malloc(bin_header.n_blocks
                                     * sizeof(corax_block_map_t));
-  if (!map) return NULL;
+  if (!map) { return NULL;
+}
 
   if (!bin_fread(map, sizeof(corax_block_map_t), bin_header.n_blocks, bin_file))
   {
@@ -972,8 +993,8 @@ CORAX_EXPORT void *corax_binary_custom_load(FILE *        bin_file,
                                             long int      offset)
 {
   corax_block_header_t block_header;
-  unsigned int         alignment;
-  void *               data;
+  unsigned int         alignment = 0;
+  void *               data = NULL;
 
   assert(offset >= 0 || offset == CORAX_BIN_ACCESS_SEEK);
 
@@ -997,8 +1018,9 @@ CORAX_EXPORT void *corax_binary_custom_load(FILE *        bin_file,
   }
 
   /* read header */
-  if (!binary_block_header_apply(bin_file, &block_header, &bin_fread))
+  if (!binary_block_header_apply(bin_file, &block_header, &bin_fread)) {
     return NULL;
+}
   *type       = block_header.type;
   *size       = block_header.block_len;
   alignment   = block_header.alignment;
@@ -1014,8 +1036,9 @@ CORAX_EXPORT void *corax_binary_custom_load(FILE *        bin_file,
 
     data = corax_aligned_alloc(*size, alignment);
   }
-  else
+  else {
     data = malloc(*size);
+}
 
   if (!data)
   {
@@ -1072,7 +1095,8 @@ static unsigned int get_current_alignment(unsigned int attributes)
   if (attributes & CORAX_ATTRIB_ARCH_SSE) alignment = CORAX_ALIGNMENT_SSE;
 #endif
 #ifdef HAVE_AVX
-  if (attributes & CORAX_ATTRIB_ARCH_AVX) alignment = CORAX_ALIGNMENT_AVX;
+  if (attributes & CORAX_ATTRIB_ARCH_AVX) { alignment = CORAX_ALIGNMENT_AVX;
+}
 #endif
   return alignment;
 }

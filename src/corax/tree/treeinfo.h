@@ -3,7 +3,7 @@
 
 #include "corax/tree/utree.h"
 
-#define CORAX_TREEINFO_PARTITION_ALL -1
+#define CORAX_TREEINFO_PARTITION_ALL (-1)
 
 typedef struct treeinfo_edge
 {
@@ -105,10 +105,10 @@ extern "C"
    *
    * @param root A pointer to the virtual root of the unrooted tree.
    *
-   * @param tips: Number of tips in the tree. Almost always this will also be the
+   * @param tips Number of tips in the tree. Almost always this will also be the
    * number of taxa.
    *
-   * @param partitions: Number of partitions that will be used in the full
+   * @param partitions Number of partitions that will be used in the full
    * analysis.
    *
    * @param brlen_linkage Which branch length linking method to use. Options are:

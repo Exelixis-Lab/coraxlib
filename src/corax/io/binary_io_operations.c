@@ -67,7 +67,7 @@ int binary_block_header_apply(FILE *                bin_file,
 
 int binary_update_header(FILE *bin_file, corax_block_header_t *header)
 {
-  unsigned int      next_block;
+  unsigned int      next_block = 0;
   corax_block_map_t next_map;
 
   long int cur_position = ftell(bin_file);
@@ -134,13 +134,15 @@ int binary_update_header(FILE *bin_file, corax_block_header_t *header)
 
 long int binary_get_offset(FILE *bin_file, int block_id)
 {
-  corax_block_map_t *map;
-  unsigned int       i, n_blocks;
+  corax_block_map_t *map = NULL;
+  unsigned int       i = 0;
+  unsigned int       n_blocks = 0;
   long int           offset = CORAX_BIN_INVALID_OFFSET;
 
   map = corax_binary_get_map(bin_file, &n_blocks);
 
-  if (!map) return CORAX_BIN_INVALID_OFFSET;
+  if (!map) { return CORAX_BIN_INVALID_OFFSET;
+}
 
   /* search id */
   for (i = 0; i < n_blocks; ++i)
@@ -179,8 +181,9 @@ int binary_partition_desc_apply(FILE *             bin_file,
   /* The variables below are used only if PATTERN_TIP is active. Otherwise
      they could be uninitialized and hence raise a valgrind error if we try
      to write them into the binary file. */
-  if (!(partition->attributes & CORAX_ATTRIB_PATTERN_TIP))
+  if (!(partition->attributes & CORAX_ATTRIB_PATTERN_TIP)) {
     partition->maxstates = 0;
+}
   bin_func(&partition->maxstates, sizeof(unsigned int), 1, bin_file);
 
   return CORAX_SUCCESS;
@@ -191,7 +194,7 @@ int binary_partition_body_apply(FILE *             bin_file,
                                 unsigned int       attributes,
                                 int (*bin_func)(void *, size_t, size_t, FILE *))
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int tips          = partition->tips;
   unsigned int sites         = partition->sites;
   unsigned int rate_cats     = partition->rate_cats;
@@ -205,28 +208,33 @@ int binary_partition_body_apply(FILE *             bin_file,
                                    : partition->sites;
 
   bin_func(partition->eigen_decomp_valid, sizeof(int), rate_matrices, bin_file);
-  for (i = 0; i < rate_matrices; ++i)
+  for (i = 0; i < rate_matrices; ++i) {
     bin_func(partition->eigenvecs[i],
              sizeof(double),
              states * states_padded,
              bin_file);
-  for (i = 0; i < rate_matrices; ++i)
+}
+  for (i = 0; i < rate_matrices; ++i) {
     bin_func(partition->inv_eigenvecs[i],
              sizeof(double),
              states * states_padded,
              bin_file);
-  for (i = 0; i < rate_matrices; ++i)
+}
+  for (i = 0; i < rate_matrices; ++i) {
     bin_func(partition->eigenvals[i], sizeof(double), states_padded, bin_file);
+}
   bin_func(partition->pmatrix[0],
            sizeof(double),
            prob_matrices * states * states_padded * rate_cats,
            bin_file);
-  for (i = 0; i < rate_matrices; ++i)
+  for (i = 0; i < rate_matrices; ++i) {
     bin_func(
         partition->subst_params[i], sizeof(double), n_subst_rates, bin_file);
-  for (i = 0; i < rate_matrices; ++i)
+}
+  for (i = 0; i < rate_matrices; ++i) {
     bin_func(
         partition->frequencies[i], sizeof(double), states_padded, bin_file);
+}
   bin_func(partition->rates, sizeof(double), rate_cats, bin_file);
   bin_func(partition->rate_weights, sizeof(double), rate_cats, bin_file);
   bin_func(partition->prop_invar, sizeof(double), rate_matrices, bin_file);
@@ -304,11 +312,12 @@ int binary_partition_body_apply(FILE *             bin_file,
                corax_get_clv_size(partition, i),
                bin_file);
     }
-    for (i = 0; i < partition->scale_buffers; ++i)
+    for (i = 0; i < partition->scale_buffers; ++i) {
       bin_func(partition->scale_buffer[i],
                sizeof(unsigned int),
                corax_get_sites_number(partition, partition->tips + i),
                bin_file);
+}
   }
 
   if (attributes & CORAX_BIN_ATTRIB_PARTITION_DUMP_WGT)
@@ -320,14 +329,16 @@ int binary_partition_body_apply(FILE *             bin_file,
              bin_file);
   }
 
-  for (i = 0; i < rate_matrices; ++i)
+  for (i = 0; i < rate_matrices; ++i) {
     if (partition->prop_invar[i] > 0)
     {
-      if (!partition->invariant)
+      if (!partition->invariant) {
         partition->invariant = (int *)malloc(partition->sites * sizeof(int));
+}
       bin_func(partition->invariant, sizeof(int), sites, bin_file);
       break;
     }
+}
 
   return CORAX_SUCCESS;
 }
@@ -337,10 +348,12 @@ int binary_partition_apply(FILE *             bin_file,
                            unsigned int       attributes,
                            int (*bin_func)(void *, size_t, size_t, FILE *))
 {
-  if (!binary_partition_desc_apply(bin_file, partition, attributes, bin_func))
+  if (!binary_partition_desc_apply(bin_file, partition, attributes, bin_func)) {
     return CORAX_FAILURE;
-  if (!binary_partition_body_apply(bin_file, partition, attributes, bin_func))
+}
+  if (!binary_partition_body_apply(bin_file, partition, attributes, bin_func)) {
     return CORAX_FAILURE;
+}
 
   return CORAX_SUCCESS;
 }
@@ -427,7 +440,8 @@ int binary_node_apply(FILE *         bin_file,
   unsigned long label_len = 0;
 
   bin_func(node, sizeof(corax_unode_t), 1, bin_file);
-  if (write && node->label) label_len = strlen(node->label);
+  if (write && node->label) { label_len = strlen(node->label);
+}
   bin_func(&label_len, sizeof(unsigned long), 1, bin_file);
   if (label_len)
   {
@@ -451,7 +465,8 @@ void file_io_error(FILE *bin_file, long int setp, const char *msg)
   assert(setp >= CORAX_BIN_INVALID_OFFSET);
 
   /* if offset is valid, we apply it */
-  if (setp != CORAX_BIN_INVALID_OFFSET) fseek(bin_file, setp, SEEK_SET);
+  if (setp != CORAX_BIN_INVALID_OFFSET) { fseek(bin_file, setp, SEEK_SET);
+}
 
   /* update error data */
   corax_set_error(CORAX_BIN_ERROR_LOADSTORE, "Binary file I/O error: %s", msg);

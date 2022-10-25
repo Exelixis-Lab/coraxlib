@@ -26,21 +26,23 @@ static void fill_parent_scaler(unsigned int        scaler_size,
                                const unsigned int *left_scaler,
                                const unsigned int *right_scaler)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
-  if (!left_scaler && !right_scaler)
+  if (!left_scaler && !right_scaler) {
     memset(parent_scaler, 0, sizeof(unsigned int) * scaler_size);
-  else if (left_scaler && right_scaler)
+  } else if (left_scaler && right_scaler)
   {
     memcpy(parent_scaler, left_scaler, sizeof(unsigned int) * scaler_size);
-    for (i = 0; i < scaler_size; ++i) parent_scaler[i] += right_scaler[i];
+    for (i = 0; i < scaler_size; ++i) { parent_scaler[i] += right_scaler[i];
+}
   }
   else
   {
-    if (left_scaler)
+    if (left_scaler) {
       memcpy(parent_scaler, left_scaler, sizeof(unsigned int) * scaler_size);
-    else
+    } else {
       memcpy(parent_scaler, right_scaler, sizeof(unsigned int) * scaler_size);
+}
   }
 }
 
@@ -49,15 +51,27 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
                                                    const double *left_matrix,
                                                    const double *right_matrix)
 {
-  unsigned int j, k, n;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
   unsigned int maxstates = 16;
 
-  __m128d ymm0, ymm1, ymm2, ymm3, ymm4;
-  __m128d xmm4, xmm5, xmm6, xmm7;
-  __m128d xmm0, xmm1, xmm2, xmm3;
+  __m128d ymm0;
+  __m128d ymm1;
+  __m128d ymm2;
+  __m128d ymm3;
+  __m128d ymm4;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
+  __m128d xmm7;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
 
-  const double *jmat;
-  const double *kmat;
+  const double *jmat = NULL;
+  const double *kmat = NULL;
 
   ymm4 = _mm_setzero_pd();
 
@@ -240,11 +254,21 @@ CORAX_EXPORT void corax_core_create_lookup_sse(unsigned int  states,
     return;
   }
 
-  unsigned int i, j, k, n, m;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
+  unsigned int m = 0;
   unsigned int states_padded = (states + 1) & 0xFFFFFFFE;
   unsigned int maxstates     = tipmap_size;
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
 
   unsigned int log2_maxstates = (unsigned int)ceil(log2(maxstates));
   unsigned int span_padded    = states_padded * rate_cats;
@@ -252,9 +276,9 @@ CORAX_EXPORT void corax_core_create_lookup_sse(unsigned int  states,
   size_t displacement = (states_padded - states) * (states_padded);
 
   /* precompute first the entries that contain only one 1 */
-  const double *jmat;
-  const double *kmat;
-  double *      lookup;
+  const double *jmat = NULL;
+  const double *kmat = NULL;
+  double *      lookup = NULL;
 
   /* go through all pairs j,k of states for the two tips; i is the inner
      node state */
@@ -386,16 +410,19 @@ corax_core_update_clv_tt_4x4_sse(unsigned int         sites,
                                  const double *       lookup,
                                  unsigned int         attrib)
 {
-  unsigned int  j, k, n;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
+  unsigned int  n = 0;
   unsigned int  states = 4;
   unsigned int  span   = states * rate_cats;
-  const double *offset;
+  const double *offset = NULL;
 
   size_t scaler_size =
       (attrib & CORAX_ATTRIB_RATE_SCALERS) ? sites * rate_cats : sites;
 
-  if (parent_scaler)
+  if (parent_scaler) {
     memset(parent_scaler, 0, sizeof(unsigned int) * scaler_size);
+}
 
   for (n = 0; n < sites; ++n)
   {
@@ -426,19 +453,31 @@ corax_core_update_clv_ii_4x4_sse(unsigned int        sites,
 {
   unsigned int states = 4;
   unsigned int span   = states * rate_cats;
-  unsigned int n, k, i;
+  unsigned int n = 0;
+  unsigned int k = 0;
+  unsigned int i = 0;
 
-  const double *lmat;
-  const double *rmat;
+  const double *lmat = NULL;
+  const double *rmat = NULL;
 
-  unsigned int scale_mode; /* 0 = none, 1 = per-site, 2 = per-rate */
-  unsigned int scale_mask;
-  unsigned int init_mask;
+  unsigned int scale_mode = 0; /* 0 = none, 1 = per-site, 2 = per-rate */
+  unsigned int scale_mask = 0;
+  unsigned int init_mask = 0;
 
   __m128d v_scale_threshold = _mm_set1_pd(CORAX_SCALE_THRESHOLD);
   __m128d v_scale_factor    = _mm_set1_pd(CORAX_SCALE_FACTOR);
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
+  __m128d xmm7;
+  __m128d xmm8;
+  __m128d xmm9;
+  __m128d xmm10;
 
   if (parent_scaler)
   {
@@ -609,8 +648,9 @@ corax_core_update_clv_ii_4x4_sse(unsigned int        sites,
           parent_scaler[n * rate_cats + k] += 1;
         }
       }
-      else
+      else {
         scale_mask = scale_mask & rate_mask;
+}
 
       _mm_store_pd(parent_clv, xmm9);
       _mm_store_pd(parent_clv + 2, xmm10);
@@ -649,11 +689,13 @@ corax_core_update_clv_tt_sse(unsigned int         states,
                              unsigned int         tipstates_count,
                              unsigned int         attrib)
 {
-  unsigned int  j, k, n;
+  unsigned int  j = 0;
+  unsigned int  k = 0;
+  unsigned int  n = 0;
   unsigned int  log2_maxstates = (unsigned int)ceil(log2(tipstates_count));
   unsigned int  states_padded  = (states + 1) & 0xFFFFFFFE;
   unsigned int  span_padded    = states_padded * rate_cats;
-  const double *offset;
+  const double *offset = NULL;
 
   if (states == 4)
   {
@@ -671,8 +713,9 @@ corax_core_update_clv_tt_sse(unsigned int         states,
   size_t scaler_size =
       (attrib & CORAX_ATTRIB_RATE_SCALERS) ? sites * rate_cats : sites;
 
-  if (parent_scaler)
+  if (parent_scaler) {
     memset(parent_scaler, 0, sizeof(unsigned int) * scaler_size);
+}
 
   for (n = 0; n < sites; ++n)
   {
@@ -701,10 +744,13 @@ CORAX_EXPORT void corax_core_update_clv_ii_sse(unsigned int  states,
                                                const unsigned int *right_scaler,
                                                unsigned int        attrib)
 {
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
-  const double *lmat;
-  const double *rmat;
+  const double *lmat = NULL;
+  const double *rmat = NULL;
 
   unsigned int states_padded = (states + 1) & 0xFFFFFFFE;
 
@@ -728,12 +774,18 @@ CORAX_EXPORT void corax_core_update_clv_ii_sse(unsigned int  states,
   unsigned int span_padded  = states_padded * rate_cats;
   size_t       displacement = (states_padded - states) * (states_padded);
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
 
   /* scaling stuff */
-  unsigned int scale_mode; /* 0 = none, 1 = per-site, 2 = per-rate */
-  unsigned int scale_mask;
-  unsigned int init_mask;
+  unsigned int scale_mode = 0; /* 0 = none, 1 = per-site, 2 = per-rate */
+  unsigned int scale_mask = 0;
+  unsigned int init_mask = 0;
   __m128d      v_scale_threshold = _mm_set1_pd(CORAX_SCALE_THRESHOLD);
   __m128d      v_scale_factor    = _mm_set1_pd(CORAX_SCALE_FACTOR);
 
@@ -842,8 +894,9 @@ CORAX_EXPORT void corax_core_update_clv_ii_sse(unsigned int  states,
           parent_scaler[n * rate_cats + k] += 1;
         }
       }
-      else
+      else {
         scale_mask = scale_mask & rate_mask;
+}
 
       parent_clv += states_padded;
       left_clv += states_padded;
@@ -890,22 +943,31 @@ corax_core_update_clv_repeats_generic_sse(unsigned int        states,
   CORAX_UNUSED(left_sites);
   CORAX_UNUSED(right_sites);
   CORAX_UNUSED(bclv_buffer);
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
 
-  const double *lmat;
-  const double *rmat;
+  const double *lmat = NULL;
+  const double *rmat = NULL;
 
   unsigned int states_padded = (states + 1) & 0xFFFFFFFE;
 
   unsigned int span_padded  = states_padded * rate_cats;
   size_t       displacement = (states_padded - states) * (states_padded);
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
 
   /* scaling stuff */
-  unsigned int scale_mode; /* 0 = none, 1 = per-site, 2 = per-rate */
-  unsigned int scale_mask;
-  unsigned int init_mask;
+  unsigned int scale_mode = 0; /* 0 = none, 1 = per-site, 2 = per-rate */
+  unsigned int scale_mask = 0;
+  unsigned int init_mask = 0;
   __m128d      v_scale_threshold = _mm_set1_pd(CORAX_SCALE_THRESHOLD);
   __m128d      v_scale_factor    = _mm_set1_pd(CORAX_SCALE_FACTOR);
 
@@ -915,7 +977,7 @@ corax_core_update_clv_repeats_generic_sse(unsigned int        states,
     scale_mode = (attrib & CORAX_ATTRIB_RATE_SCALERS) ? 2 : 1;
     init_mask  = (scale_mode == 1) ? 0x3 : 0;
     /* add up the scale vector of the two children if available */
-    if (scale_mode == 2)
+    if (scale_mode == 2) {
       corax_fill_parent_scaler_repeats_per_rate(parent_sites,
                                                 rate_cats,
                                                 parent_scaler,
@@ -924,7 +986,7 @@ corax_core_update_clv_repeats_generic_sse(unsigned int        states,
                                                 left_site_id,
                                                 right_scaler,
                                                 right_site_id);
-    else
+    } else {
       corax_fill_parent_scaler_repeats(parent_sites,
                                        parent_scaler,
                                        parent_id_site,
@@ -932,6 +994,7 @@ corax_core_update_clv_repeats_generic_sse(unsigned int        states,
                                        left_site_id,
                                        right_scaler,
                                        right_site_id);
+}
   }
   else
   {
@@ -1034,8 +1097,9 @@ corax_core_update_clv_repeats_generic_sse(unsigned int        states,
           parent_scaler[n * rate_cats + k] += 1;
         }
       }
-      else
+      else {
         scale_mask = scale_mask & rate_mask;
+}
 
       parent_clv += states_padded;
       lclv += states_padded;
@@ -1073,21 +1137,34 @@ corax_core_update_clv_ti_4x4_sse(unsigned int         sites,
 {
   unsigned int states = 4;
   unsigned int span   = states * rate_cats;
-  unsigned int i, k, n;
-  unsigned int lstate;
+  unsigned int i = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
+  unsigned int lstate = 0;
 
-  const double *lmat;
-  const double *rmat;
+  const double *lmat = NULL;
+  const double *rmat = NULL;
 
-  unsigned int scale_mode; /* 0 = none, 1 = per-site, 2 = per-rate */
-  unsigned int scale_mask;
-  unsigned int init_mask;
+  unsigned int scale_mode = 0; /* 0 = none, 1 = per-site, 2 = per-rate */
+  unsigned int scale_mask = 0;
+  unsigned int init_mask = 0;
 
   __m128d v_scale_threshold = _mm_set1_pd(CORAX_SCALE_THRESHOLD);
   __m128d v_scale_factor    = _mm_set1_pd(CORAX_SCALE_FACTOR);
 
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8;
-  __m128d ymm0, ymm1, ymm2, ymm3;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
+  __m128d xmm7;
+  __m128d xmm8;
+  __m128d ymm0;
+  __m128d ymm1;
+  __m128d ymm2;
+  __m128d ymm3;
 
   /* precompute a lookup table of four values per entry (one for each state),
      for all 16 states (including ambiguities) and for each rate category. */
@@ -1283,8 +1360,9 @@ corax_core_update_clv_ti_4x4_sse(unsigned int         sites,
           parent_scaler[n * rate_cats + k] += 1;
         }
       }
-      else
+      else {
         scale_mask = scale_mask & rate_mask;
+}
 
       _mm_store_pd(parent_clv, xmm3);
       _mm_store_pd(parent_clv + 2, xmm8);
@@ -1328,14 +1406,17 @@ corax_core_update_clv_ti_sse(unsigned int         states,
                              unsigned int         attrib)
 {
   CORAX_UNUSED(tipmap_size);
-  unsigned int i, j, k, n;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  unsigned int n = 0;
   unsigned int states_padded = (states + 1) & 0xFFFFFFFE;
   unsigned int span_padded   = states_padded * rate_cats;
 
-  const double *lmat;
-  const double *rmat;
+  const double *lmat = NULL;
+  const double *rmat = NULL;
 
-  corax_state_t lstate;
+  corax_state_t lstate = 0;
 
   /* dedicated functions for 4x4 matrices */
   if (states == 4)
@@ -1354,14 +1435,21 @@ corax_core_update_clv_ti_sse(unsigned int         states,
   }
 
   size_t  displacement = (states_padded - states) * (states_padded);
-  __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+  __m128d xmm0;
+  __m128d xmm1;
+  __m128d xmm2;
+  __m128d xmm3;
+  __m128d xmm4;
+  __m128d xmm5;
+  __m128d xmm6;
+  __m128d xmm7;
 
   xmm7 = _mm_setzero_pd();
 
   /* scaling stuff */
-  unsigned int scale_mode; /* 0 = none, 1 = per-site, 2 = per-rate */
-  unsigned int scale_mask;
-  unsigned int init_mask;
+  unsigned int scale_mode = 0; /* 0 = none, 1 = per-site, 2 = per-rate */
+  unsigned int scale_mask = 0;
+  unsigned int init_mask = 0;
   __m128d      v_scale_threshold = _mm_set1_pd(CORAX_SCALE_THRESHOLD);
   __m128d      v_scale_factor    = _mm_set1_pd(CORAX_SCALE_FACTOR);
 
@@ -1482,8 +1570,9 @@ corax_core_update_clv_ti_sse(unsigned int         states,
           parent_scaler[n * rate_cats + k] += 1;
         }
       }
-      else
+      else {
         scale_mask = scale_mask & rate_mask;
+}
 
       parent_clv += states_padded;
       right_clv += states_padded;

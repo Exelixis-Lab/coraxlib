@@ -29,12 +29,12 @@ static int sumtable_tipinner(corax_partition_t * partition,
                              const unsigned int *params_indices,
                              double *            sumtable)
 {
-  int                 retval;
-  unsigned int        i;
-  unsigned int        tip_clv_index;
-  unsigned int        inner_clv_index;
+  int                 retval = 0;
+  unsigned int        i = 0;
+  unsigned int        tip_clv_index = 0;
+  unsigned int        inner_clv_index = 0;
   unsigned int        sites = partition->sites;
-  const unsigned int *scaler;
+  const unsigned int *scaler = NULL;
 
   double **eigenvecs =
       (double **)malloc(partition->rate_cats * sizeof(double *));
@@ -43,16 +43,20 @@ static int sumtable_tipinner(corax_partition_t * partition,
   double **freqs = (double **)malloc(partition->rate_cats * sizeof(double *));
   if (!eigenvecs || !inv_eigenvecs || !freqs)
   {
-    if (eigenvecs) free(eigenvecs);
-    if (inv_eigenvecs) free(inv_eigenvecs);
-    if (freqs) free(freqs);
+    if (eigenvecs) { free(eigenvecs);
+}
+    if (inv_eigenvecs) { free(inv_eigenvecs);
+}
+    if (freqs) { free(freqs);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
   }
 
   /* ascertaiment bias correction */
-  if (partition->asc_bias_alloc) sites += partition->states;
+  if (partition->asc_bias_alloc) { sites += partition->states;
+}
 
   for (i = 0; i < partition->rate_cats; ++i)
   {
@@ -104,8 +108,8 @@ static int sumtable_innerinner(corax_partition_t * partition,
                                const unsigned int *params_indices,
                                double *            sumtable)
 {
-  int          retval;
-  unsigned int i;
+  int          retval = 0;
+  unsigned int i = 0;
   unsigned int sites = partition->sites;
 
   double **eigenvecs =
@@ -115,17 +119,21 @@ static int sumtable_innerinner(corax_partition_t * partition,
   double **freqs = (double **)malloc(partition->rate_cats * sizeof(double *));
   if (!eigenvecs || !inv_eigenvecs || !freqs)
   {
-    if (eigenvecs) free(eigenvecs);
-    if (inv_eigenvecs) free(inv_eigenvecs);
-    if (freqs) free(freqs);
+    if (eigenvecs) { free(eigenvecs);
+}
+    if (inv_eigenvecs) { free(inv_eigenvecs);
+}
+    if (freqs) { free(freqs);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
   }
 
   /* ascertaiment bias correction */
-  if (partition->asc_bias_alloc)
+  if (partition->asc_bias_alloc) {
     sites += (unsigned int)partition->asc_additional_sites;
+}
 
   for (i = 0; i < partition->rate_cats; ++i)
   {
@@ -162,8 +170,8 @@ static int sumtable_repeats(corax_partition_t * partition,
                             const unsigned int *params_indices,
                             double *            sumtable)
 {
-  int          retval;
-  unsigned int i;
+  int          retval = 0;
+  unsigned int i = 0;
   unsigned int sites = partition->sites;
 
   double **eigenvecs =
@@ -173,17 +181,21 @@ static int sumtable_repeats(corax_partition_t * partition,
   double **freqs = (double **)malloc(partition->rate_cats * sizeof(double *));
   if (!eigenvecs || !inv_eigenvecs || !freqs)
   {
-    if (eigenvecs) free(eigenvecs);
-    if (inv_eigenvecs) free(inv_eigenvecs);
-    if (freqs) free(freqs);
+    if (eigenvecs) { free(eigenvecs);
+}
+    if (inv_eigenvecs) { free(inv_eigenvecs);
+}
+    if (freqs) { free(freqs);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
   }
 
   /* ascertaiment bias correction */
-  if (partition->asc_bias_alloc)
+  if (partition->asc_bias_alloc) {
     sites += (unsigned int)partition->asc_additional_sites;
+}
 
   for (i = 0; i < partition->rate_cats; ++i)
   {
@@ -238,21 +250,23 @@ CORAX_EXPORT int corax_update_sumtable(corax_partition_t * partition,
                                        const unsigned int *params_indices,
                                        double *            sumtable)
 {
-  int retval;
+  int retval = 0;
 
-  unsigned int *parent_scaler;
-  unsigned int *child_scaler;
+  unsigned int *parent_scaler = NULL;
+  unsigned int *child_scaler = NULL;
 
   /* get parent scaler */
-  if (parent_scaler_index == CORAX_SCALE_BUFFER_NONE)
+  if (parent_scaler_index == CORAX_SCALE_BUFFER_NONE) {
     parent_scaler = NULL;
-  else
+  } else {
     parent_scaler = partition->scale_buffer[parent_scaler_index];
+}
 
-  if (child_scaler_index == CORAX_SCALE_BUFFER_NONE)
+  if (child_scaler_index == CORAX_SCALE_BUFFER_NONE) {
     child_scaler = NULL;
-  else
+  } else {
     child_scaler = partition->scale_buffer[child_scaler_index];
+}
 
   if (corax_repeats_enabled(partition)
       && (partition->repeats->pernode_ids[parent_clv_index]
@@ -333,9 +347,9 @@ corax_compute_likelihood_derivatives(corax_partition_t * partition,
                                      double *            d_f,
                                      double *            dd_f)
 {
-  unsigned int *parent_scaler;
-  unsigned int *child_scaler;
-  unsigned int  i;
+  unsigned int *parent_scaler = NULL;
+  unsigned int *child_scaler = NULL;
+  unsigned int  i = 0;
   unsigned int  rate_cats = partition->rate_cats;
 
   double **eigenvals  = (double **)malloc(rate_cats * sizeof(double *));
@@ -343,9 +357,12 @@ corax_compute_likelihood_derivatives(corax_partition_t * partition,
   double * prop_invar = (double *)malloc(rate_cats * sizeof(double));
   if (!eigenvals || !prop_invar || !freqs)
   {
-    if (eigenvals) free(eigenvals);
-    if (prop_invar) free(prop_invar);
-    if (freqs) free(freqs);
+    if (eigenvals) { free(eigenvals);
+}
+    if (prop_invar) { free(prop_invar);
+}
+    if (freqs) { free(freqs);
+}
 
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Unable to allocate enough memory.");
     return CORAX_FAILURE;
@@ -359,15 +376,17 @@ corax_compute_likelihood_derivatives(corax_partition_t * partition,
   }
 
   /* get parent scaler */
-  if (parent_scaler_index == CORAX_SCALE_BUFFER_NONE)
+  if (parent_scaler_index == CORAX_SCALE_BUFFER_NONE) {
     parent_scaler = NULL;
-  else
+  } else {
     parent_scaler = partition->scale_buffer[parent_scaler_index];
+}
 
-  if (child_scaler_index == CORAX_SCALE_BUFFER_NONE)
+  if (child_scaler_index == CORAX_SCALE_BUFFER_NONE) {
     child_scaler = NULL;
-  else
+  } else {
     child_scaler = partition->scale_buffer[child_scaler_index];
+}
 
   unsigned int parent_ids = partition->sites;
   unsigned int child_ids  = partition->sites;

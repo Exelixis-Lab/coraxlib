@@ -1,3 +1,4 @@
+#include "math.h"
 #include "opt_generic.h"
 
 /******************************************************************************/
@@ -60,10 +61,10 @@ CORAX_EXPORT double corax_opt_minimize_newton(
                                                (void *)&wrapper_params,
                                                newton_wrapper_func);
 
-  if (retval)
+  if (retval) {
     return xres;
-  else
-    return CORAX_FAILURE;
+}
+      return CORAX_FAILURE;
 }
 
 /**
@@ -100,7 +101,7 @@ CORAX_EXPORT int corax_opt_minimize_newton_multi(
     void *       params,
     void(deriv_func)(void *, double *, double *, double *))
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int iter          = 0;
   int          all_converged = 0;
   int          error_flag    = 0;
@@ -148,9 +149,10 @@ CORAX_EXPORT int corax_opt_minimize_newton_multi(
     all_converged = 1;
     for (i = 0; i < xnum; i++)
     {
-      double dx;
+      double dx = NAN;
 
-      if (converged[i]) continue;
+      if (converged[i]) { continue;
+}
 
       if (!isfinite(f[i]) || !isfinite(df[i]))
       {
@@ -174,10 +176,11 @@ CORAX_EXPORT int corax_opt_minimize_newton_multi(
           continue;
         }
 
-        if (f[i] < 0.0)
+        if (f[i] < 0.0) {
           xl[i] = x[i];
-        else
+        } else {
           xh[i] = x[i];
+}
 
         dx = -1 * f[i] / df[i];
       }
@@ -188,8 +191,10 @@ CORAX_EXPORT int corax_opt_minimize_newton_multi(
 
       dx = CORAX_MAX(CORAX_MIN(dx, dxmax), -dxmax);
 
-      if (x[i] + dx < xl[i]) dx = xl[i] - x[i];
-      if (x[i] + dx > xh[i]) dx = xh[i] - x[i];
+      if (x[i] + dx < xl[i]) { dx = xl[i] - x[i];
+}
+      if (x[i] + dx > xh[i]) { dx = xh[i] - x[i];
+}
 
       if (fabs(dx) < tolerance)
       {
@@ -217,10 +222,11 @@ CORAX_EXPORT int corax_opt_minimize_newton_multi(
   free(xh);
   free(f);
   free(df);
-  if (int_converged) free(int_converged);
+  if (int_converged) { free(int_converged);
+}
 
-  if (all_converged && !error_flag)
+  if (all_converged && !error_flag) {
     return CORAX_SUCCESS;
-  else
-    return CORAX_FAILURE;
+}
+      return CORAX_FAILURE;
 }

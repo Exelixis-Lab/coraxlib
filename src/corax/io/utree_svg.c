@@ -19,6 +19,7 @@
     Schloss-Wolfsbrunnenweg 35, D-69118 Heidelberg, Germany
 */
 
+#include "math.h"
 #include "utree_io.h"
 
 typedef struct corax_svg_data_s
@@ -40,7 +41,8 @@ typedef struct corax_svg_aux_s
 static corax_svg_data_t *create_data(int height, double x, double y)
 {
   corax_svg_data_t *data = (corax_svg_data_t *)malloc(sizeof(corax_svg_data_t));
-  if (!data) return NULL;
+  if (!data) { return NULL;
+}
 
   data->height = height;
   data->x      = x;
@@ -54,22 +56,27 @@ static int utree_height_recursive(corax_unode_t *node)
   if (!node->next)
   {
     node->data = (void *)create_data(0, 0, 0);
-    if (!node->data) return 0;
+    if (!node->data) { return 0;
+}
     return 1;
   }
 
-  if (!utree_height_recursive(node->next->back)) return 0;
-  if (!utree_height_recursive(node->next->next->back)) return 0;
+  if (!utree_height_recursive(node->next->back)) { return 0;
+}
+  if (!utree_height_recursive(node->next->next->back)) { return 0;
+}
 
   corax_svg_data_t *d1 = (corax_svg_data_t *)(node->next->back->data);
   corax_svg_data_t *d2 = (corax_svg_data_t *)(node->next->next->back->data);
   corax_svg_data_t *d  = create_data(0, 0, 0);
-  if (!d) return 0;
+  if (!d) { return 0;
+}
 
-  if (d1->height > d2->height)
+  if (d1->height > d2->height) {
     d->height = d1->height + 1;
-  else
+  } else {
     d->height = d2->height + 1;
+}
 
   node->data = node->next->data = node->next->next->data = d;
 
@@ -78,15 +85,19 @@ static int utree_height_recursive(corax_unode_t *node)
 
 static int utree_set_height(corax_unode_t *root)
 {
-  if (!root->next) return CORAX_FAILURE;
+  if (!root->next) { return CORAX_FAILURE;
+}
 
-  if (!utree_height_recursive(root->back)) return CORAX_FAILURE;
-  if (!utree_height_recursive(root)) return CORAX_FAILURE;
+  if (!utree_height_recursive(root->back)) { return CORAX_FAILURE;
+}
+  if (!utree_height_recursive(root)) { return CORAX_FAILURE;
+}
 
   corax_svg_data_t *db = (corax_svg_data_t *)(root->back->data);
   corax_svg_data_t *d  = (corax_svg_data_t *)(root->data);
 
-  if (db->height >= d->height) d->height = db->height + 1;
+  if (db->height >= d->height) { d->height = db->height + 1;
+}
 
   return CORAX_SUCCESS;
 }
@@ -126,24 +137,28 @@ static void utree_set_offset(corax_unode_t *           node,
 
   /* did we reach the root ? */
   corax_svg_data_t *parent_data = (corax_svg_data_t *)(node->back->data);
-  if (parent_data->height > data->height) parent = node->back;
+  if (parent_data->height > data->height) { parent = node->back;
+}
 
   /* if node has a parent then add up the parent's x coord such that
      the branch is shifted towards right. Otherwise, if node is the root,
      align it with the left margin */
-  if (parent)
+  if (parent) {
     data->x += parent_data->x;
-  else
+  } else {
     data->x = attr->margin_left;
+}
 
   /* if it's a tip then stop here */
-  if (!node->next) return;
+  if (!node->next) { return;
+}
 
   /* otherwise recursively set coordinates for the other nodes in a
      pre-order fashion */
   utree_set_offset(node->next->back, attr, aux);
   utree_set_offset(node->next->next->back, attr, aux);
-  if (!parent) utree_set_offset(node->back, attr, aux);
+  if (!parent) { utree_set_offset(node->back, attr, aux);
+}
 }
 
 static void utree_plot(FILE *                    fp,
@@ -151,25 +166,28 @@ static void utree_plot(FILE *                    fp,
                        const corax_svg_attrib_t *attr,
                        corax_svg_aux_t *         aux)
 {
-  double y;
+  double y = NAN;
   //  static int tip_occ = 0;
   corax_unode_t *parent = NULL;
 
   corax_svg_data_t *data        = (corax_svg_data_t *)(node->data);
   corax_svg_data_t *parent_data = (corax_svg_data_t *)(node->back->data);
 
-  if (parent_data->height > data->height) parent = node->back;
+  if (parent_data->height > data->height) { parent = node->back;
+}
 
   if (node->next)
   {
     utree_plot(fp, node->next->back, attr, aux);
     utree_plot(fp, node->next->next->back, attr, aux);
-    if (!parent) utree_plot(fp, node->back, attr, aux);
+    if (!parent) { utree_plot(fp, node->back, attr, aux);
+}
   }
 
   if (parent)
   {
-    double x, px;
+    double x = NAN;
+    double px = NAN;
 
     x  = data->x;
     px = parent_data->x;
@@ -182,7 +200,8 @@ static void utree_plot(FILE *                    fp,
     }
     else
     {
-      double ly, ry;
+      double ly = NAN;
+      double ry = NAN;
 
       corax_svg_data_t *nb_data  = node->next->back->data;
       corax_svg_data_t *nnb_data = node->next->next->back->data;
@@ -208,12 +227,15 @@ static void utree_plot(FILE *                    fp,
               attr->font_size,
               node->label);
     }
-    else
+    else {
       fprintf(fp, "\n");
+}
   }
   else
   {
-    double            ly, ry, x;
+    double            ly = NAN;
+    double            ry = NAN;
+    double            x = NAN;
     corax_svg_data_t *nb_data = (corax_svg_data_t *)(node->next->back->data);
 
     ly = nb_data->y;
@@ -230,9 +252,9 @@ static void utree_scaler_init(const corax_svg_attrib_t *attr,
                               corax_svg_aux_t *         aux,
                               corax_utree_t *           tree)
 {
-  unsigned int i;
+  unsigned int i = 0;
   double       len = 0;
-  double       label_len;
+  double       label_len = NAN;
 
   /* compute the length of all tip-to-root paths and store the longest one in
      max_tree_len */
@@ -249,17 +271,19 @@ static void utree_scaler_init(const corax_svg_attrib_t *attr,
       corax_svg_data_t *nnb_data =
           (corax_svg_data_t *)(node->next->next->back->data);
 
-      if (nb_data->height > data->height)
+      if (nb_data->height > data->height) {
         node = node->next->back;
-      else if (nnb_data->height > data->height)
+      } else if (nnb_data->height > data->height) {
         node = node->next->next->back;
-      else
+      } else {
         break;
+}
 
       len += node->length;
     }
 
-    if (len > aux->max_tree_len) aux->max_tree_len = len;
+    if (len > aux->max_tree_len) { aux->max_tree_len = len;
+}
 
     label_len = (attr->font_size / 1.5)
                 * (tree->nodes[i]->label ? strlen(tree->nodes[i]->label) : 0);
@@ -283,7 +307,7 @@ static void print_header(FILE *                    fp,
                          const corax_svg_attrib_t *attr,
                          corax_svg_aux_t *         aux)
 {
-  long svg_height;
+  long svg_height = 0;
 
   aux->canvas_width = attr->width - attr->margin_left - attr->margin_right;
 
@@ -365,10 +389,11 @@ static void svg_make(FILE *                    fp,
 
 CORAX_EXPORT corax_svg_attrib_t *corax_svg_attrib_create()
 {
-  corax_svg_attrib_t *x;
+  corax_svg_attrib_t *x = NULL;
 
   x = (corax_svg_attrib_t *)malloc(sizeof(corax_svg_attrib_t));
-  if (!x) return NULL;
+  if (!x) { return NULL;
+}
 
   /* set some defaults */
   x->width          = 1920;
@@ -398,12 +423,13 @@ CORAX_EXPORT int corax_utree_export_svg(corax_utree_t *           tree,
                                         const corax_svg_attrib_t *attribs,
                                         const char *              filename)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   /* clone the tree */
   int rc = CORAX_SUCCESS;
 
-  if (!root || !(root->next)) return CORAX_FAILURE;
+  if (!root || !(root->next)) { return CORAX_FAILURE;
+}
 
   /* open output file for writing */
   FILE *fp = fopen(filename, "w");
@@ -429,17 +455,19 @@ CORAX_EXPORT int corax_utree_export_svg(corax_utree_t *           tree,
   /* treat unrooted tree as rooted binary with a ternary root
      and compute the height of each node */
   // if (!utree_set_height(cloned))
-  if (!utree_set_height(root))
+  if (!utree_set_height(root)) {
     rc = CORAX_FAILURE;
-  else
+  } else {
     svg_make(fp, tree, root, attribs);
+}
 
   fclose(fp);
 
   /* restore old data */
   for (i = 0; i < tree->tip_count + tree->inner_count; ++i)
   {
-    if (tree->nodes[i]->data) free(tree->nodes[i]->data);
+    if (tree->nodes[i]->data) { free(tree->nodes[i]->data);
+}
     tree->nodes[i]->data = data_old[i];
   }
   free(data_old);

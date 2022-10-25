@@ -26,8 +26,9 @@ CORAX_EXPORT int corax_set_parsimony_sequence(corax_parsimony_t *  pars,
                                               const corax_state_t *map,
                                               const char *         sequence)
 {
-  corax_state_t c;
-  unsigned int  i, j;
+  corax_state_t c = 0;
+  unsigned int  i = 0;
+  unsigned int  j = 0;
 
   unsigned int states   = pars->states;
   double *     tipstate = pars->sbuffer[tip_index];
@@ -36,8 +37,10 @@ CORAX_EXPORT int corax_set_parsimony_sequence(corax_parsimony_t *  pars,
 
   /* set infinity as the highest score in the matrix plus one */
   double inf = score_matrix[0];
-  for (i = 1; i < states * states; ++i)
-    if (score_matrix[i] > inf) inf = score_matrix[i];
+  for (i = 1; i < states * states; ++i) {
+    if (score_matrix[i] > inf) { inf = score_matrix[i];
+}
+}
   inf++;
 
   for (i = 0; i < pars->sites; ++i)
@@ -53,10 +56,11 @@ CORAX_EXPORT int corax_set_parsimony_sequence(corax_parsimony_t *  pars,
 
     for (j = 0; j < states; ++j)
     {
-      if (c & 1)
+      if (c & 1) {
         tipstate[j] = 0;
-      else
+      } else {
         tipstate[j] = inf;
+}
       c >>= 1;
     }
 
@@ -74,7 +78,7 @@ CORAX_EXPORT corax_parsimony_t *
                                     unsigned int  score_buffers,
                                     unsigned int  ancestral_buffers)
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   /* create parsimony instance */
   corax_parsimony_t *pars =
@@ -151,32 +155,37 @@ CORAX_EXPORT corax_parsimony_t *
 
 CORAX_EXPORT void corax_parsimony_destroy(corax_parsimony_t *parsimony)
 {
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int nodes_count = 0;
 
-  if (!parsimony) return;
+  if (!parsimony) { return;
+}
 
   nodes_count = parsimony->tips + 3 * parsimony->inner_nodes;
 
   /* deallocate fast parsimony structures */
   if (parsimony->packedvector)
   {
-    for (i = 0; i < nodes_count; ++i)
+    for (i = 0; i < nodes_count; ++i) {
       corax_aligned_free(parsimony->packedvector[i]);
+}
     free(parsimony->packedvector);
   }
 
-  if (parsimony->node_cost) free(parsimony->node_cost);
+  if (parsimony->node_cost) { free(parsimony->node_cost);
+}
 
-  if (parsimony->informative) free(parsimony->informative);
+  if (parsimony->informative) { free(parsimony->informative);
+}
 
   /* if available, deallocate structures for weighted parsimony */
 
   /* score buffers */
   if (parsimony->sbuffer)
   {
-    for (i = 0; i < parsimony->score_buffers + parsimony->tips; ++i)
+    for (i = 0; i < parsimony->score_buffers + parsimony->tips; ++i) {
       free(parsimony->sbuffer[i]);
+}
     free(parsimony->sbuffer);
   }
 
@@ -185,13 +194,15 @@ CORAX_EXPORT void corax_parsimony_destroy(corax_parsimony_t *parsimony)
   {
     for (i = parsimony->tips;
          i < parsimony->ancestral_buffers + parsimony->tips;
-         ++i)
+         ++i) {
       free(parsimony->anc_states[i]);
+}
     free(parsimony->anc_states);
   }
 
   /* scoring matrix */
-  if (parsimony->score_matrix) free(parsimony->score_matrix);
+  if (parsimony->score_matrix) { free(parsimony->score_matrix);
+}
 
   free(parsimony);
 }

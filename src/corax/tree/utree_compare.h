@@ -50,14 +50,14 @@ extern "C"
   CORAX_EXPORT corax_consensus_utree_t *
                corax_utree_from_splits(const corax_split_system_t *split_system,
                                        unsigned int                tip_count,
-                                       const char *const *const    tip_labels);
+                                       const char *const *   tip_labels);
 
   CORAX_EXPORT corax_split_system_t *corax_utree_split_consensus(
       bitv_hashtable_t *splits_hash, unsigned int tip_count, double threshold);
 
   CORAX_EXPORT corax_consensus_utree_t *
                corax_utree_weight_consensus(const corax_utree_t *const *trees,
-                                            const double *const         weights,
+                                            const double *        weights,
                                             double                      threshold,
                                             unsigned int                tree_count);
 

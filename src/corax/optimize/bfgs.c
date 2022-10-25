@@ -1,3 +1,4 @@
+#include "math.h"
 #include "opt_generic.h"
 
 #include "lbfgsb/lbfgsb.h"
@@ -17,7 +18,7 @@ static inline int d_equals(double a, double b) { return (fabs(a - b) < 1e-10); }
  * and it requires 2 parameters: (1) custom data (if needed),
  * and (2) the values at which score is computed.
  *
- * @param  x[in,out]   first guess and result of the minimization process
+ * @param  x   first guess and result of the minimization process
  * @param  xmin        lower bound for each of the variables
  * @param  xmax        upper bound for each of the variables
  * @param  bound       bound type (CORAX_LBFGSB_BOUND_[NONE|LOWER|UPPER|BOTH]
@@ -49,19 +50,20 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb(double *     x,
                                               double (*target_funk)(void *,
                                                                     double *))
 {
-  unsigned int i;
+  unsigned int i = 0;
 
   /* L-BFGS-B parameters */
   //  double initial_score;
-  int     max_corrections;
+  int     max_corrections = 0;
   double  score = 0;
-  double *g, *wa;
-  int *   iwa;
+  double *g = NULL;
+  double *wa = NULL;
+  int *   iwa = NULL;
 
-  int  taskValue;
+  int  taskValue = 0;
   int *task = &taskValue;
 
-  int     csaveValue;
+  int     csaveValue = 0;
   int *   csave = &csaveValue;
   double  dsave[29];
   int     isave[44];
@@ -89,9 +91,12 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb(double *     x,
   {
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
                     "Cannot allocate memory for l-bfgs-b variables");
-    if (g) free(g);
-    if (iwa) free(iwa);
-    if (wa) free(wa);
+    if (g) { free(g);
+}
+    if (iwa) { free(iwa);
+}
+    if (wa) { free(wa);
+}
     return (double)-INFINITY;
   }
 
@@ -128,14 +133,17 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb(double *     x,
 
       score = target_funk(params, x);
 
-      if (is_nan(score) || d_equals(score, (double)-INFINITY)) break;
+      if (is_nan(score) || d_equals(score, (double)-INFINITY)) { break;
+}
 
-      double h, temp;
+      double h = NAN;
+      double temp = NAN;
       for (i = 0; i < n; i++)
       {
         temp = x[i];
         h    = CORAX_LBFGSB_ERROR * fabs(temp);
-        if (h < 1e-12) h = CORAX_LBFGSB_ERROR;
+        if (h < 1e-12) { h = CORAX_LBFGSB_ERROR;
+}
 
         x[i]           = temp + h;
         h              = x[i] - temp;
@@ -147,8 +155,9 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb(double *     x,
         x[i] = temp;
       }
     }
-    else if (*task != NEW_X)
+    else if (*task != NEW_X) {
       continue_opt = 0;
+}
   }
 
   /* fix optimal parameters */
@@ -244,9 +253,12 @@ static void destroy_bfgs_opt(struct bfgs_multi_opt *opt)
 {
   if (opt)
   {
-    if (opt->g) free(opt->g);
-    if (opt->iwa) free(opt->iwa);
-    if (opt->wa) free(opt->wa);
+    if (opt->g) { free(opt->g);
+}
+    if (opt->iwa) { free(opt->iwa);
+}
+    if (opt->wa) { free(opt->wa);
+}
     free(opt);
   }
 }
@@ -286,7 +298,8 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
     void *        params,
     double (*target_funk)(void *, double **, double *, int *))
 {
-  unsigned int i, p;
+  unsigned int i = 0;
+  unsigned int p = 0;
 
   double score = (double)-INFINITY;
 
@@ -323,8 +336,9 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
     }
 
     if (!init_bfgs_opt(
-            opts[p], n[p], x[p], xmin[p], xmax[p], bound[p], factr, pgtol))
+            opts[p], n[p], x[p], xmin[p], xmax[p], bound[p], factr, pgtol)) {
       goto cleanup;
+}
   }
 
   /* reset errno */
@@ -368,11 +382,13 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
        */
       score = target_funk(params, x, lh_old, skip);
 
-      if (is_nan(score) || d_equals(score, (double)-INFINITY)) break;
+      if (is_nan(score) || d_equals(score, (double)-INFINITY)) { break;
+}
 
       for (p = 0; p < xnum; p++)
       {
-        if (!skip[p]) opts[p]->score = lh_old[p];
+        if (!skip[p]) { opts[p]->score = lh_old[p];
+}
       }
 
       for (i = 0; i < nmax; i++)
@@ -385,11 +401,13 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
             skip[p] = 1;
           }
 
-          if (skip[p]) continue;
+          if (skip[p]) { continue;
+}
 
           opts[p]->temp = x[p][i];
           opts[p]->h    = CORAX_LBFGSB_ERROR * fabs(opts[p]->temp);
-          if (opts[p]->h < 1e-12) opts[p]->h = CORAX_LBFGSB_ERROR;
+          if (opts[p]->h < 1e-12) { opts[p]->h = CORAX_LBFGSB_ERROR;
+}
 
           x[p][i]    = opts[p]->temp + opts[p]->h;
           opts[p]->h = x[p][i] - opts[p]->temp;
@@ -399,7 +417,8 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
 
         for (p = 0; p < xnum; p++)
         {
-          if (skip[p]) continue;
+          if (skip[p]) { continue;
+}
 
           assert(opts[p]);
 
@@ -419,13 +438,18 @@ CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
   score = target_funk(params, x, NULL, NULL);
 
 cleanup:
-  if (lh_old) free(lh_old);
-  if (lh_new) free(lh_new);
-  if (converged) free(converged);
-  if (skip) free(skip);
+  if (lh_old) { free(lh_old);
+}
+  if (lh_new) { free(lh_new);
+}
+  if (converged) { free(converged);
+}
+  if (skip) { free(skip);
+}
   if (opts)
   {
-    for (p = 0; p < xnum; p++) destroy_bfgs_opt(opts[p]);
+    for (p = 0; p < xnum; p++) { destroy_bfgs_opt(opts[p]);
+}
     free(opts);
   }
 
