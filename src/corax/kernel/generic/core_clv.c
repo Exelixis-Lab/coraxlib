@@ -1027,15 +1027,15 @@ corax_core_update_clv_repeatsbclv_generic(unsigned int        states,
   }
 }
 
-CORAX_EXPORT void corax_core_create_lookup_4x4(unsigned int  rate_cats,
-                                               double *      lookup,
-                                               const double *left_matrix,
-                                               const double *right_matrix)
+CORAX_EXPORT void corax_core_create_lookup_4x4(corax_partition_t *      partition,
+                                               const corax_operation_t *op)
 {
   unsigned int i, j, k, n, m;
   unsigned int maxstates = 16;
   unsigned int states    = 4;
   unsigned int index     = 0;
+  const double *left_matrix  = partition->pmatrix[op->child1_matrix_index];
+  const double *right_matrix = partition->pmatrix[op->child2_matrix_index];
 
   /* precompute first the entries that contain only one 1 */
   double termj = 0;
@@ -1054,7 +1054,7 @@ CORAX_EXPORT void corax_core_create_lookup_4x4(unsigned int  rate_cats,
       kmat = right_matrix;
 
       /* precompute the likelihood for each state and each rate */
-      for (n = 0; n < rate_cats; ++n)
+      for (n = 0; n < partition->rate_cats; ++n)
       {
         for (i = 0; i < states; ++i)
         {
@@ -1078,37 +1078,29 @@ CORAX_EXPORT void corax_core_create_lookup_4x4(unsigned int  rate_cats,
 
           jmat += states;
           kmat += states;
-          lookup[index++] = termj * termk;
+          partition->ttlookup[index++] = termj * termk;
         }
       }
     }
   }
 }
 
-CORAX_EXPORT void corax_core_create_lookup(unsigned int         states,
-                                           unsigned int         rate_cats,
-                                           double *             lookup,
-                                           const double *       left_matrix,
-                                           const double *       right_matrix,
-                                           const corax_state_t *tipmap,
-                                           unsigned int         tipmap_size,
-                                           unsigned int         attrib)
+CORAX_EXPORT void corax_core_create_lookup(corax_partition_t *partition,
+                                           const corax_operation_t *op)
 {
+  assert(partition);
+  assert(op);
+  unsigned int states = partition->states;
+  unsigned int rate_cats = partition->rate_cats;
+  unsigned int attrib = partition->attributes;
 
 #ifdef HAVE_SSE3
   if (attrib & CORAX_ATTRIB_ARCH_SSE && CORAX_HAS_CPU_FEATURE(sse3_present))
   {
     if (states == 4)
-      corax_core_create_lookup_4x4_sse(
-          rate_cats, lookup, left_matrix, right_matrix);
+      corax_core_create_lookup_4x4_sse(partition, op);
     else
-      corax_core_create_lookup_sse(states,
-                                   rate_cats,
-                                   lookup,
-                                   left_matrix,
-                                   right_matrix,
-                                   tipmap,
-                                   tipmap_size);
+      corax_core_create_lookup_sse(partition, op);
     return;
   }
 #endif
@@ -1116,16 +1108,9 @@ CORAX_EXPORT void corax_core_create_lookup(unsigned int         states,
   if (attrib & CORAX_ATTRIB_ARCH_AVX && CORAX_HAS_CPU_FEATURE(avx_present))
   {
     if (states == 4)
-      corax_core_create_lookup_4x4_avx(
-          rate_cats, lookup, left_matrix, right_matrix);
+      corax_core_create_lookup_4x4_avx(partition, op);
     else
-      corax_core_create_lookup_avx(states,
-                                   rate_cats,
-                                   lookup,
-                                   left_matrix,
-                                   right_matrix,
-                                   tipmap,
-                                   tipmap_size);
+      corax_core_create_lookup_avx(partition, op);
     return;
   }
 #endif
@@ -1133,28 +1118,21 @@ CORAX_EXPORT void corax_core_create_lookup(unsigned int         states,
   if (attrib & CORAX_ATTRIB_ARCH_AVX2 && CORAX_HAS_CPU_FEATURE(avx2_present))
   {
     if (states == 4)
-      corax_core_create_lookup_4x4_avx(
-          rate_cats, lookup, left_matrix, right_matrix);
+      corax_core_create_lookup_4x4_avx(partition, op);
     else
-      corax_core_create_lookup_avx(states,
-                                   rate_cats,
-                                   lookup,
-                                   left_matrix,
-                                   right_matrix,
-                                   tipmap,
-                                   tipmap_size);
+      corax_core_create_lookup_avx(partition, op);
     return;
   }
 #endif
   if (states == 4)
   {
-    corax_core_create_lookup_4x4(rate_cats, lookup, left_matrix, right_matrix);
+    corax_core_create_lookup_4x4(partition, op);
     return;
   }
 
   unsigned int i, j, k, n, m;
   unsigned int index     = 0;
-  unsigned int maxstates = tipmap_size;
+  unsigned int maxstates = partition->maxstates;
 
   unsigned int log2_maxstates = (unsigned int)ceil(log2(maxstates));
   unsigned int span           = states * rate_cats;
@@ -1173,12 +1151,12 @@ CORAX_EXPORT void corax_core_create_lookup(unsigned int         states,
   {
     for (k = 0; k < maxstates; ++k)
     {
-      jmat  = left_matrix;
-      kmat  = right_matrix;
+      jmat  = partition->pmatrix[op->child1_matrix_index];
+      kmat  = partition->pmatrix[op->child2_matrix_index];
       index = 0;
 
       /* find offset of state-pair in the precomputation table */
-      lh_statepair = lookup;
+      lh_statepair = partition->ttlookup;
       lh_statepair += ((j << log2_maxstates) + k) * span;
 
       /* precompute the likelihood for each state and each rate */
@@ -1189,8 +1167,8 @@ CORAX_EXPORT void corax_core_create_lookup(unsigned int         states,
           termj = 0;
           termk = 0;
 
-          corax_state_t jstate = tipmap[j];
-          corax_state_t kstate = tipmap[k];
+          corax_state_t jstate = partition->tipmap[j];
+          corax_state_t kstate = partition->tipmap[k];
 
           /* decompose basecall into the encoded residues and set the
              appropriate positions in the tip vector */

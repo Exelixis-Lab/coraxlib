@@ -21,31 +21,25 @@
 
 #include "corax/corax.h"
 
-CORAX_EXPORT void corax_core_create_lookup_avx(unsigned int  states,
-                                               unsigned int  rate_cats,
-                                               double *      ttlookup,
-                                               const double *left_matrix,
-                                               const double *right_matrix,
-                                               const corax_state_t *tipmap,
-                                               unsigned int         tipmap_size)
+CORAX_EXPORT void corax_core_create_lookup_avx(corax_partition_t *      partition,
+                                               const corax_operation_t *op)
 {
-  if (states == 4)
+  if (partition->states == 4)
   {
-    corax_core_create_lookup_4x4_avx(
-        rate_cats, ttlookup, left_matrix, right_matrix);
+    corax_core_create_lookup_4x4_avx(partition, op);
     return;
   }
 
-  if (states == 20)
+  if (partition->states == 20)
   {
-    corax_core_create_lookup_20x20_avx(
-        rate_cats, ttlookup, left_matrix, right_matrix, tipmap, tipmap_size);
+    corax_core_create_lookup_20x20_avx(partition, op);
     return;
   }
 
   unsigned int i, j, k, n, m;
-  unsigned int states_padded = (states + 3) & 0xFFFFFFFC;
-  unsigned int maxstates     = tipmap_size;
+  unsigned int states_padded = (partition->states + 3) & 0xFFFFFFFC;
+  unsigned int maxstates     = partition->maxstates;
+  unsigned int rate_cats     = partition->rate_cats;
   unsigned int index         = 0;
 
   unsigned int log2_maxstates = (unsigned int)ceil(log2(maxstates));
@@ -65,28 +59,28 @@ CORAX_EXPORT void corax_core_create_lookup_avx(unsigned int  states,
   {
     for (k = 0; k < maxstates; ++k)
     {
-      jmat = left_matrix;
-      kmat = right_matrix;
+      jmat = partition->pmatrix[op->child1_matrix_index];
+      kmat = partition->pmatrix[op->child2_matrix_index];
 
       /* find offset of state-pair in the precomputation table */
-      lookup = ttlookup;
+      lookup = partition->ttlookup;
       lookup += ((j << log2_maxstates) + k) * span_padded;
 
       /* precompute the likelihood for each state and each rate */
       for (n = 0; n < rate_cats; ++n)
       {
         index = 0;
-        for (i = 0; i < states; ++i)
+        for (i = 0; i < partition->states; ++i)
         {
           termj = 0;
           termk = 0;
 
-          corax_state_t jstate = tipmap[j];
-          corax_state_t kstate = tipmap[k];
+          corax_state_t jstate = partition->tipmap[j];
+          corax_state_t kstate = partition->tipmap[k];
 
           /* decompose basecall into the encoded residues and set the
              appropriate positions in the tip vector */
-          for (m = 0; m < states; ++m)
+          for (m = 0; m < partition->states; ++m)
           {
             if (jstate & 1) termj += jmat[m];
 
@@ -102,8 +96,8 @@ CORAX_EXPORT void corax_core_create_lookup_avx(unsigned int  states,
         }
         /* this is to avoid valgrind warnings on accessing uninitialized memory
            when using AVX and states are not a multiple of 4 */
-        if (states_padded - states)
-          memset(lookup + index, 0, (states_padded - states) * sizeof(double));
+        if (states_padded - partition->states)
+          memset(lookup + index, 0, (states_padded - partition->states) * sizeof(double));
 
         lookup += states_padded;
       }
@@ -111,21 +105,17 @@ CORAX_EXPORT void corax_core_create_lookup_avx(unsigned int  states,
   }
 }
 
-CORAX_EXPORT void
-corax_core_create_lookup_20x20_avx(unsigned int         rate_cats,
-                                   double *             ttlookup,
-                                   const double *       left_matrix,
-                                   const double *       right_matrix,
-                                   const corax_state_t *tipmap,
-                                   unsigned int         tipmap_size)
+CORAX_EXPORT 
+void corax_core_create_lookup_20x20_avx(corax_partition_t *      partition,
+                                        const corax_operation_t *op)
 {
   unsigned int i, j, k, n, m;
   unsigned int states        = 20;
   unsigned int states_padded = 20;
-  unsigned int maxstates     = tipmap_size;
+  unsigned int maxstates     = partition->maxstates;
 
   unsigned int log2_maxstates = (unsigned int)ceil(log2(maxstates));
-  unsigned int span_padded    = states_padded * rate_cats;
+  unsigned int span_padded    = states_padded * partition->rate_cats;
 
   /* precompute first the entries that contain only one 1 */
   double terml = 0;
@@ -159,15 +149,15 @@ corax_core_create_lookup_20x20_avx(unsigned int         rate_cats,
 
   for (j = 0; j < maxstates; ++j)
   {
-    lmat = left_matrix;
-    rmat = right_matrix;
+    lmat = partition->pmatrix[op->child1_matrix_index];
+    rmat = partition->pmatrix[op->child2_matrix_index];
 
     // just 20 states -> will fit into 32-bit int
-    unsigned int state = (unsigned int)tipmap[j];
+    unsigned int state = (unsigned int)partition->tipmap[j];
 
     int ss = CORAX_POPCNT32(state) == 1 ? CORAX_CTZ32(state) : -1;
 
-    for (n = 0; n < rate_cats; ++n)
+    for (n = 0; n < partition->rate_cats; ++n)
     {
       for (i = 0; i < states; ++i)
       {
@@ -213,14 +203,14 @@ corax_core_create_lookup_20x20_avx(unsigned int         rate_cats,
     for (k = 0; k < maxstates; ++k)
     {
       /* find offset of state-pair in the precomputation table */
-      lookup = ttlookup;
+      lookup = partition->ttlookup;
       lookup += ((j << log2_maxstates) + k) * span_padded;
 
       ll = lookupl + j * span_padded;
       lr = lookupr + k * span_padded;
 
       /* precompute the likelihood for each state and each rate */
-      for (n = 0; n < rate_cats; ++n)
+      for (n = 0; n < partition->rate_cats; ++n)
       {
         for (i = 0; i < states; i += 4)
         {
@@ -243,16 +233,16 @@ corax_core_create_lookup_20x20_avx(unsigned int         rate_cats,
   corax_aligned_free(lookupr);
 }
 
-CORAX_EXPORT void corax_core_create_lookup_4x4_avx(unsigned int  rate_cats,
-                                                   double *      lookup,
-                                                   const double *left_matrix,
-                                                   const double *right_matrix)
+CORAX_EXPORT 
+void corax_core_create_lookup_4x4_avx(corax_partition_t    *partition,
+                                      const corax_operation_t *op)
 {
   unsigned int j, k, n;
   unsigned int maxstates = 16;
   unsigned int states    = 4;
+  unsigned int rate_cats = partition->rate_cats;
   unsigned int span      = states * rate_cats;
-
+    
   __m256d ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7;
   __m256d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
   __m256i jmask;
@@ -260,6 +250,7 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_avx(unsigned int  rate_cats,
   const double *jmat;
   const double *kmat;
 
+  double *lookup = NULL;
   double *lookupl = NULL;
   double *lookupr = NULL;
 
@@ -290,8 +281,8 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_avx(unsigned int  rate_cats,
                               ((j >> 1) & 1) ? ~0 : 0,
                               (j & 1) ? ~0 : 0);
 
-    jmat = left_matrix;
-    kmat = right_matrix;
+    jmat = partition->pmatrix[op->child1_matrix_index];
+    kmat = partition->pmatrix[op->child2_matrix_index];
 
     for (n = 0; n < rate_cats; ++n)
     {

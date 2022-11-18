@@ -40,14 +40,7 @@ static void case_tiptip(corax_partition_t *      partition,
     parent_scaler = partition->scale_buffer[op->parent_scaler_index];
 
   /* precompute lookup table */
-  corax_core_create_lookup(partition->states,
-                           partition->rate_cats,
-                           partition->ttlookup,
-                           left_matrix,
-                           right_matrix,
-                           partition->tipmap,
-                           partition->maxstates,
-                           partition->attributes);
+  corax_core_create_lookup(partition, op);
 
   /* and update CLV at inner node */
   corax_core_update_clv_tt(partition->states,

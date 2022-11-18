@@ -10,14 +10,13 @@ extern "C"
 
   /* functions in core_clvs.c */
 
-  CORAX_EXPORT void corax_core_create_lookup(unsigned int         states,
-                                             unsigned int         rate_cats,
-                                             double *             lookup,
-                                             const double *       left_matrix,
-                                             const double *       right_matrix,
-                                             const corax_state_t *tipmap,
-                                             unsigned int         tipmap_size,
-                                             unsigned int         attrib);
+  /**
+   *  Fill the tip-tip lookup table of partition. The lookup table
+   *  must already be allocated.
+   */
+  CORAX_EXPORT void corax_core_create_lookup(corax_partition_t *      partition,
+                                             const corax_operation_t *op);
+
 
   CORAX_EXPORT void
   corax_core_update_clv_tt(unsigned int         states,
@@ -118,10 +117,8 @@ extern "C"
                                             double *            bclv_buffer,
                                             unsigned int        attrib);
 
-  CORAX_EXPORT void corax_core_create_lookup_4x4(unsigned int  rate_cats,
-                                                 double *      lookup,
-                                                 const double *left_matrix,
-                                                 const double *right_matrix);
+  CORAX_EXPORT void corax_core_create_lookup_4x4(corax_partition_t *      partition,
+                                                 const corax_operation_t *op);
 
   CORAX_EXPORT void
   corax_core_update_clv_tt_4x4(unsigned int         sites,

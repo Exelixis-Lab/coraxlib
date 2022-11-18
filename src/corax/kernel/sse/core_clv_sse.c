@@ -44,10 +44,8 @@ static void fill_parent_scaler(unsigned int        scaler_size,
   }
 }
 
-CORAX_EXPORT void corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
-                                                   double *      lookup,
-                                                   const double *left_matrix,
-                                                   const double *right_matrix)
+CORAX_EXPORT void corax_core_create_lookup_4x4_sse(corax_partition_t *      partition,
+                                               const corax_operation_t *op)
 {
   unsigned int j, k, n;
   unsigned int maxstates = 16;
@@ -58,11 +56,12 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
 
   const double *jmat;
   const double *kmat;
+  double *lookup = partition->ttlookup;
 
   ymm4 = _mm_setzero_pd();
 
   /* skip entries for j = 0 */
-  lookup += maxstates * 4 * rate_cats;
+  lookup += maxstates * 4 * partition->rate_cats;
 
   for (j = 1; j < maxstates; ++j)
   {
@@ -74,7 +73,7 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
     xmm1 = _mm_cmpgt_pd(xmm2, ymm4);
 
     /* skip entry for k = 0 */
-    lookup += 4 * rate_cats;
+    lookup += 4 * partition->rate_cats;
 
     for (k = 1; k < maxstates; ++k)
     {
@@ -86,10 +85,10 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
 
       xmm3 = _mm_cmpgt_pd(xmm4, ymm4);
 
-      jmat = left_matrix;
-      kmat = right_matrix;
+      jmat = partition->pmatrix[op->child1_matrix_index];
+      kmat = partition->pmatrix[op->child2_matrix_index];
 
-      for (n = 0; n < rate_cats; ++n)
+      for (n = 0; n < partition->rate_cats; ++n)
       {
         /* load row0 from left matrix  */
         ymm0 = _mm_load_pd(jmat);
@@ -225,31 +224,25 @@ CORAX_EXPORT void corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
   }
 }
 
-CORAX_EXPORT void corax_core_create_lookup_sse(unsigned int  states,
-                                               unsigned int  rate_cats,
-                                               double *      ttlookup,
-                                               const double *left_matrix,
-                                               const double *right_matrix,
-                                               const corax_state_t *tipmap,
-                                               unsigned int         tipmap_size)
+CORAX_EXPORT void corax_core_create_lookup_sse(corax_partition_t *partition,
+                                               const corax_operation_t *op)
 {
-  if (states == 4)
+  if (partition->states == 4)
   {
-    corax_core_create_lookup_4x4_sse(
-        rate_cats, ttlookup, left_matrix, right_matrix);
+    corax_core_create_lookup_4x4_sse(partition, op);
     return;
   }
 
   unsigned int i, j, k, n, m;
-  unsigned int states_padded = (states + 1) & 0xFFFFFFFE;
-  unsigned int maxstates     = tipmap_size;
+  unsigned int states_padded = (partition->states + 1) & 0xFFFFFFFE;
+  unsigned int maxstates     = partition->maxstates;
 
   __m128d xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6;
 
   unsigned int log2_maxstates = (unsigned int)ceil(log2(maxstates));
-  unsigned int span_padded    = states_padded * rate_cats;
+  unsigned int span_padded    = states_padded * partition->rate_cats;
 
-  size_t displacement = (states_padded - states) * (states_padded);
+  size_t displacement = (states_padded - partition->states) * (states_padded);
 
   /* precompute first the entries that contain only one 1 */
   const double *jmat;
@@ -262,19 +255,19 @@ CORAX_EXPORT void corax_core_create_lookup_sse(unsigned int  states,
 
   for (j = 0; j < maxstates; ++j)
   {
-    corax_state_t jstate = tipmap[j];
+    corax_state_t jstate = partition->tipmap[j];
     for (k = 0; k < maxstates; ++k)
     {
-      corax_state_t kstate = tipmap[k];
-      jmat                 = left_matrix;
-      kmat                 = right_matrix;
+      corax_state_t kstate = partition->tipmap[k];
+      jmat = partition->pmatrix[op->child1_matrix_index];
+      kmat = partition->pmatrix[op->child2_matrix_index];
 
       /* find offset of state-pair in the precomputation table */
-      lookup = ttlookup;
+      lookup = partition->ttlookup;
       lookup += ((j << log2_maxstates) + k) * span_padded;
 
       /* precompute the likelihood for each state and each rate */
-      for (n = 0; n < rate_cats; ++n)
+      for (n = 0; n < partition->rate_cats; ++n)
       {
         for (i = 0; i < states_padded; i += 2)
         {

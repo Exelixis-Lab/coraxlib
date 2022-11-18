@@ -10,19 +10,12 @@ extern "C"
 
   /* functions in core_clv_sse.c */
 
-  CORAX_EXPORT void corax_core_create_lookup_sse(unsigned int  states,
-                                                 unsigned int  rate_cats,
-                                                 double *      ttlookup,
-                                                 const double *left_matrix,
-                                                 const double *right_matrix,
-                                                 const corax_state_t *tipmap,
-                                                 unsigned int tipmap_size);
+  CORAX_EXPORT void corax_core_create_lookup_sse(corax_partition_t *      partition,
+                                                 const corax_operation_t *op);
 
   CORAX_EXPORT void
-  corax_core_create_lookup_4x4_sse(unsigned int  rate_cats,
-                                   double *      lookup,
-                                   const double *left_matrix,
-                                   const double *right_matrix);
+  corax_core_create_lookup_4x4_sse(corax_partition_t *      partition,
+                                   const corax_operation_t *op);
 
   CORAX_EXPORT void
   corax_core_update_clv_tt_sse(unsigned int         states,

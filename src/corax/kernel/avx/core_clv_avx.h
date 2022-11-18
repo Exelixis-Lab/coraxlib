@@ -10,27 +10,16 @@ extern "C"
 
   /* functions in core_clvs_avx.c */
 
-  CORAX_EXPORT void corax_core_create_lookup_avx(unsigned int  states,
-                                                 unsigned int  rate_cats,
-                                                 double *      lookup,
-                                                 const double *left_matrix,
-                                                 const double *right_matrix,
-                                                 const corax_state_t *tipmap,
-                                                 unsigned int tipmap_size);
+  CORAX_EXPORT void corax_core_create_lookup_avx(corax_partition_t *      partition,
+                                                 const corax_operation_t *op);
 
   CORAX_EXPORT void
-  corax_core_create_lookup_4x4_avx(unsigned int  rate_cats,
-                                   double *      lookup,
-                                   const double *left_matrix,
-                                   const double *right_matrix);
+  corax_core_create_lookup_4x4_avx(corax_partition_t *      partition,
+                                   const corax_operation_t *op);
 
   CORAX_EXPORT void
-  corax_core_create_lookup_20x20_avx(unsigned int         rate_cats,
-                                     double *             ttlookup,
-                                     const double *       left_matrix,
-                                     const double *       right_matrix,
-                                     const corax_state_t *tipmap,
-                                     unsigned int         tipmap_size);
+  corax_core_create_lookup_20x20_avx(corax_partition_t *      partition,
+                                     const corax_operation_t *op);
 
   CORAX_EXPORT void
   corax_core_update_clv_tt_avx(unsigned int         states,
