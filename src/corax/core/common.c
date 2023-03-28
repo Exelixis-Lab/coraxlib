@@ -56,3 +56,11 @@ CORAX_EXPORT void corax_aligned_free(void *ptr)
 #endif
 }
 
+CORAX_EXPORT unsigned int
+corax_core_compute_states_padded(unsigned int states, unsigned int attribs) {
+  if (attribs & CORAX_ATTRIB_ARCH_SSE) { return (states + 1) & 0xFFFFFFFE; }
+  if (attribs & CORAX_ATTRIB_ARCH_AVX) { return (states + 3) & 0xFFFFFFFC; }
+  if (attribs & CORAX_ATTRIB_ARCH_AVX2) { return (states + 3) & 0xFFFFFFFC; }
+  if (attribs & CORAX_ATTRIB_ARCH_AVX512) { return (states + 3) & 0xFFFFFFFC; }
+  return states;
+}

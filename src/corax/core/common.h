@@ -177,30 +177,35 @@
 #define CORAX_ERROR_MSA_MAP_INVALID 132
 /** @} */
 
-
 typedef unsigned long long corax_state_t;
 typedef int                corax_bool_t;
 
-CORAX_EXPORT extern __thread int              corax_errno;
-CORAX_EXPORT extern __thread char             corax_errmsg[CORAX_ERRMSG_LEN];
-
+CORAX_EXPORT extern __thread int  corax_errno;
+CORAX_EXPORT extern __thread char corax_errmsg[CORAX_ERRMSG_LEN];
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-  /* functions in common.c */
+/* functions in common.c */
 
-  void corax_set_error(int _errno, const char *errmsg_fmt, ...);
-  void corax_reset_error();
+void corax_set_error(int _errno, const char *errmsg_fmt, ...);
+void corax_reset_error();
 
-  CORAX_EXPORT void *corax_aligned_alloc(size_t size, size_t alignment);
-  CORAX_EXPORT void corax_aligned_free(void *ptr);
+CORAX_EXPORT void *corax_aligned_alloc(size_t size, size_t alignment);
+CORAX_EXPORT void  corax_aligned_free(void *ptr);
+
+/**
+ * @brief Computes the padded length for clvs, which is dependant on cpu arch.
+ *
+ * Used to compute `states_padded`, a common quantity across the library.
+ */
+CORAX_EXPORT unsigned int
+corax_core_compute_states_padded(unsigned int states, unsigned int attribs);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
 
 #endif /* CORAX_CORE_COMMON_H_ */

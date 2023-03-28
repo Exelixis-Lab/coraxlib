@@ -26,8 +26,7 @@
 #include <lapacke.h>
 
 int corax_core_update_pmatrix_nonrev_ss(
-    double *A, size_t n, size_t lda, double t, double *P)
-{
+    double *A, size_t n, size_t lda, double t, double *P) {
   const size_t matrix_size = n * lda;
 
   double *X = (double *)calloc(matrix_size, sizeof(double));
@@ -65,8 +64,7 @@ int corax_core_update_pmatrix_nonrev_ss(
   cblas_daxpy(matrix_size, c, X, 1, N, 1);
   cblas_daxpy(matrix_size, sign * c, X, 1, D, 1);
 
-  for (int i = 2; i <= q; ++i)
-  {
+  for (int i = 2; i <= q; ++i) {
     c = c * (q - i + 1) / (i * (2 * q - i + 1));
     sign *= -1.0;
 
@@ -102,8 +100,7 @@ int corax_core_update_pmatrix_nonrev_ss(
   double *r1 = N;
   double *r2 = D;
 
-  for (int i = 0; i < scale_exp; ++i)
-  {
+  for (int i = 0; i < scale_exp; ++i) {
     cblas_dgemm(CblasRowMajor,
                 CblasNoTrans,
                 CblasNoTrans,
@@ -132,14 +129,11 @@ int corax_core_update_pmatrix_nonrev_ss(
   return CORAX_SUCCESS;
 }
 
-int setup_ratematrix_nonrev(double *params, size_t n, size_t lda, double *rm)
-{
+int setup_ratematrix_nonrev(double *params, size_t n, size_t lda, double *rm) {
   size_t k = 0;
-  for (size_t i = 0; i < n; ++i)
-  {
+  for (size_t i = 0; i < n; ++i) {
     double row_sum = 0.0;
-    for (size_t j = 0; j < n; ++j)
-    {
+    for (size_t j = 0; j < n; ++j) {
       if (i == j) { continue; }
       double tmp = params[k++];
       row_sum += tmp;
@@ -161,23 +155,23 @@ corax_core_update_pmatrix_nonrev(double            **pmatrix,
                                  const double       *prop_invar,
                                  double *const      *params,
                                  unsigned int        count,
-                                 unsigned int        attrib)
-{
-  double *tmp_rm = (double *)malloc(states * states * sizeof(double));
-  for (size_t i = 0; i < count; ++i)
-  {
-    for (size_t j = 0; j < rate_cats; ++j)
-    {
-      double *cur_pmat   = pmatrix[matrix_indices[i]] + j * states * states;
+                                 unsigned int        attrib) {
+  unsigned int states_padded = corax_core_compute_states_padded(states, attrib);
+  double *tmp_rm = (double *)calloc(states * states_padded, sizeof(double));
+  for (size_t i = 0; i < count; ++i) {
+    for (size_t j = 0; j < rate_cats; ++j) {
+      double *cur_pmat =
+          pmatrix[matrix_indices[i]] + j * states * states_padded;
       double *cur_params = params[params_indices[j]];
       double  cur_pinv   = prop_invar[params_indices[j]];
       double  cur_brlen  = branch_lengths[i];
       double  cur_rate   = rates[j];
       double  t          = cur_rate * cur_brlen / (1.0 - cur_pinv);
       assert(cur_pinv < 1.0);
-      setup_ratematrix_nonrev(cur_params, states, states, tmp_rm);
+      setup_ratematrix_nonrev(cur_params, states, states_padded, tmp_rm);
 
-      corax_core_update_pmatrix_nonrev_ss(tmp_rm, states, states, t, cur_pmat);
+      corax_core_update_pmatrix_nonrev_ss(
+          tmp_rm, states, states_padded, t, cur_pmat);
     }
   }
   free(tmp_rm);
