@@ -83,6 +83,9 @@ endif ()
 
 if (CORAX_ENABLE_AVX2)
     target_add_avx2_definitions(${CORAX_LIB_TARGET})
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
+    endif()
 endif ()
 
 # Set the library name to "corax", regardless of if we build the static or shared version. We
