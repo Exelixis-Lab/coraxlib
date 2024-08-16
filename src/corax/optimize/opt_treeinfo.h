@@ -201,7 +201,8 @@ extern "C"
                                            double            lh_epsilon_brlen_triplet,
                                            corax_bool_t fast_clv_updates DEFAULT_VALUE(1),
                                            unsigned long int *total_moves_counter DEFAULT_VALUE(NULL),
-                                           unsigned long int *improving_moves_counter DEFAULT_VALUE(NULL));
+                                           unsigned long int *improving_moves_counter DEFAULT_VALUE(NULL),
+                                           const char        *intermediate_tree_filename DEFAULT_VALUE(NULL));
 
 // Defining errors in NNI
 #define CORAX_NNI_ROUND_LEAF_ERROR 6001
