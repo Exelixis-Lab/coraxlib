@@ -54,6 +54,7 @@ typedef struct spr_params
   unsigned long int *total_moves_counter;
   unsigned long int *improving_moves_counter;
   
+  const char * sprtrees_file;
   corax_bool_t fast_clv_updates;
 } corax_search_params_t;
 
@@ -1025,6 +1026,15 @@ static double reinsert_nodes(corax_treeinfo_t            *treeinfo,
         // the root is already at p_edge
         corax_treeinfo_invalidate_clv(treeinfo, p_edge);
         loglh = corax_treeinfo_compute_loglh_flex(treeinfo, 1, 0);
+
+        // here I store the fucking tree
+        if(params->sprtrees_file){
+          FILE *fptr = fopen(params->sprtrees_file, "a");
+          fprintf(fptr, corax_utree_export_newick(treeinfo->root, NULL));
+          fprintf(fptr, "\n");
+          fclose(fptr);
+
+        }
       }
 
       assert(spr_entry.lh > best_lh);
@@ -1084,7 +1094,8 @@ CORAX_EXPORT double corax_algo_spr_round(corax_treeinfo_t *treeinfo,
                                          double            lh_epsilon_brlen_triplet,
                                          corax_bool_t      fast_clv_updates,
                                          unsigned long int *total_moves_counter,
-                                         unsigned long int *improving_moves_counter)
+                                         unsigned long int *improving_moves_counter,
+                                         const char        *intermediate_tree_filename)
 {
 
   unsigned int          i;
@@ -1129,6 +1140,7 @@ CORAX_EXPORT double corax_algo_spr_round(corax_treeinfo_t *treeinfo,
   params.fast_clv_updates = fast_clv_updates;
   params.total_moves_counter = total_moves_counter ? total_moves_counter : NULL;
   params.improving_moves_counter = improving_moves_counter ? improving_moves_counter : NULL;
+  params.sprtrees_file = intermediate_tree_filename ? intermediate_tree_filename : NULL;
 
   if(total_moves_counter) (*total_moves_counter) = 0;
   if(improving_moves_counter) (*improving_moves_counter) = 0;

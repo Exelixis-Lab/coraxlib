@@ -34,6 +34,7 @@
 
 #include "msa.h"
 
+#include "corax/corax.h"
 #include "corax/corax_core.h"
 #include "corax/corax_model.h"
 
@@ -1281,6 +1282,75 @@ error_exit:
   corax_set_error(CORAX_ERROR_MEM_ALLOC,
                   "Cannot allocate memory needed for MSA filtering");
   return NULL;
+}
+
+/*
+ * MSA Cross - validation
+ * @param msa Multiple Sequence Alignment
+ * @param split_ratio Fraction of sites within the training MSA (e.g. if we use an 80%-20% splitting scheme for 
+ * training and testing MSA the input will be 0.8)
+ * @param seed Random seed
+*/
+CORAX_EXPORT corax_msa_cv_split_t * 
+            corax_msa_cv_split_create(const corax_msa_t * msa, 
+                                    double split_ratio,
+                                    unsigned int seed)
+{
+  corax_msa_cv_split_t * cv_split =
+      (corax_msa_cv_split_t *)malloc(sizeof(corax_msa_cv_split_t));
+
+  
+  if(!cv_split)
+  {
+    corax_set_error(CORAX_ERROR_MEM_ALLOC,
+      "Cannot allocate memory needed for MSA splitting");
+  }
+
+  cv_split->total_sites = msa->length;
+  cv_split->split_ratio = split_ratio;
+  cv_split->training_sites_count = 0;
+  cv_split->testing_sites_count = 0;
+
+  cv_split->site_part = 
+    (unsigned int*)calloc(cv_split->total_sites, sizeof(unsigned int));
+  
+  if (!cv_split->site_part)
+  {
+    corax_set_error(CORAX_ERROR_MEM_ALLOC,
+      "Cannot allocate memory needed for MSA splitting");
+  }
+
+  corax_random_state *rstate = corax_random_create(seed);
+  int split_threshold = 100 * split_ratio;
+  int rand_int;
+
+  for (size_t i = 0; i < cv_split->total_sites; ++i)
+  {
+    rand_int = corax_random_getint(rstate, 100);
+    
+    if (rand_int < split_threshold)
+    {
+      cv_split->training_sites_count += 1;
+      cv_split->site_part[i] = 1;
+    }
+    else
+    {
+      cv_split->testing_sites_count += 1;
+      cv_split->site_part[i] = 2;
+    }
+  }
+
+  corax_random_destroy(rstate);
+  
+  return cv_split;
+}
+
+CORAX_EXPORT void 
+  corax_msa_cv_split_destroy(corax_msa_cv_split_t * msa_cv_split)
+{
+  if (msa_cv_split->site_part) free(msa_cv_split->site_part);
+  
+  free(msa_cv_split);
 }
 
 /**

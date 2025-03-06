@@ -48,6 +48,19 @@ typedef struct corax_msa_s
   char **label;
 } corax_msa_t;
 
+typedef struct corax_msa_cv_split_s{
+
+  /* training-testing split (between 0. and 1.)*/
+  double split_ratio;
+
+  size_t total_sites;
+  int training_sites_count;
+  int testing_sites_count;
+  
+  unsigned int* site_part;
+
+}corax_msa_cv_split_t;
+
 typedef struct msa_stats
 {
   unsigned int states;
@@ -88,6 +101,13 @@ typedef struct msa_errors
 extern "C"
 {
 #endif
+
+  CORAX_EXPORT corax_msa_cv_split_t *
+  corax_msa_cv_split_create(const corax_msa_t * msa, 
+                            double split_ratio,
+                            unsigned int seed);
+  
+  CORAX_EXPORT void corax_msa_cv_split_destroy(corax_msa_cv_split_t * msa_cv_split);
 
   CORAX_EXPORT double *
   corax_msa_empirical_frequencies(const corax_partition_t *partition);
