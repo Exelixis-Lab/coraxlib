@@ -703,7 +703,8 @@ corax_msa_t *corax_phylip_load(const char *fname, corax_bool_t interleaved)
 }
 
 CORAX_EXPORT int corax_phylip_save(const char *       out_fname,
-                                   const corax_msa_t *msa)
+                                   const corax_msa_t *msa,
+                                   char  **labels)
 {
   if (!msa)
   {
@@ -731,7 +732,14 @@ CORAX_EXPORT int corax_phylip_save(const char *       out_fname,
   unsigned long i;
   for (i = 0; i < (unsigned long)msa->count; ++i)
   {
-    fprintf(f, "%s    %s\n", msa->label[i], msa->sequence[i]);
+    if(labels)
+    {
+      fprintf(f, "%s    %s\n", labels[i], msa->sequence[i]);
+    }
+    else
+    {
+      fprintf(f, "%s    %s\n", msa->label[i], msa->sequence[i]);
+    }
   }
 
   fclose(f);

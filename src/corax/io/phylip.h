@@ -21,9 +21,18 @@ typedef struct corax_phylip_s
 } corax_phylip_t;
 
 #ifdef __cplusplus
+/* in case the compiler is a C++ compiler */
+#define DEFAULT_VALUE(value) = value
+#else
+/* otherwise, C compiler, do nothing */
+#define DEFAULT_VALUE(value)
+#endif
+
+#ifdef __cplusplus
 extern "C"
 {
 #endif
+  
 
   /* functions in phylip.c */
 
@@ -44,7 +53,8 @@ extern "C"
                                               corax_bool_t interleaved);
 
   CORAX_EXPORT int corax_phylip_save(const char *       out_fname,
-                                     const corax_msa_t *msa);
+                                     const corax_msa_t *msa,
+                                     char  **labels DEFAULT_VALUE(NULL));
 
 #ifdef __cplusplus
 } /* extern "C" */

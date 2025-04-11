@@ -1409,7 +1409,7 @@ CORAX_EXPORT corax_msa_t **corax_msa_split(const corax_msa_t  *msa,
   {
     part_msa_list[p] = (corax_msa_t *)calloc(1, sizeof(corax_msa_t));
     if (!part_msa_list[p]) goto malloc_error;
-
+    
     part_msa_list[p]->count  = msa->count;
     part_msa_list[p]->length = 0;
     part_msa_list[p]->label  = NULL;
@@ -1420,8 +1420,10 @@ CORAX_EXPORT corax_msa_t **corax_msa_split(const corax_msa_t  *msa,
     for (i = 0; i < (unsigned long)msa->count; i++)
     {
       part_msa_list[p]->sequence[i] =
-          (char *)malloc(part_len[p] * sizeof(char));
+          (char *)malloc((part_len[p]+1) * sizeof(char));
       if (!part_msa_list[p]->sequence[i]) goto malloc_error;
+
+      part_msa_list[p]->sequence[i][part_len[p]] = '\0';
     }
   }
 
