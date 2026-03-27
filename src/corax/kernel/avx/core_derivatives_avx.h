@@ -44,7 +44,7 @@ extern "C"
                                         unsigned int         states_padded,
                                         unsigned int         rate_cats,
                                         unsigned int         ef_sites,
-                                        const unsigned int * pattern_weights,
+                                        const double *       pattern_weights,
                                         const double *       rate_weights,
                                         const int *          invariant,
                                         const double *       prop_invar,

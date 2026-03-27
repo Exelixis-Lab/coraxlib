@@ -24,7 +24,7 @@
 
 static double compute_asc_bias_correction(double       logl_base,
                                           unsigned int sum_w,
-                                          unsigned int sum_w_inv,
+                                          double       sum_w_inv,
                                           int          asc_bias_type)
 {
   double logl_correction = 0.0;
@@ -63,11 +63,11 @@ static double root_loglikelihood_asc_bias(corax_partition_t * partition,
   unsigned int  states        = partition->states;
   unsigned int  states_padded = partition->states_padded;
   unsigned int  scale_factors;
-  unsigned int *pattern_weights = partition->pattern_weights;
+  double *      pattern_weights = partition->fp_weights;
   double *      rate_weights    = partition->rate_weights;
 
   double       logl_correction = 0;
-  unsigned int sum_w_inv       = 0;
+  double       sum_w_inv       = 0;
   int          asc_bias_type   = partition->attributes & CORAX_ATTRIB_AB_MASK;
 
   /* point clvp to state sites */
@@ -93,7 +93,7 @@ static double root_loglikelihood_asc_bias(corax_partition_t * partition,
     if (asc_bias_type == CORAX_ATTRIB_AB_STAMATAKIS)
     {
       /* 2a. site_lk is the lnl weighted by the number of occurences */
-      site_lk = log(term) * partition->pattern_weights[sites + i];
+      site_lk = log(term) * pattern_weights[sites + i];
       if (scale_factors) site_lk += scale_factors * log(CORAX_SCALE_THRESHOLD);
     }
     else
@@ -164,7 +164,7 @@ corax_compute_root_loglikelihood_sitecat(corax_partition_t * partition,
         scaler,
         (const double **)partition->frequencies,
         partition->rate_weights,
-        partition->pattern_weights,
+        partition->fp_weights,
         partition->prop_invar,
         partition->invariant,
         freqs_indices,
@@ -182,7 +182,7 @@ corax_compute_root_loglikelihood_sitecat(corax_partition_t * partition,
                                       scaler,
                                       (const double **)partition->frequencies,
                                       partition->rate_weights,
-                                      partition->pattern_weights,
+                                      partition->fp_weights,
                                       partition->prop_invar,
                                       partition->invariant,
                                       freqs_indices,
@@ -225,11 +225,11 @@ static double edge_loglikelihood_asc_bias_ti(corax_partition_t *partition,
   unsigned int  states        = partition->states;
   unsigned int  states_padded = partition->states_padded;
   unsigned int  scale_factors;
-  unsigned int *pattern_weights = partition->pattern_weights;
+  double *      pattern_weights = partition->fp_weights;
   double *      rate_weights    = partition->rate_weights;
 
   double       logl_correction = 0;
-  unsigned int sum_w_inv       = 0;
+  double       sum_w_inv       = 0;
   int          asc_bias_type   = partition->attributes & CORAX_ATTRIB_AB_MASK;
 
   /* point clvp to state sites */
@@ -312,7 +312,7 @@ static double edge_loglikelihood_tipinner(corax_partition_t *partition,
         partition->pmatrix[matrix_index],
         (const double **)partition->frequencies,
         partition->rate_weights,
-        partition->pattern_weights,
+        partition->fp_weights,
         partition->prop_invar,
         partition->invariant,
         freqs_indices,
@@ -334,7 +334,7 @@ static double edge_loglikelihood_tipinner(corax_partition_t *partition,
         partition->pmatrix[matrix_index],
         (const double **)partition->frequencies,
         partition->rate_weights,
-        partition->pattern_weights,
+        partition->fp_weights,
         partition->prop_invar,
         partition->invariant,
         freqs_indices,
@@ -379,7 +379,7 @@ static double edge_loglikelihood_asc_bias_ii(corax_partition_t * partition,
   unsigned int  states        = partition->states;
   unsigned int  states_padded = partition->states_padded;
   unsigned int  scale_factors;
-  unsigned int *pattern_weights = partition->pattern_weights;
+  double *      pattern_weights = partition->fp_weights;
   double *      rate_weights    = partition->rate_weights;
 
   /* point clv, clvc, scalers and pattern weights to state sites */
@@ -395,7 +395,7 @@ static double edge_loglikelihood_asc_bias_ii(corax_partition_t * partition,
   if (child_scaler) child_scaler += child_sites;
 
   double       logl_correction = 0;
-  unsigned int sum_w_inv       = 0;
+  double       sum_w_inv       = 0;
   int          asc_bias_type   = partition->attributes & CORAX_ATTRIB_AB_MASK;
 
   /* 1. compute per-site logl for each state */
@@ -487,7 +487,7 @@ static double edge_loglikelihood(corax_partition_t * partition,
                                        partition->pmatrix[matrix_index],
                                        (const double **)partition->frequencies,
                                        partition->rate_weights,
-                                       partition->pattern_weights,
+                                       partition->fp_weights,
                                        partition->prop_invar,
                                        partition->invariant,
                                        freqs_indices,
@@ -563,7 +563,7 @@ static double edge_loglikelihood_repeats(corax_partition_t *partition,
       partition->pmatrix[matrix_index],
       (const double **)partition->frequencies,
       partition->rate_weights,
-      partition->pattern_weights,
+      partition->fp_weights,
       partition->prop_invar,
       partition->invariant,
       freqs_indices,

@@ -1,4 +1,4 @@
-#ifndef CORAX_KERNEL_AVX2_CORE_LIKELIHOOD_H_
+double *       pattern_weights#ifndef CORAX_KERNEL_AVX2_CORE_LIKELIHOOD_H_
 #define CORAX_KERNEL_AVX2_CORE_LIKELIHOOD_H_
 
 #include "corax/core/common.h"
@@ -18,7 +18,7 @@ extern "C"
                                             const unsigned int * scaler,
                                             const double *const *frequencies,
                                             const double *       rate_weights,
-                                            const unsigned int *pattern_weights,
+                                            const double *       pattern_weights,
                                             const double *invar_proportion,
                                             const int *   invar_indices,
                                             const unsigned int *freqs_indices,
@@ -36,7 +36,7 @@ extern "C"
       const double *       pmatrix,
       const double *const *frequencies,
       const double *       rate_weights,
-      const unsigned int * pattern_weights,
+      const double *       pattern_weights,
       const double *       invar_proportion,
       const int *          invar_indices,
       const unsigned int * freqs_indices,
@@ -56,7 +56,7 @@ extern "C"
                                         const double *       pmatrix,
                                         const double *const *frequencies,
                                         const double *       rate_weights,
-                                        const unsigned int * pattern_weights,
+                                        const double *       pattern_weights,
                                         const double *       invar_proportion,
                                         const int *          invar_indices,
                                         const unsigned int * freqs_indices,
@@ -74,7 +74,7 @@ extern "C"
       const unsigned int * scaler,
       const double *const *frequencies,
       const double *       rate_weights,
-      const unsigned int * pattern_weights,
+      const double *       pattern_weights,
       const double *       invar_proportion,
       const int *          invar_indices,
       const unsigned int * freqs_indices,
@@ -93,7 +93,7 @@ extern "C"
       const double *       pmatrix,
       const double *const *frequencies,
       const double *       rate_weights,
-      const unsigned int * pattern_weights,
+      const double *       pattern_weights,
       const double *       invar_proportion,
       const int *          invar_indices,
       const unsigned int * freqs_indices,

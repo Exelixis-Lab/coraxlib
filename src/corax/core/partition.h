@@ -180,6 +180,7 @@ typedef struct corax_partition
   double *       prop_invar;
   int *          invariant;
   unsigned int * pattern_weights;
+  double *       fp_weights;
 
   int *    eigen_decomp_valid;
   double **eigenvecs;
@@ -341,6 +342,10 @@ extern "C"
   CORAX_EXPORT void
   corax_set_pattern_weights(corax_partition_t * partition,
                             const unsigned int *pattern_weights);
+
+  CORAX_EXPORT void
+  corax_set_fp_weights(corax_partition_t * partition,
+                            const unsigned int *fp_weights);
 
   /**
    * Sets a substitution matrix for a partition.

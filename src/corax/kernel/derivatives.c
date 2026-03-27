@@ -382,6 +382,8 @@ corax_compute_likelihood_derivatives(corax_partition_t * partition,
                      : 0;
     child_ids  = child_ids ? child_ids : partition->sites;
   }
+
+
   int retval = corax_core_likelihood_derivatives(partition->states,
                                                  partition->sites,
                                                  partition->rate_cats,
@@ -391,7 +393,7 @@ corax_compute_likelihood_derivatives(corax_partition_t * partition,
                                                  parent_ids,
                                                  child_ids,
                                                  partition->invariant,
-                                                 partition->pattern_weights,
+                                                 partition->fp_weights,
                                                  branch_length,
                                                  prop_invar,
                                                  freqs,

@@ -98,7 +98,7 @@ extern "C"
                                     unsigned int        parent_ids,
                                     unsigned int        child_ids,
                                     const int *         invariant,
-                                    const unsigned int *pattern_weights,
+                                    const double *      pattern_weights,
                                     double              branch_length,
                                     const double *      prop_invar,
                                     double *const *     freqs,

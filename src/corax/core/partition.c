@@ -37,6 +37,7 @@ static void dealloc_partition_data(corax_partition_t *partition)
   if (partition->prop_invar) free(partition->prop_invar);
   if (partition->invariant) free(partition->invariant);
   if (!partition->pattern_weights) free(partition->pattern_weights);
+  if (!partition->fp_weights) free(partition->fp_weights);
 
   if (partition->scale_buffer)
     for (i = 0; i < partition->scale_buffers; ++i)
@@ -97,6 +98,7 @@ static void dealloc_partition_data(corax_partition_t *partition)
   free(partition->frequencies);
 
   if (partition->pattern_weights) free(partition->pattern_weights);
+  if (partition->fp_weights) free(partition->fp_weights);
 
   if (partition->repeats)
   {
@@ -465,6 +467,7 @@ CORAX_EXPORT corax_partition_t *
   partition->prop_invar      = NULL;
   partition->invariant       = NULL;
   partition->pattern_weights = NULL;
+  partition->fp_weights      = NULL;
 
   partition->eigenvecs     = NULL;
   partition->inv_eigenvecs = NULL;
@@ -785,6 +788,19 @@ CORAX_EXPORT corax_partition_t *
   /* additional positions if asc_bias is set are initialized to zero */
   for (i = sites; i < sites_alloc; ++i) partition->pattern_weights[i] = 0;
 
+  /* site weights */
+  partition->fp_weights =
+      (unsigned int *)malloc(sites_alloc * sizeof(double));
+  if (!partition->fp_weights)
+  {
+    dealloc_partition_data(partition);
+    corax_set_error(
+        CORAX_ERROR_MEM_ALLOC,
+        "Unable to allocate enough memory for fp weights.");
+    return CORAX_FAILURE;
+  }
+  for (i = 0; i < partition->sites; ++i) partition->fp_weights[i] = 1.0;
+
   /* scale_buffer */
   partition->scale_buffer =
       (unsigned int **)calloc(partition->scale_buffers, sizeof(unsigned int *));
@@ -1099,6 +1115,21 @@ CORAX_EXPORT void corax_set_pattern_weights(corax_partition_t * partition,
   partition->pattern_weight_sum = 0;
   for (i = 0; i < partition->sites; ++i)
     partition->pattern_weight_sum += pattern_weights[i];
+  if (!partition->fp_weights)
+  {
+    partition->fp_weights = (double *)malloc(partition->sites * sizeof(double));
+    for (i = 0; i < partition->sites; ++i)
+      partition->fp_weights[i] = (double)pattern_weights[i]
+  }
+}
+
+CORAX_EXPORT void corax_set_fp_weights(corax_partition_t * partition,
+                                            const unsigned int *fp_weights)
+{
+  unsigned int i;
+  memcpy(partition->fp_weights,
+         fp_weights,
+         sizeof(double) * partition->sites);
 }
 
 CORAX_EXPORT void corax_set_frequencies(corax_partition_t *partition,
