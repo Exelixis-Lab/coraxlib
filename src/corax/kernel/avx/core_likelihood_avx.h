@@ -137,7 +137,7 @@ extern "C"
                                             const unsigned int * scaler,
                                             const double *const *frequencies,
                                             const double *       rate_weights,
-                                            const unsigned int *pattern_weights,
+                                            const double *       pattern_weights,
                                             const double *invar_proportion,
                                             const int *   invar_indices,
                                             const unsigned int *freqs_indices,

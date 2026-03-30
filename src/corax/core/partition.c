@@ -790,7 +790,7 @@ CORAX_EXPORT corax_partition_t *
 
   /* site weights */
   partition->fp_weights =
-      (unsigned int *)malloc(sites_alloc * sizeof(double));
+      (double *)malloc(sites_alloc * sizeof(double));
   if (!partition->fp_weights)
   {
     dealloc_partition_data(partition);
@@ -1119,14 +1119,13 @@ CORAX_EXPORT void corax_set_pattern_weights(corax_partition_t * partition,
   {
     partition->fp_weights = (double *)malloc(partition->sites * sizeof(double));
     for (i = 0; i < partition->sites; ++i)
-      partition->fp_weights[i] = (double)pattern_weights[i]
+      partition->fp_weights[i] = (double)pattern_weights[i];
   }
 }
 
 CORAX_EXPORT void corax_set_fp_weights(corax_partition_t * partition,
-                                            const unsigned int *fp_weights)
+                                            const double *fp_weights)
 {
-  unsigned int i;
   memcpy(partition->fp_weights,
          fp_weights,
          sizeof(double) * partition->sites);

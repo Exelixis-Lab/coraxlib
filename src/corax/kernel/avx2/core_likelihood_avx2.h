@@ -1,4 +1,4 @@
-double *       pattern_weights#ifndef CORAX_KERNEL_AVX2_CORE_LIKELIHOOD_H_
+#ifndef CORAX_KERNEL_AVX2_CORE_LIKELIHOOD_H_
 #define CORAX_KERNEL_AVX2_CORE_LIKELIHOOD_H_
 
 #include "corax/core/common.h"

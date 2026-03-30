@@ -345,7 +345,7 @@ extern "C"
 
   CORAX_EXPORT void
   corax_set_fp_weights(corax_partition_t * partition,
-                            const unsigned int *fp_weights);
+                            const double *fp_weights);
 
   /**
    * Sets a substitution matrix for a partition.
