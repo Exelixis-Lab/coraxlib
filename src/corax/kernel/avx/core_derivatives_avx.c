@@ -1841,15 +1841,17 @@ corax_core_likelihood_derivatives_avx(unsigned int         states,
       __m256d v_deriv2 = _mm256_sub_pd(_mm256_mul_pd(v_deriv1, v_deriv1),
                                        _mm256_mul_pd(v_term2, v_recip0));
 
-      /* assumption: no zero weights */
-      if (pattern_weights[n - 3] > 0  || pattern_weights[n - 2] > 0
-           || pattern_weights[n - 1] > 0|| pattern_weights[n] > 0)
-      {
-        /* all 4 weights are 1 -> no multiplication needed */
-        v_df  = _mm256_sub_pd(v_df, v_deriv1);
-        v_ddf = _mm256_add_pd(v_ddf, v_deriv2);
-      }
-      else
+      /* TODO check if we can re-implement this optinization with fp weights - 
+         or maybe it's not worth it */
+//      if (pattern_weights[n - 3]  | pattern_weights[n - 2] |
+//          pattern_weights[n - 1] | pattern_weights[n])
+//      {
+//        /* all 4 weights are 1 -> no multiplication needed */
+//        v_df  = _mm256_sub_pd(v_df, v_deriv1);
+//        v_ddf = _mm256_add_pd(v_ddf, v_deriv2);
+//      }
+//      else
+
       {
         __m256d v_patw = _mm256_setr_pd(pattern_weights[n - 3],
                                         pattern_weights[n - 2],
