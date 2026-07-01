@@ -237,7 +237,7 @@ l4:
 
 CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
                                           unsigned int categories,
-                                          double *     output_rates,
+                                          double      *output_rates,
                                           int          rates_mode)
 {
   unsigned int i;
@@ -297,4 +297,206 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
   }
 
   return CORAX_SUCCESS;
+}
+
+CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
+                                                      unsigned int categories,
+                                                      double      *output_rates,
+                                                      double *output_weights)
+{
+  /*
+     Lloyd-Max discretization of a Gamma distribution G(alpha, beta).
+
+     This function has the same argument format as PAML's original
+     DiscreteGamma() function, but it produces a Lloyd-Max discretization
+     instead of forcing all bins to have equal probability.
+
+     Inputs:
+        alpha      Shape parameter of the Gamma distribution.
+        beta       Rate parameter of the Gamma distribution.
+                   With this parameterization, the mean is alpha / beta.
+        K          Number of discrete categories/bins.
+        UseMedian  Retained only for compatibility with the original
+                   DiscreteGamma() call format.  It is ignored here.
+
+     Outputs:
+        freqK[i]   Probability mass in Lloyd-Max bin i.
+                   These probabilities are generally not equal.
+        rK[i]      Representative rate for bin i.  In Lloyd-Max, this is
+                   the conditional mean/centroid of the Gamma distribution
+                   within that bin.
+
+     External functions/macros assumed to be available elsewhere:
+        QuantileGamma(prob, alpha, beta)
+        IncompleteGamma(x, alpha, ln_gamma_alpha)
+        malloc(), free(), fabs(), lgamma()
+
+  */
+
+  unsigned int i, iter;
+
+  const int    max_iter = 200; /* Maximum number of Lloyd-Max iterations */
+  const double tol =
+      1e-12; /* Relative convergence tolerance for changes in rK[] */
+  const double tiny = 1e-300; /* small positive value used to avoid division by
+                                 zero/underflow problems */
+
+  double beta = alpha;
+
+  double mean  = alpha / beta;
+  double lnga  = lgamma(alpha);
+  double lnga1 = lgamma(alpha + 1.0);
+  double max_change, oldr, denom, rel_change;
+  double Fa0, Fa1, Ga0, Ga1, mass,
+      moment_mass; /* Fa0 and Fa1 are Gamma CDF values with shape alpha at the
+                      lower and upper bin boundaries.  Ga0 and Ga1 are
+                      corresponding CDF values for a Gamma distribution with
+                      shape alpha + 1.  The alpha + 1 terms are used to compute
+                      the first moment inside a bin. */
+  double *bound;   /* Boundary array of length K + 1.  Do not explicitly store
+                      infinity in bound[K].   For the final bin, the upper CDF
+                      values are set directly to 1.0. */
+
+  if (categories <= 0 || alpha <= 0 || beta <= 0)
+    return (-1); /* Basic validity check */
+
+  bound = (double *)malloc(
+      (categories + 1)
+      * sizeof(double)); /* temporary storage for bin boundaries */
+  if (bound == 0) return (-1);
+
+  /*
+     Initialization step.
+
+     Lloyd-Max needs an initial ordered set of representative values.  Here we
+     use the medians of K equal-probability Gamma intervals:
+
+        p_i = (2i + 1) / (2K)
+        rK[i] = Gamma quantile at p_i
+
+     These are not the final Lloyd-Max representatives.  They are just a simple,
+     stable, ordered starting point for the iteration.
+  */
+  corax_compute_gamma_cats(
+      alpha, categories, output_rates, CORAX_GAMMA_RATES_MEDIAN);
+
+  /* Main Lloyd-Max iteration. */
+  for (iter = 0; iter < max_iter; iter++)
+  {
+
+    /*
+       Step 1: compute decision boundaries from current representatives.
+
+       For squared-error Lloyd-Max quantization, the boundary between two
+       adjacent representatives is the midpoint between them.
+
+       The Gamma distribution has support [0, infinity), so the first lower
+       boundary is 0.  The final upper boundary is infinity, handled later
+       by using CDF value 1.0 for the last bin.
+    */
+    bound[0] = 0.0;
+    for (i = 1; i < categories; i++)
+      bound[i] = (output_rates[i - 1] + output_rates[i]) / 2.0;
+
+    /* Track the largest relative change in any representative during this
+       iteration.  This is used as the convergence criterion. */
+    max_change = 0.0;
+
+    /*
+       Step 2: update each bin probability and representative value.
+
+       For bin i with lower boundary a and upper boundary b:
+
+          freqK[i] = P(a <= X < b)
+                   = F_alpha(b) - F_alpha(a)
+
+       The conditional mean is:
+
+          rK[i] = E[X | a <= X < b]
+
+       For Gamma(alpha, beta), the partial first moment over [a,b] is:
+
+          E[X ; a <= X < b]
+            = (alpha / beta) * [F_{alpha+1}(b) - F_{alpha+1}(a)]
+
+       Therefore:
+
+          rK[i] = (alpha / beta)
+                  * [F_{alpha+1}(b) - F_{alpha+1}(a)]
+                  / [F_alpha(b) - F_alpha(a)]
+    */
+    for (i = 0; i < categories; i++)
+    {
+
+      /* Save previous representative so we can measure convergence after
+         updating rK[i]. */
+      oldr = output_rates[i];
+
+      /* Lower-bound CDF values.
+
+         For the first bin, the lower boundary is 0.  The Gamma CDF at 0 is
+         0 for positive alpha, so both CDF values are exactly 0. */
+      if (i == 0)
+      {
+        Fa0 = 0.0;
+        Ga0 = 0.0;
+      }
+      else
+      {
+        /* IncompleteGamma() expects the argument beta*x for a Gamma
+           distribution with rate beta. */
+        Fa0 = IncompleteGamma(bound[i] * beta, alpha, lnga);
+        Ga0 = IncompleteGamma(bound[i] * beta, alpha + 1.0, lnga1);
+      }
+
+      /* Upper-bound CDF values.
+
+         For the final bin, the upper boundary is infinity.  The CDF at
+         infinity is 1, so we use 1.0 directly rather than storing infinity
+         or calling IncompleteGamma() with an infinite argument. */
+      if (i == categories - 1)
+      {
+        Fa1 = 1.0;
+        Ga1 = 1.0;
+      }
+      else
+      {
+        Fa1 = IncompleteGamma(bound[i + 1] * beta, alpha, lnga);
+        Ga1 = IncompleteGamma(bound[i + 1] * beta, alpha + 1.0, lnga1);
+      }
+
+      /* Probability mass in the current Lloyd-Max bin. */
+      mass = Fa1 - Fa0;
+
+      /* Corresponding alpha+1 CDF difference, used for the partial first
+         moment in this bin. */
+      moment_mass = Ga1 - Ga0;
+
+      /* Store the bin probability in the output frequency array. */
+      output_weights[i] = mass;
+
+      /* Update representative rate to the conditional mean in the bin.
+
+         If mass is effectively zero, leave rK[i] unchanged to avoid
+         division by zero.  This should rarely occur for ordinary K and
+         well-behaved alpha/beta values. */
+      if (mass > tiny) output_rates[i] = mean * moment_mass / mass;
+
+      /* Measure relative change in this representative.  If oldr is too
+         close to zero, use 1.0 as the denominator. */
+      denom = fabs(oldr);
+      if (denom < tiny) denom = 1.0;
+      rel_change = fabs(output_rates[i] - oldr) / denom;
+
+      /* Keep the largest relative change across all bins. */
+      if (rel_change > max_change) max_change = rel_change;
+    }
+
+    /* Stop if all representative rates changed by less than the tolerance. */
+    if (max_change < tol) break;
+  }
+
+  free(bound); /* Release temporary storage */
+
+  return (0);
 }

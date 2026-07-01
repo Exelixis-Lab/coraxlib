@@ -91,6 +91,8 @@ double target_alpha_func(void *p, double x);
 /* optimize proportion of invariant sites */
 double target_pinv_func(void *p, double x);
 
+double target_alpha_func_opt_weights(void *p, double x);
+
 /* optimize alpha & proportion of invariant sites simultaneously */
 double target_alpha_pinv_func(void *p, double *x);
 

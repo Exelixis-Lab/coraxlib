@@ -140,6 +140,30 @@ double target_alpha_func(void *p, double x)
   return score;
 }
 
+double target_alpha_func_opt_weights(void *p, double x)
+{
+  struct default_params *params         = (struct default_params *)p;
+  corax_partition_t *    partition      = params->partition;
+  corax_unode_t *        root           = params->tree;
+  const unsigned int *   params_indices = params->params_indices;
+
+  /* update rate categories */
+  if (!corax_compute_gamma_cats_opt_weights(
+          x, partition->rate_cats, partition->rates, partition->rate_weights))
+  {
+    return CORAX_FAILURE;
+  }
+
+  /* compute negative score */
+  double score = -1
+                 * corax_opt_compute_lk(partition,
+                                        root,
+                                        params_indices,
+                                        1,  /* update pmatrices */
+                                        1); /* update partials */
+  return score;
+}
+
 double target_pinv_func(void *p, double x)
 {
   struct default_params *params         = (struct default_params *)p;
@@ -409,6 +433,17 @@ target_func_multidim_treeinfo(void *p, double **x, double *fx, int *converged)
         /* update rate categories */
         memcpy(
             partition->rates, x[part], partition->rate_cats * sizeof(double));
+        break;
+      case CORAX_OPT_PARAM_ALPHA_OPT_WEIGHTS:
+        treeinfo->alphas[i] = x[part][0];
+        if (!corax_compute_gamma_cats_opt_weights(treeinfo->alphas[i],
+                                      partition->rate_cats,
+                                      partition->rates,
+                                      partition->rate_weights))
+        {
+          assert(corax_errno);
+          return CORAX_FAILURE;
+        }
         break;
       case CORAX_OPT_PARAM_RATE_WEIGHTS:
       {
