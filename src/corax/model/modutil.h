@@ -37,6 +37,7 @@
 #define CORAX_UTIL_MIXTYPE_FIXED (0)
 #define CORAX_UTIL_MIXTYPE_GAMMA (1 << 0)
 #define CORAX_UTIL_MIXTYPE_FREE (1 << 1)
+#define CORAX_UTIL_MIXTYPE_GAMMA_OPT_WEIGHTS (1 << 2)
 
 /* Substitution model definition */
 typedef struct subst_model

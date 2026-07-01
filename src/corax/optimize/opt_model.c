@@ -260,6 +260,39 @@ CORAX_EXPORT double corax_algo_opt_alpha(corax_partition_t  * partition,
   return cur_logl;
 }
 
+double corax_algo_opt_alpha_opt_weights(corax_partition_t  *partition,
+                                        corax_unode_t      *tree,
+                                        const unsigned int *params_indices,
+                                        double              min_alpha,
+                                        double              max_alpha,
+                                        double             *alpha,
+                                        double              tolerance)
+{
+  double cur_logl;
+  double f2x;
+  double xres;
+
+  struct default_params opt_params;
+  opt_params.partition      = partition;
+  opt_params.tree           = tree;
+  opt_params.params_indices = params_indices;
+  opt_params.gamma_mode     = CORAX_GAMMA_RATES_MEAN; // for now
+
+  xres = corax_opt_minimize_brent(min_alpha,
+                                  *alpha,
+                                  max_alpha,
+                                  tolerance,
+                                  &cur_logl,
+                                  &f2x,
+                                  (void *)&opt_params,
+                                  &target_alpha_func);
+
+  cur_logl = target_alpha_func_opt_weights(&opt_params, xres);
+  *alpha   = xres;
+
+  return cur_logl;
+}
+
 CORAX_EXPORT double corax_algo_opt_pinv(corax_partition_t *  partition,
                                         corax_unode_t *      tree,
                                         const unsigned int * params_indices,

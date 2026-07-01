@@ -53,6 +53,7 @@
 #define CORAX_OPT_PARAM_FREE_RATES (1 << 8)
 #define CORAX_OPT_PARAM_RATE_WEIGHTS (1 << 9)
 #define CORAX_OPT_PARAM_BRANCH_LEN_SCALER (1 << 10)
+#define CORAX_OPT_PARAM_ALPHA_OPT_WEIGHTS (1 << 11)
 /* !!! NOTE: all params in user code must be defined as
  *           CORAX_OPT_PARAM_USER<<0, CORAX_OPT_PARAM_USER<<1 etc. !!! */
 #define CORAX_OPT_PARAM_USER (1 << 16)

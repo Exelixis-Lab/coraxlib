@@ -62,6 +62,15 @@ CORAX_EXPORT double corax_algo_opt_alpha(corax_partition_t  * partition,
                                          double *             alpha,
                                          double               tolerance);
 
+CORAX_EXPORT double
+corax_algo_opt_alpha_opt_weights(corax_partition_t  *partition,
+                                 corax_unode_t      *tree,
+                                 const unsigned int *params_indices,
+                                 double              min_alpha,
+                                 double              max_alpha,
+                                 double             *alpha,
+                                 double              tolerance);
+
 CORAX_EXPORT double corax_algo_opt_pinv(corax_partition_t *  partition,
                                         corax_unode_t *      tree,
                                         const unsigned int * params_indices,

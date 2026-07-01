@@ -16,8 +16,13 @@ extern "C"
 
   CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
                                             unsigned int categories,
-                                            double *     output_rates,
+                                            double      *output_rates,
                                             int          rates_mode);
+
+  CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
+                                                        unsigned int categories,
+                                                        double *output_rates,
+                                                        double *output_weights);
 
 #ifdef __cplusplus
 } /* extern "C" */

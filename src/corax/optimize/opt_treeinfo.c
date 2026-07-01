@@ -958,6 +958,137 @@ double corax_algo_opt_frequencies_treeinfo(corax_treeinfo_t *treeinfo,
 }
 
 CORAX_EXPORT
+double
+corax_algo_opt_alpha_opt_weights_pinv_treeinfo(corax_treeinfo_t *treeinfo,
+                                               unsigned int      params_index,
+                                               double            min_alpha,
+                                               double            max_alpha,
+                                               double            min_pinv,
+                                               double            max_pinv,
+                                               double            bfgs_factor,
+                                               double            tolerance)
+{
+  const double factor = bfgs_factor > 0. ? bfgs_factor : CORAX_ALGO_BFGS_FACTR;
+  const int    params_to_optimize =
+      CORAX_OPT_PARAM_ALPHA_OPT_WEIGHTS | CORAX_OPT_PARAM_PINV;
+
+  unsigned int i;
+
+  double        cur_logl;
+  double      **x, **lb, **ub;
+  double       *xd;
+  int         **bt;
+  unsigned int *num_free_params;
+
+  unsigned int part_count      = 0;
+  unsigned int max_free_params = 2;
+
+  /* check in how many partitions both alpha AND p-inv have to be optimized */
+  for (i = 0; i < treeinfo->partition_count; ++i)
+  {
+    if ((treeinfo->params_to_optimize[i] & params_to_optimize)
+        == params_to_optimize)
+    {
+      part_count++;
+    }
+  }
+
+  /* nothing to optimize */
+  if (!part_count) return -1 * corax_treeinfo_compute_loglh(treeinfo, 0);
+
+  x               = (double **)malloc(sizeof(double *) * part_count);
+  xd              = (double *)malloc(sizeof(double) * part_count * 2);
+  lb              = (double **)malloc(sizeof(double *) * part_count);
+  ub              = (double **)malloc(sizeof(double *) * part_count);
+  bt              = (int **)malloc(sizeof(int *) * part_count);
+  cur_logl        = corax_treeinfo_compute_loglh(treeinfo, 1);
+  num_free_params = (unsigned int *)calloc(part_count, sizeof(unsigned int));
+
+  /* those values are the same for all partitions */
+  lb[0] = (double *)malloc(sizeof(double) * 2);
+  ub[0] = (double *)malloc(sizeof(double) * 2);
+  bt[0] = (int *)malloc(sizeof(int) * 2);
+
+  /* init bounds for alpha & p-inv */
+  lb[0][0] = min_alpha ? min_alpha : CORAX_OPT_MIN_ALPHA;
+  ub[0][0] = max_alpha ? max_alpha : CORAX_OPT_MAX_ALPHA;
+  bt[0][0] = CORAX_OPT_LBFGSB_BOUND_BOTH;
+
+  lb[0][1] = min_pinv > CORAX_ALGO_LBFGSB_ERROR
+                 ? min_pinv
+                 : CORAX_OPT_MIN_PINV + CORAX_ALGO_LBFGSB_ERROR;
+  ub[0][1] = max_pinv ? max_pinv : CORAX_OPT_MAX_PINV;
+  bt[0][1] = CORAX_OPT_LBFGSB_BOUND_BOTH;
+
+  struct treeinfo_opt_params opt_params;
+  opt_params.treeinfo           = treeinfo;
+  opt_params.param_to_optimize  = params_to_optimize;
+  opt_params.num_opt_partitions = part_count;
+  opt_params.params_index       = params_index;
+  opt_params.fixed_var_index    = NULL;
+
+  /* now iterate over partitions and collect current alpha/p-inv values */
+  size_t part = 0;
+  for (i = 0; i < treeinfo->partition_count; ++i)
+  {
+    // skip partition where no freqs optimization is needed
+    if ((treeinfo->params_to_optimize[i] & params_to_optimize)
+        != params_to_optimize)
+      continue;
+
+    /* skip remote partitions (will be handled by other threads) */
+    if (!treeinfo->partitions[i])
+    {
+      x[part] = NULL;
+      part++;
+      continue;
+    }
+
+    corax_partition_t *partition = treeinfo->partitions[i];
+
+    /* init alpha & p-inv */
+    x[part]               = xd + part * 2;
+    x[part][0]            = treeinfo->alphas[i];
+    x[part][1]            = partition->prop_invar[params_index];
+    num_free_params[part] = max_free_params;
+
+    bt[part] = bt[0];
+    lb[part] = lb[0];
+    ub[part] = ub[0];
+
+    part++;
+  }
+
+  assert(part == part_count);
+
+  cur_logl = corax_opt_minimize_lbfgsb_multi(part_count,
+                                             x,
+                                             lb,
+                                             ub,
+                                             bt,
+                                             num_free_params,
+                                             max_free_params,
+                                             factor,
+                                             tolerance,
+                                             (void *)&opt_params,
+                                             target_func_multidim_treeinfo);
+
+  /* cleanup */
+  free(lb[0]);
+  free(ub[0]);
+  free(bt[0]);
+
+  free(x);
+  free(xd);
+  free(lb);
+  free(ub);
+  free(bt);
+  free(num_free_params);
+
+  return cur_logl;
+}
+
+CORAX_EXPORT
 double corax_algo_opt_alpha_pinv_treeinfo(corax_treeinfo_t *treeinfo,
                                           unsigned int      params_index,
                                           double            min_alpha,
