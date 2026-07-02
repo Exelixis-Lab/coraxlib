@@ -159,6 +159,28 @@ static int treeinfo_set_alpha(corax_treeinfo_t *treeinfo,
   return CORAX_SUCCESS;
 }
 
+static int treeinfo_set_alpha_opt_weights(corax_treeinfo_t *treeinfo,
+                              unsigned int      part_num,
+                              const double *    param_vals,
+                              unsigned int      param_count)
+{
+  CORAX_UNUSED(param_count);
+  if (part_num >= treeinfo->partition_count) return CORAX_FAILURE;
+
+  treeinfo->alphas[part_num] = param_vals[0];
+
+  corax_partition_t *partition = treeinfo->partitions[part_num];
+
+  /* update rate categories */
+  if (!corax_compute_gamma_cats_opt_weights(treeinfo->alphas[part_num],
+                                partition->rate_cats,
+                                partition->rates,
+                                partition->rate_weights))
+    return CORAX_FAILURE;
+
+  return CORAX_SUCCESS;
+}
+
 static int treeinfo_get_pinv(const corax_treeinfo_t *treeinfo,
                              unsigned int            part_num,
                              double *                param_vals,
@@ -417,6 +439,10 @@ CORAX_EXPORT double corax_algo_opt_onedim_treeinfo(corax_treeinfo_t *treeinfo,
   case CORAX_OPT_PARAM_ALPHA:
     params_getter = treeinfo_get_alpha;
     params_setter = treeinfo_set_alpha;
+    break;
+  case CORAX_OPT_PARAM_ALPHA_OPT_WEIGHTS:
+    params_getter = treeinfo_get_alpha;
+    params_setter = treeinfo_set_alpha_opt_weights;
     break;
   case CORAX_OPT_PARAM_PINV:
     params_getter = treeinfo_get_pinv;

@@ -338,15 +338,13 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
   const int    max_iter = 200; /* Maximum number of Lloyd-Max iterations */
   const double tol =
       1e-12; /* Relative convergence tolerance for changes in rK[] */
-  const double tiny = 1e-300; /* small positive value used to avoid division by
-                                 zero/underflow problems */
 
   double beta = alpha;
 
   double mean  = alpha / beta;
   double lnga  = lgamma(alpha);
   double lnga1 = lgamma(alpha + 1.0);
-  double max_change, oldr, denom, rel_change;
+  double prev_rate, denom, change;
   double Fa0, Fa1, Ga0, Ga1, mass,
       moment_mass; /* Fa0 and Fa1 are Gamma CDF values with shape alpha at the
                       lower and upper bin boundaries.  Ga0 and Ga1 are
@@ -363,7 +361,13 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
   bound = (double *)malloc(
       (categories + 1)
       * sizeof(double)); /* temporary storage for bin boundaries */
-  if (bound == 0) return (-1);
+  if (bound == 0)
+  {
+    corax_set_error(
+        CORAX_ERROR_MEM_ALLOC,
+        "Failed to allocate temporary storage for gamma weight optimization ");
+    return CORAX_FAILURE;
+  }
 
   /*
      Initialization step.
@@ -378,7 +382,7 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
      stable, ordered starting point for the iteration.
   */
   corax_compute_gamma_cats(
-      alpha, categories, output_rates, CORAX_GAMMA_RATES_MEDIAN);
+      alpha, categories, output_rates, CORAX_GAMMA_RATES_MEAN);
 
   /* Main Lloyd-Max iteration. */
   for (iter = 0; iter < max_iter; iter++)
@@ -400,7 +404,7 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
 
     /* Track the largest relative change in any representative during this
        iteration.  This is used as the convergence criterion. */
-    max_change = 0.0;
+    bool converged = true;
 
     /*
        Step 2: update each bin probability and representative value.
@@ -430,7 +434,7 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
 
       /* Save previous representative so we can measure convergence after
          updating rK[i]. */
-      oldr = output_rates[i];
+      prev_rate = output_rates[i];
 
       /* Lower-bound CDF values.
 
@@ -480,23 +484,25 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
          If mass is effectively zero, leave rK[i] unchanged to avoid
          division by zero.  This should rarely occur for ordinary K and
          well-behaved alpha/beta values. */
-      if (mass > tiny) output_rates[i] = mean * moment_mass / mass;
+      if (mass > CORAX_MISC_EPSILON)
+      {
+        output_rates[i] = mean * moment_mass / mass;
+      }
 
-      /* Measure relative change in this representative.  If oldr is too
-         close to zero, use 1.0 as the denominator. */
-      denom = fabs(oldr);
-      if (denom < tiny) denom = 1.0;
-      rel_change = fabs(output_rates[i] - oldr) / denom;
+      /* Switch to abstol if the change is close to the machine eps */
+      denom  = fabs(prev_rate);
+      change = fabs(output_rates[i] - prev_rate);
+      if (denom >= CORAX_MISC_EPSILON) { change /= denom; }
 
       /* Keep the largest relative change across all bins. */
-      if (rel_change > max_change) max_change = rel_change;
+      converged &= change < tol;
     }
 
     /* Stop if all representative rates changed by less than the tolerance. */
-    if (max_change < tol) break;
+    if (converged) { break; }
   }
 
   free(bound); /* Release temporary storage */
 
-  return (0);
+  return CORAX_SUCCESS;
 }
