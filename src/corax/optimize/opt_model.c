@@ -285,7 +285,7 @@ double corax_algo_opt_alpha_opt_weights(corax_partition_t  *partition,
                                   &cur_logl,
                                   &f2x,
                                   (void *)&opt_params,
-                                  &target_alpha_func);
+                                  &target_alpha_func_opt_weights);
 
   cur_logl = target_alpha_func_opt_weights(&opt_params, xres);
   *alpha   = xres;
