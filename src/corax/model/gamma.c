@@ -19,7 +19,9 @@
     Schloss-Wolfsbrunnenweg 35, D-69118 Heidelberg, Germany
 */
 
+#include "corax/model/gamma.h"
 #include "corax/corax.h"
+#include "corax/core/common.h"
 
 #define POINT_GAMMA(prob, alpha, beta)                                         \
   PointChi2(prob, 2.0 * (alpha)) / (2.0 * (beta))
@@ -235,7 +237,7 @@ l4:
   return (ch);
 }
 
-CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
+CORAX_EXPORT int corax_compute_gamma_rates(double       alpha,
                                           unsigned int categories,
                                           double      *output_rates,
                                           int          rates_mode)
@@ -326,7 +328,7 @@ lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
   return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
+CORAX_EXPORT int corax_compute_gamma_cats_lloyd_max(double       alpha,
                                                       unsigned int categories,
                                                       double      *output_rates,
                                                       double *output_weights)
@@ -540,4 +542,26 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
   free(bound); /* Release temporary storage */
 
   return CORAX_SUCCESS;
+}
+
+CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
+                                        unsigned int categories,
+                                        double      *output_rates,
+                                        double      *output_weights,
+                                        int          mode)
+{
+    switch (mode) {
+        case CORAX_GAMMA_RATES_MEAN:
+        case CORAX_GAMMA_RATES_MEDIAN:
+            corax_compute_gamma_rates(alpha, categories, output_rates, mode);
+            break;
+        case CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX:
+            corax_compute_gamma_cats_lloyd_max(alpha, categories, output_rates, output_weights);
+            break;
+        default:
+            corax_set_error(CORAX_ERROR_INVALID_PARAM, "Invalid gamma mode %i", mode);
+            return CORAX_FAILURE;
+    }
+
+    return CORAX_SUCCESS;
 }

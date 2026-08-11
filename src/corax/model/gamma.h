@@ -5,7 +5,8 @@
 
 /* GAMMA discretization modes */
 #define CORAX_GAMMA_RATES_MEAN 0
-#define CORAX_GAMMA_RATES_MEDIAN 1
+#define CORAX_GAMMA_RATES_MEDIAN (1 << 0)
+#define CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX (1 << 1)
 
 #ifdef __cplusplus
 extern "C"
@@ -13,16 +14,16 @@ extern "C"
 #endif
 
   /* functions in gamma.c */
+  CORAX_EXPORT int corax_compute_gamma_rates(double       alpha,
+                                             unsigned int categories,
+                                             double      *output_rates,
+                                             int          rates_mode);
 
   CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
                                             unsigned int categories,
                                             double      *output_rates,
-                                            int          rates_mode);
-
-  CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
-                                                        unsigned int categories,
-                                                        double *output_rates,
-                                                        double *output_weights);
+                                            double      *output_weights,
+                                            int          mode);
 
 #ifdef __cplusplus
 } /* extern "C" */

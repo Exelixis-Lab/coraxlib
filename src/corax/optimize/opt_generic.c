@@ -189,8 +189,10 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
   {
     assert(!isnan(xptr[0]));
     /* assign discrete rates */
-    double *rate_cats;
-    if ((rate_cats = malloc((size_t)partition->rate_cats * sizeof(double)))
+
+    // Allocate memory for rates and weights adjacently
+    double *rate_cats, *rate_weights;
+    if ((rate_cats = malloc((size_t)2 * partition->rate_cats * sizeof(double)))
         == NULL)
     {
       corax_set_error(
@@ -198,14 +200,16 @@ static int set_x_to_parameters(corax_optimize_options_t *params, double *x)
           "Cannot allocate memory for substitution rate categories");
       return CORAX_FAILURE;
     }
+    rate_weights = rate_cats + partition->rate_cats;
 
     params->lk_params.alpha_value = xptr[0];
     if (!corax_compute_gamma_cats(
-            xptr[0], partition->rate_cats, rate_cats, CORAX_GAMMA_RATES_MEAN))
+            xptr[0], partition->rate_cats, rate_cats, rate_weights, CORAX_GAMMA_RATES_MEAN))
     {
       return CORAX_FAILURE;
     }
     corax_set_category_rates(partition, rate_cats);
+    corax_set_category_weights(partition, rate_weights);
 
     free(rate_cats);
     xptr++;
