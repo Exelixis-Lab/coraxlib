@@ -409,6 +409,7 @@ CORAX_EXPORT int corax_compute_gamma_cats_lloyd_max(double       alpha,
      stable, ordered starting point for the iteration.
   */
   lloyd_max_init_cats(alpha, categories, output_rates);
+
   /* Main Lloyd-Max iteration. */
   for (iter = 0; iter < max_iter; iter++)
   {
