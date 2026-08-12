@@ -7,6 +7,7 @@
 #define CORAX_GAMMA_RATES_MEAN 0
 #define CORAX_GAMMA_RATES_MEDIAN (1 << 0)
 #define CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX (1 << 1)
+#define CORAX_GAMMA_RATES_WEIGHTS_LAGUERRE (1 << 2)
 
 #ifdef __cplusplus
 extern "C"
