@@ -21,6 +21,7 @@
 
 #include "corax/corax.h"
 #include <limits.h>
+#include <float.h>
 
 static double compute_asc_bias_correction(double       logl_base,
                                           unsigned int sum_w,
@@ -908,6 +909,384 @@ cleanup:
   corax_aligned_free(temp_clv);
   corax_aligned_free(temp_scaler);
   corax_aligned_free(ident_pmat);
+
+  return retval;
+}
+
+/* ===========================================================================
+   NEW CODE -- append this block to the END of likelihood.c (after the
+   existing corax_compute_node_ancestral() function). Nothing above this
+   point in likelihood.c is modified.
+
+   JOINT (Pupko et al. 1998) maximum-likelihood ancestral state
+   reconstruction, as opposed to the EMPIRICAL-BAYES per-node posterior
+   already provided by corax_compute_node_ancestral[_extbuf]().
+
+   ---------------------------------------------------------------------
+   Read this before using:
+
+   * PROBABILITIES ONLY: this function computes, per internal node, a
+     softmax-normalized joint log-score vector (see node_probs below).
+     It does NOT compute or output per-site best/argmax states, and
+     carries no backpointers or traceback -- that is done elsewhere in
+     the codebase, against a corax_operation_t/tree structure this file
+     does not have visibility into. If you need the joint MAP state
+     per site again here, that logic (backpointer arrays + traceback)
+     will need to be reintroduced; see version history / prior
+     conversation for a previous implementation of it.
+
+   * Supports both plain (unpacked) CLV storage AND
+     CORAX_ATTRIB_PATTERN_TIP (packed tip characters + tipmap lookup),
+     per corax_core_update_clv_ti()/corax_core_create_lookup() in
+     core_clv.c: a tip's per-state likelihood at (site,state) is
+     ((partition->tipmap[partition->tipchars[clv_index][site]] >> state)
+     & 1) ? 1.0 : 0.0, independent of rate category. Site-repeats
+     partitions are still rejected with an error -- they use a
+     different per-node site-count/site-id indirection
+     (corax_get_sites_number()/corax_get_site_id()) that this DP does
+     not (yet) thread through; this mirrors the existing empirical-Bayes
+     function's own unconditional rejection of repeats.
+
+   * Rate-category heterogeneity: the rate category is treated as one
+     more jointly-maximized hidden variable per site (we compare the
+     best fully-reconstructed path under each rate category, weighted
+     by its prior rate_weight, and keep the overall best one) purely to
+     decide WHICH rate category's log-score table to report probs from
+     per site. This is a modeling choice, not the per-rate
+     marginalization scheme corax_compute_node_ancestral_extbuf() uses.
+
+   * All computation is done in log-space (max-sum, i.e. Viterbi-style),
+     so no separate scale-buffer bookkeeping is required for numerical
+     stability.
+
+   * Output: node_probs[op][site*states + s] -- a softmax-normalized
+     version of the log-joint-score table at that node, evaluated at
+     the globally-chosen best rate category for that site. This is a
+     legitimate "confidence-like" vector but is NOT a marginal/
+     empirical-Bayes posterior probability.
+   =========================================================================== */
+
+#include <limits.h>
+#include <float.h>
+
+static double corax_joint_safe_log(double x)
+{
+  return (x > 0.) ? log(x) : -INFINITY;
+}
+
+/* Read a single (site, rate, state) log-likelihood value for a clv_index
+   that we do NOT compute ourselves (i.e. it is not the parent of any
+   operation) -- under "plain" CLV storage this can be any node (tip or
+   otherwise unvisited), under CORAX_ATTRIB_PATTERN_TIP storage this must
+   be an actual tip (clv_index < partition->tips), since inner CLVs are
+   always stored unpacked in partition->clv[] regardless of this
+   attribute (see case_tiptip/case_tipinner in clv.c). */
+static double corax_joint_leaf_logclv(const corax_partition_t *partition,
+                                      unsigned int              clv_index,
+                                      unsigned int              site,
+                                      unsigned int              rate,
+                                      unsigned int              state)
+{
+  if ((partition->attributes & CORAX_ATTRIB_PATTERN_TIP)
+      && clv_index < partition->tips)
+  {
+    unsigned char charcode = partition->tipchars[clv_index][site];
+    corax_state_t smask    = partition->tipmap[charcode];
+
+    return ((smask >> state) & 1u) ? 0.0 : -INFINITY; /* log(1) = 0 */
+  }
+
+  unsigned int  states_padded = partition->states_padded;
+  unsigned int  rate_cats     = partition->rate_cats;
+  const double *clv           = partition->clv[clv_index];
+
+  double v =
+      clv[(size_t)site * rate_cats * states_padded + (size_t)rate * states_padded
+          + state];
+
+  return corax_joint_safe_log(v);
+}
+
+/*
+   Core per-partition joint-reconstruction probability engine.
+
+   operations/op_count: the SAME postorder operation list used for
+     ordinary sum-product likelihood computation (e.g. as built by
+     corax_utree_create_operations() inside treeinfo_compute_loglh()).
+     Children are guaranteed to be processed before their parents.
+
+   root_clv_index / root_scaler_index / root_other_clv_index /
+   root_other_scaler_index / root_matrix_index: the same "virtual root
+     edge" quadruple used by corax_compute_edge_loglikelihood_sitecat(),
+     i.e. treeinfo->root and treeinfo->root->back. (Scaler indices are
+     unused here since everything is computed in log-space directly
+     from CLV values, but are accepted for interface symmetry / future
+     use and to make misuse obvious if someone passes CLV indices from
+     an inconsistent rooting.)
+
+   node_probs: caller-allocated array of length op_count. node_probs[i]
+     must point to a buffer of size sites*states doubles. Indexed by
+     OPERATION index i, i.e. node_probs[i] describes
+     operations[i].parent_clv_index.
+*/
+CORAX_EXPORT int
+corax_compute_joint_ancestral(corax_partition_t *      partition,
+                              const corax_operation_t *operations,
+                              unsigned int              op_count,
+                              unsigned int              root_clv_index,
+                              int                       root_scaler_index,
+                              unsigned int              root_other_clv_index,
+                              int                       root_other_scaler_index,
+                              unsigned int              root_matrix_index,
+                              const unsigned int *      freqs_indices,
+                              double **                 node_probs)
+{
+  CORAX_UNUSED(root_scaler_index);
+  CORAX_UNUSED(root_other_scaler_index);
+
+  if (!partition || !operations || !node_probs || !freqs_indices)
+  {
+    corax_set_error(CORAX_ERROR_INVALID_PARAM, "Parameter value is NULL!");
+    return CORAX_FAILURE;
+  }
+
+  if (corax_repeats_enabled(partition))
+  {
+    corax_set_error(
+        CORAX_ERROR_EINVAL,
+        "Site repeats are not compatible with ancestral state reconstruction!");
+    return CORAX_FAILURE;
+  }
+
+  if (op_count == 0)
+  {
+    corax_set_error(CORAX_ERROR_INVALID_PARAM, "op_count must be > 0");
+    return CORAX_FAILURE;
+  }
+
+  unsigned int states        = partition->states;
+  unsigned int states_padded = partition->states_padded;
+  unsigned int sites         = partition->sites;
+  unsigned int rate_cats     = partition->rate_cats;
+
+  unsigned int i, n, r, s, k, op;
+  int          retval = CORAX_FAILURE;
+
+  /* ---- map clv_index -> operation index, for clv indices that WE
+     compute (i.e. internal nodes). Anything not in this map is treated
+     as a raw leaf CLV read directly from partition->clv[]/tipchars. ---- */
+  unsigned int max_clv_index = root_clv_index;
+  if (root_other_clv_index > max_clv_index) max_clv_index = root_other_clv_index;
+  for (i = 0; i < op_count; ++i)
+    if (operations[i].parent_clv_index > max_clv_index)
+      max_clv_index = operations[i].parent_clv_index;
+
+  unsigned int *clv_to_op =
+      (unsigned int *)malloc(((size_t)max_clv_index + 1) * sizeof(unsigned int));
+
+  /* per-node (per-operation) log-space joint table: op_count buffers of
+     size sites * rate_cats * states. No backpointers -- states are not
+     computed here. */
+  double **jtable = (double **)calloc(op_count, sizeof(double *));
+
+  double *      best_total = (double *)malloc(sites * sizeof(double));
+  unsigned int *best_rate  = (unsigned int *)malloc(sites * sizeof(unsigned int));
+
+  if (!clv_to_op || !jtable || !best_total || !best_rate)
+  {
+    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
+    goto cleanup;
+  }
+
+  for (i = 0; i <= max_clv_index; ++i) clv_to_op[i] = UINT_MAX;
+  for (i = 0; i < op_count; ++i) clv_to_op[operations[i].parent_clv_index] = i;
+
+  {
+    size_t table_size = (size_t)sites * rate_cats * states;
+    int    alloc_fail = 0;
+    for (i = 0; i < op_count; ++i)
+    {
+      jtable[i] = (double *)malloc(table_size * sizeof(double));
+      if (!jtable[i])
+      {
+        alloc_fail = 1;
+        break;
+      }
+    }
+    if (alloc_fail)
+    {
+      corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
+      goto cleanup;
+    }
+  }
+
+  /* default guards against a pathological, data-contradicts-model site
+     (every state -INFINITY under every rate category) leaving best_rate
+     read uninitialized below; rate category 0 is an arbitrary but
+     well-defined fallback in that case */
+  for (n = 0; n < sites; ++n)
+  {
+    best_total[n] = -INFINITY;
+    best_rate[n]  = 0;
+  }
+
+  /* =====================================================================
+     Main DP: for every rate category, run a full postorder max-sum pass,
+     then combine across the virtual-root edge and keep, per site, which
+     rate category gives the best total joint log-score (used below only
+     to select which rate-category slice of jtable to report probs from).
+     ===================================================================== */
+  for (r = 0; r < rate_cats; ++r)
+  {
+    const double *freqs           = partition->frequencies[freqs_indices[r]];
+    double        log_rate_weight = corax_joint_safe_log(partition->rate_weights[r]);
+
+    for (op = 0; op < op_count; ++op)
+    {
+      const corax_operation_t *o  = &operations[op];
+      unsigned int              c1 = o->child1_clv_index;
+      unsigned int              c2 = o->child2_clv_index;
+      unsigned int              c1_is_op = (c1 <= max_clv_index) && (clv_to_op[c1] != UINT_MAX);
+      unsigned int              c2_is_op = (c2 <= max_clv_index) && (clv_to_op[c2] != UINT_MAX);
+      unsigned int              op1 = c1_is_op ? clv_to_op[c1] : UINT_MAX;
+      unsigned int              op2 = c2_is_op ? clv_to_op[c2] : UINT_MAX;
+
+      const double *pmat1_base = partition->pmatrix[o->child1_matrix_index]
+                                  + (size_t)r * states * states_padded;
+      const double *pmat2_base = partition->pmatrix[o->child2_matrix_index]
+                                  + (size_t)r * states * states_padded;
+
+      for (n = 0; n < sites; ++n)
+      {
+        for (s = 0; s < states; ++s)
+        {
+          double best1 = -INFINITY;
+          double best2 = -INFINITY;
+
+          const double *row1 = pmat1_base + (size_t)s * states_padded;
+          const double *row2 = pmat2_base + (size_t)s * states_padded;
+
+          for (k = 0; k < states; ++k)
+          {
+            double child_val = c1_is_op
+                ? jtable[op1][((size_t)n * rate_cats + r) * states + k]
+                : corax_joint_leaf_logclv(partition, c1, n, r, k);
+            double val = corax_joint_safe_log(row1[k]) + child_val;
+            if (val > best1) best1 = val;
+          }
+
+          for (k = 0; k < states; ++k)
+          {
+            double child_val = c2_is_op
+                ? jtable[op2][((size_t)n * rate_cats + r) * states + k]
+                : corax_joint_leaf_logclv(partition, c2, n, r, k);
+            double val = corax_joint_safe_log(row2[k]) + child_val;
+            if (val > best2) best2 = val;
+          }
+
+          jtable[op][((size_t)n * rate_cats + r) * states + s] = best1 + best2;
+        }
+      }
+    }
+
+    /* ---- combine across the virtual-root edge for this rate category,
+       purely to score how good this rate category is per site ---- */
+    {
+      unsigned int root_is_op  = (root_clv_index <= max_clv_index)
+                                  && (clv_to_op[root_clv_index] != UINT_MAX);
+      unsigned int other_is_op = (root_other_clv_index <= max_clv_index)
+                                  && (clv_to_op[root_other_clv_index] != UINT_MAX);
+      unsigned int root_op  = root_is_op ? clv_to_op[root_clv_index] : UINT_MAX;
+      unsigned int other_op = other_is_op ? clv_to_op[root_other_clv_index] : UINT_MAX;
+
+      const double *pmat_root_base =
+          partition->pmatrix[root_matrix_index] + (size_t)r * states * states_padded;
+
+      for (n = 0; n < sites; ++n)
+      {
+        double total_best = -INFINITY;
+
+        for (s = 0; s < states; ++s)
+        {
+          double root_val = root_is_op
+              ? jtable[root_op][((size_t)n * rate_cats + r) * states + s]
+              : corax_joint_leaf_logclv(partition, root_clv_index, n, r, s);
+
+          double        back_best = -INFINITY;
+          const double *row = pmat_root_base + (size_t)s * states_padded;
+
+          for (k = 0; k < states; ++k)
+          {
+            double other_val = other_is_op
+                ? jtable[other_op][((size_t)n * rate_cats + r) * states + k]
+                : corax_joint_leaf_logclv(partition, root_other_clv_index, n, r, k);
+            double val = corax_joint_safe_log(row[k]) + other_val;
+            if (val > back_best) back_best = val;
+          }
+
+          double total = corax_joint_safe_log(freqs[s]) + root_val + back_best;
+          if (total > total_best) total_best = total;
+        }
+
+        double candidate = log_rate_weight + total_best;
+        if (candidate > best_total[n])
+        {
+          best_total[n] = candidate;
+          best_rate[n]  = r;
+        }
+      }
+    }
+  }
+
+  /* =====================================================================
+     Output probability vectors: softmax-normalize the log-joint-score
+     table at each node, evaluated at that site's globally best rate
+     category. This is a confidence-like companion score, NOT a
+     marginal/empirical-Bayes posterior probability.
+     ===================================================================== */
+  for (op = 0; op < op_count; ++op)
+  {
+    for (n = 0; n < sites; ++n)
+    {
+      unsigned int rbest = best_rate[n];
+      double       maxv  = -INFINITY;
+
+      for (s = 0; s < states; ++s)
+      {
+        double v = jtable[op][((size_t)n * rate_cats + rbest) * states + s];
+        if (v > maxv) maxv = v;
+      }
+
+      if (maxv == -INFINITY)
+      {
+        /* pathological: data contradicts the model at every state --
+           fall back to a uniform vector rather than propagate NaN */
+        for (s = 0; s < states; ++s)
+          node_probs[op][(size_t)n * states + s] = 1.0 / states;
+        continue;
+      }
+
+      double sum = 0.;
+      for (s = 0; s < states; ++s)
+      {
+        double v = jtable[op][((size_t)n * rate_cats + rbest) * states + s];
+        double e = exp(v - maxv);
+        node_probs[op][(size_t)n * states + s] = e;
+        sum += e;
+      }
+      for (s = 0; s < states; ++s) node_probs[op][(size_t)n * states + s] /= sum;
+    }
+  }
+
+  retval = CORAX_SUCCESS;
+
+cleanup:
+  if (jtable)
+    for (i = 0; i < op_count; ++i) free(jtable[i]);
+  free(jtable);
+  free(clv_to_op);
+  free(best_total);
+  free(best_rate);
 
   return retval;
 }

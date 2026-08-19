@@ -370,10 +370,13 @@ CORAX_EXPORT
 
 
   CORAX_EXPORT corax_ancestral_t *
-               corax_treeinfo_compute_ancestral(corax_treeinfo_t *treeinfo);
+               corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *treeinfo);
+
+  CORAX_EXPORT corax_ancestral_t *
+               corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *treeinfo);
 
   CORAX_EXPORT void
-  corax_treeinfo_destroy_ancestral(corax_ancestral_t *ancestral);
+               corax_treeinfo_destroy_ancestral(corax_ancestral_t *ancestral);
 
   /**
    * Set linkage for substitution matrices and stationary frequencies

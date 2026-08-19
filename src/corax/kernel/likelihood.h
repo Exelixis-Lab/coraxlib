@@ -123,6 +123,18 @@ extern "C"
                                       unsigned int *      temp_scaler,
                                       double *            ident_pmat);
 
+  CORAX_EXPORT int
+corax_compute_joint_ancestral(corax_partition_t *      partition,
+                              const corax_operation_t *operations,
+                              unsigned int              op_count,
+                              unsigned int              root_clv_index,
+                              int                       root_scaler_index,
+                              unsigned int              root_other_clv_index,
+                              int                       root_other_scaler_index,
+                              unsigned int              root_matrix_index,
+                              const unsigned int *      freqs_indices,
+                              double **                 node_probs);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
