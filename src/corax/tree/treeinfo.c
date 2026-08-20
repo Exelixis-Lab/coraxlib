@@ -1653,6 +1653,7 @@ CORAX_EXPORT void corax_treeinfo_destroy_ancestral(corax_ancestral_t *ancestral)
 
   corax_utree_destroy(ancestral->tree, NULL);
   free(ancestral->probs);
+  free(ancestral);
 }
 bool label_inner_nodes(const unsigned int  node_count,
                        corax_ancestral_t  *ancestral)
