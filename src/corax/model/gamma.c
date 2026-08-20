@@ -299,6 +299,37 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
   return CORAX_SUCCESS;
 }
 
+CORAX_EXPORT int
+lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
+{
+  unsigned int i;
+
+  double factor = alpha / alpha * categories, alfa = (alpha + 1.0) / 3.0,
+         beta = alpha / 3.0;
+
+  /* Note that ALPHA_MIN setting is somewhat critical due to   */
+  /* numerical instability caused by very small rate[0] values */
+  /* induced by low alpha values around 0.01 */
+
+  if (alpha < ALPHA_MIN || categories < 1)
+  {
+    corax_set_error(
+        CORAX_ERROR_INVALID_PARAM, "Invalid alpha value (%f)", alpha);
+    return CORAX_FAILURE;
+  }
+
+  if (categories == 1) { output_rates[0] = 1.0; }
+  double middle = 1.0 / (2.0 * categories), t = 0.0;
+
+  for (i = 0; i < categories; i++)
+    output_rates[i] = POINT_GAMMA((double)(i * 2 + 1) * middle, alfa, beta);
+
+  for (i = 0; i < categories; i++) t += output_rates[i];
+  for (i = 0; i < categories; i++) output_rates[i] *= factor / t;
+
+  return CORAX_SUCCESS;
+}
+
 CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
                                                       unsigned int categories,
                                                       double      *output_rates,
@@ -312,12 +343,8 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
      instead of forcing all bins to have equal probability.
 
      Inputs:
-        alpha      Shape parameter of the Gamma distribution.
-        beta       Rate parameter of the Gamma distribution.
-                   With this parameterization, the mean is alpha / beta.
-        K          Number of discrete categories/bins.
-        UseMedian  Retained only for compatibility with the original
-                   DiscreteGamma() call format.  It is ignored here.
+        alpha         Shape parameter of the Gamma distribution.
+        categories    Number of discrete categories/bins.
 
      Outputs:
         freqK[i]   Probability mass in Lloyd-Max bin i.
@@ -335,9 +362,11 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
 
   unsigned int i, iter;
 
-  const int    max_iter = 200; /* Maximum number of Lloyd-Max iterations */
-  const double tol =
-      1e-12; /* Relative convergence tolerance for changes in rK[] */
+  /* Maximum number of Lloyd-Max iterations */
+  const unsigned int max_iter = 2000;
+
+  /* Relative convergence tolerance for changes in rK[] */
+  const double tol = 1e-12;
 
   double beta = alpha;
 
@@ -381,9 +410,7 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
      These are not the final Lloyd-Max representatives.  They are just a simple,
      stable, ordered starting point for the iteration.
   */
-  corax_compute_gamma_cats(
-      alpha, categories, output_rates, CORAX_GAMMA_RATES_MEAN);
-
+  lloyd_max_init_cats(alpha, categories, output_rates);
   /* Main Lloyd-Max iteration. */
   for (iter = 0; iter < max_iter; iter++)
   {
@@ -503,6 +530,14 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
 
     /* Stop if all representative rates changed by less than the tolerance. */
     if (converged) { break; }
+  }
+
+  if(iter == max_iter){
+    corax_set_error(CORAX_ERROR_OPT_CONVERGE,
+                    "Failed to converge for Lloyd-Max quantization of gamma "
+                    "distribution after %d iterations",
+                    iter);
+    return CORAX_FAILURE;
   }
 
   free(bound); /* Release temporary storage */
