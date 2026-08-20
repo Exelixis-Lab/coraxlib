@@ -358,9 +358,9 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
   if (categories <= 0 || alpha <= 0 || beta <= 0)
     return (-1); /* Basic validity check */
 
-  bound = (double *)malloc(
-      (categories + 1)
-      * sizeof(double)); /* temporary storage for bin boundaries */
+  /* temporary storage for bin boundaries */
+  bound = (double *)malloc((categories + 1) * sizeof(double));
+
   if (bound == 0)
   {
     corax_set_error(
@@ -400,7 +400,10 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
     */
     bound[0] = 0.0;
     for (i = 1; i < categories; i++)
-      bound[i] = (output_rates[i - 1] + output_rates[i]) / 2.0;
+    {
+      bound[i] = (output_rates[i - 1] - output_rates[i])
+                 / (log(output_rates[i - 1]) - log(output_rates[i]));
+    }
 
     /* Track the largest relative change in any representative during this
        iteration.  This is used as the convergence criterion. */
