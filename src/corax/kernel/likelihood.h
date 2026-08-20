@@ -123,28 +123,6 @@ extern "C"
                                       unsigned int *      temp_scaler,
                                       double *            ident_pmat);
 
-  /**
-   * Joint (Pupko et al. 1998) maximum-likelihood ancestral state
-   * reconstruction: for every internal node in `operations`, computes a
-   * probability vector (softmax of the log-score the winning traceback
-   * path was chosen from -- NOT a marginal/empirical-Bayes posterior)
-   * such that the arg max over states at every node, taken together,
-   * forms a single globally most likely joint assignment of states to
-   * all internal nodes (and, per site, to the rate category).
-   *
-   * `operations`/`op_count` is the same postorder operation list used
-   * for ordinary sum-product likelihood computation. `root_clv_index` /
-   * `root_other_clv_index` / `root_matrix_index` describe the virtual
-   * root edge, as for `corax_compute_edge_loglikelihood_sitecat()`.
-   * `root_scaler_index` / `root_other_scaler_index` are accepted for
-   * interface symmetry but unused (everything is computed in log-space
-   * directly from CLV/tip values).
-   *
-   * `node_probs` is caller-allocated, of length `op_count`; each
-   * `node_probs[i]` must point to a buffer of `sites*states` doubles
-   * and is indexed by operation index (`node_probs[i]` describes
-   * `operations[i].parent_clv_index`).
-   */
   CORAX_EXPORT int
   corax_compute_joint_ancestral(corax_partition_t *      partition,
                                 const corax_operation_t *operations,

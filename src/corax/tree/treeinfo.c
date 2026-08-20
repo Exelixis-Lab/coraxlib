@@ -21,7 +21,6 @@
 
 #include "treeinfo.h"
 #include "corax/corax.h"
-#include <limits.h>
 
 static int treeinfo_check_tree(const corax_treeinfo_t *treeinfo,
                                const corax_utree_t *   tree);
@@ -1261,7 +1260,7 @@ static int treeinfo_init_tree(corax_treeinfo_t *treeinfo)
   /* save virtual root */
   treeinfo->root = tree->vroot;
 
-  /* 1. save back pointer to treeinfo stuct in in eacn node's _data_ field
+  /* 1. save back pointer to treeinfo struct in each node's _data_ field
    * 2. collect branch length from the tree and store in a separate array
    *    indexed by pmatrix_index */
   for (unsigned int i = 0; i < node_count; ++i)
@@ -1655,29 +1654,20 @@ CORAX_EXPORT void corax_treeinfo_destroy_ancestral(corax_ancestral_t *ancestral)
   corax_utree_destroy(ancestral->tree, NULL);
   free(ancestral->probs);
 }
-
-CORAX_EXPORT
-corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *treeinfo)
+bool label_inner_nodes(const unsigned int  node_count,
+                       corax_ancestral_t  *ancestral)
 {
-  unsigned int i, p;
-  unsigned int traversal_size;
-  unsigned int node_count =
-      treeinfo->tree->tip_count + treeinfo->tree->inner_count;
-
-  corax_unode_t *old_root = treeinfo->root;
+  unsigned int    i;
+  unsigned int    traversal_size;
 
   corax_unode_t **travbuffer =
       (corax_unode_t **)calloc(node_count, sizeof(corax_unode_t *));
-
-  corax_ancestral_t *ancestral = corax_treeinfo_create_ancestral(treeinfo);
-
-  if (!travbuffer || !ancestral)
+  if (!travbuffer)
   {
-    if (travbuffer) free(travbuffer);
-    if (ancestral) corax_treeinfo_destroy_ancestral(ancestral);
+    free(travbuffer);
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
-                    "Can't allocate memory for ancestral probabilities\n");
-    return NULL;
+      "Can't allocate memory for inner node labelings\n");
+    return CORAX_FAILURE;
   }
 
   /* perform a FULL postorder traversal of the unrooted tree */
@@ -1688,15 +1678,15 @@ corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *t
                             &traversal_size))
   {
     free(travbuffer);
-    corax_treeinfo_destroy_ancestral(ancestral);
-    return NULL;
+    return CORAX_FAILURE;
   }
 
   assert(traversal_size == node_count);
 
 #ifdef DEBUG
   printf("\nTraversal: ");
-  for (i = 0; i < traversal_size; ++i) printf("%u ", travbuffer[i]->clv_index);
+  for (*i = 0; *i < traversal_size; ++*i)
+    printf("%u ", (*travbuffer)[(*i)]->clv_index);
   printf("\n\n");
 #endif
 
@@ -1723,9 +1713,36 @@ corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *t
   assert(n == ancestral->node_count);
 
   free(travbuffer);
+  travbuffer = NULL;
+  return CORAX_SUCCESS;
+}
+
+CORAX_EXPORT
+corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *treeinfo)
+{
+  const unsigned int node_count =
+      treeinfo->tree->tip_count + treeinfo->tree->inner_count;
+
+  corax_unode_t *old_root = treeinfo->root;
+
+  corax_ancestral_t *ancestral = corax_treeinfo_create_ancestral(treeinfo);
+
+  if (!ancestral)
+  {
+    corax_treeinfo_destroy_ancestral(ancestral);
+    corax_set_error(CORAX_ERROR_MEM_ALLOC,
+                    "Can't allocate memory for ancestral probabilities\n");
+    return NULL;
+  }
+
+  if (!label_inner_nodes(node_count, ancestral))
+  {
+    corax_treeinfo_destroy_ancestral(ancestral);
+    return NULL;
+  }
 
   /* now compute ancestral state probs for every internal node */
-  for (i = 0; i < ancestral->node_count; ++i)
+  for (unsigned int i = 0; i < ancestral->node_count; ++i)
   {
     corax_unode_t *node          = ancestral->nodes[i];
     corax_unode_t *treeinfo_node = treeinfo->subnodes[node->node_index];
@@ -1734,7 +1751,7 @@ corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *t
     treeinfo->root = treeinfo_node;
     corax_treeinfo_compute_loglh(treeinfo, 1);
 
-    for (p = 0; p < treeinfo->init_partition_count; ++p)
+    for (unsigned int p = 0; p < treeinfo->init_partition_count; ++p)
     {
       corax_partition_t *partition = treeinfo->init_partitions[p];
       size_t             part_span = partition->sites * partition->states;
@@ -1764,185 +1781,62 @@ corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *t
   return ancestral;
 }
 
-CORAX_EXPORT
 corax_ancestral_t *corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *treeinfo)
 {
-  unsigned int i, n, p;
-  unsigned int traversal_size;
-  unsigned int ops_count;
-  unsigned int node_count =
-      treeinfo->tree->tip_count + treeinfo->tree->inner_count;
+  const unsigned int node_count =
+    treeinfo->tree->tip_count + treeinfo->tree->inner_count;
 
-  corax_unode_t **travbuffer =
-      (corax_unode_t **)calloc(node_count, sizeof(corax_unode_t *));
-  corax_operation_t *operations = (corax_operation_t *)calloc(
-      treeinfo->tree->inner_count, sizeof(corax_operation_t));
+  /* Assume op i == node i */
+  corax_operation_t *operations = treeinfo->operations;
+  const unsigned int ops_count  = treeinfo->counter;
 
   corax_ancestral_t *ancestral = corax_treeinfo_create_ancestral(treeinfo);
 
-  unsigned int *op_to_node     = NULL;
-  unsigned int *clvidx_to_node = NULL;
-  double **     node_probs_buf = NULL;
-
-  if (!travbuffer || !operations || !ancestral)
+  if (!ancestral)
   {
-    free(travbuffer);
-    free(operations);
-    if (ancestral) corax_treeinfo_destroy_ancestral(ancestral);
+    corax_treeinfo_destroy_ancestral(ancestral);
     corax_set_error(
         CORAX_ERROR_MEM_ALLOC,
-        "Can't allocate memory for joint ancestral reconstruction\n");
+        "Can't allocate memory for ancestral reconstruction\n");
     return NULL;
   }
-
-  /* Joint reconstruction uses ONE fixed rooting and a single postorder
-     pass over the whole tree -- unlike corax_treeinfo_compute_marginal_
-     ancestral(), we do NOT loop over internal nodes reassigning
-     treeinfo->root. We do still need up-to-date CLVs/p-matrices for the
-     current branch lengths before running our own DP over them. */
-  if (isnan(corax_treeinfo_compute_loglh(treeinfo, 0)))
-  {
-    free(travbuffer);
-    free(operations);
-    corax_treeinfo_destroy_ancestral(ancestral);
-    return NULL;
-  }
-
-  /* full postorder traversal over our own clone (mirrors
-     corax_treeinfo_compute_marginal_ancestral()); clv_index/scaler_
-     index/pmatrix_index numbering is structural and identical between
-     the clone and treeinfo->tree */
-  if (!corax_utree_traverse(ancestral->tree->vroot,
-                            CORAX_TREE_TRAVERSE_POSTORDER,
-                            cb_full_traversal,
-                            travbuffer,
-                            &traversal_size))
-  {
-    free(travbuffer);
-    free(operations);
-    corax_treeinfo_destroy_ancestral(ancestral);
-    return NULL;
-  }
-
-  assert(traversal_size == node_count);
-
-  n = 0;
-  for (i = 0; i < traversal_size; ++i)
-  {
-    corax_unode_t *node = travbuffer[i];
-
-    if (CORAX_UTREE_IS_TIP(node)) continue;
-
-    if (!node->label)
-    {
-      char buf[100];
-      snprintf(buf, 100, "Node%u", n + 1);
-      node->label = node->next->label = node->next->next->label = strdup(buf);
-    }
-
-    ancestral->nodes[n] = node;
-    ++n;
-  }
-
-  assert(n == ancestral->node_count);
-
-  corax_utree_create_operations((const corax_unode_t *const *)travbuffer,
-                                traversal_size,
-                                NULL,
-                                NULL,
-                                operations,
-                                NULL,
-                                &ops_count);
-
-  free(travbuffer);
-  travbuffer = NULL;
 
   assert(ops_count == ancestral->node_count);
 
-  /* map operations[i].parent_clv_index -> which ancestral->nodes[] slot
-     it corresponds to, so per-partition results land in the right
-     output buffer (node-collection above and corax_utree_create_
-     operations() both walk the same traversal in the same order, so in
-     practice op i == node i, but build an explicit map rather than
-     assume it) */
+  if (!label_inner_nodes(node_count, ancestral))
   {
-    unsigned int max_ci = 0;
-    for (n = 0; n < ancestral->node_count; ++n)
-      if (ancestral->nodes[n]->clv_index > max_ci) max_ci = ancestral->nodes[n]->clv_index;
-    for (i = 0; i < ops_count; ++i)
-      if (operations[i].parent_clv_index > max_ci)
-        max_ci = operations[i].parent_clv_index;
-
-    clvidx_to_node = (unsigned int *)malloc(((size_t)max_ci + 1) * sizeof(unsigned int));
-    op_to_node     = (unsigned int *)malloc(ops_count * sizeof(unsigned int));
-
-    if (!clvidx_to_node || !op_to_node)
-    {
-      free(operations);
-      free(clvidx_to_node);
-      free(op_to_node);
-      corax_treeinfo_destroy_ancestral(ancestral);
-      corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-      return NULL;
-    }
-
-    for (i = 0; i <= max_ci; ++i) clvidx_to_node[i] = UINT_MAX;
-    for (n = 0; n < ancestral->node_count; ++n)
-      clvidx_to_node[ancestral->nodes[n]->clv_index] = n;
-
-    for (i = 0; i < ops_count; ++i)
-    {
-      unsigned int ci = operations[i].parent_clv_index;
-      op_to_node[i]   = (ci <= max_ci) ? clvidx_to_node[ci] : UINT_MAX;
-
-      if (op_to_node[i] == UINT_MAX)
-      {
-        free(operations);
-        free(clvidx_to_node);
-        free(op_to_node);
-        corax_treeinfo_destroy_ancestral(ancestral);
-        corax_set_error(
-            CORAX_ERROR_EINVAL,
-            "Internal error: could not map operation to node in joint "
-            "ancestral reconstruction");
-        return NULL;
-      }
-    }
-    free(clvidx_to_node);
-    clvidx_to_node = NULL;
+    corax_treeinfo_destroy_ancestral(ancestral);
+    return NULL;
   }
 
-  node_probs_buf = (double **)malloc(ops_count * sizeof(double *));
+  /* different to ancp in marginal (because of single tree traverse ?)*/
+  double **node_probs_buf = (double **)malloc(ops_count * sizeof(double *));
 
   if (!node_probs_buf)
   {
-    free(operations);
-    free(op_to_node);
     corax_treeinfo_destroy_ancestral(ancestral);
     corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
     return NULL;
   }
 
-  for (p = 0; p < treeinfo->init_partition_count; ++p)
+  for (unsigned int p = 0; p < treeinfo->init_partition_count; ++p)
   {
     corax_partition_t *partition = treeinfo->init_partitions[p];
     unsigned int       pidx      = treeinfo->init_partition_idx[p];
 
     ancestral->partition_indices[p] = pidx;
 
-    /* per-partition offset within each node's concatenated output
-       buffer, matching corax_treeinfo_create_ancestral()'s own layout
-       convention for ->probs */
+    /* per-partition offset within each node's concatenated output buffer
+       TODO Works kind of reverse to marginal, maybe do it similar? */
     size_t       prob_offset = 0;
-    unsigned int q;
-    for (q = 0; q < p; ++q)
+    for (unsigned int q = 0; q < p; ++q)
     {
       const corax_partition_t *prev = treeinfo->init_partitions[q];
       prob_offset += (size_t)prev->sites * prev->states;
     }
 
-    for (i = 0; i < ops_count; ++i)
-      node_probs_buf[i] = ancestral->probs[op_to_node[i]] + prob_offset;
+    for (unsigned int i = 0; i < ops_count; ++i)
+      node_probs_buf[i] = ancestral->probs[i] + prob_offset;
 
     if (!corax_compute_joint_ancestral(partition,
                                        operations,
@@ -1955,16 +1849,12 @@ corax_ancestral_t *corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *tree
                                        treeinfo->param_indices[pidx],
                                        node_probs_buf))
     {
-      free(operations);
-      free(op_to_node);
       free(node_probs_buf);
       corax_treeinfo_destroy_ancestral(ancestral);
       return NULL;
     }
   }
 
-  free(operations);
-  free(op_to_node);
   free(node_probs_buf);
 
   /* treeinfo->root was never reassigned, so there is nothing to restore
