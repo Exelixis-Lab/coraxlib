@@ -304,8 +304,7 @@ lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
 {
   unsigned int i;
 
-  double factor = alpha / alpha * categories, alfa = (alpha + 1.0) / 3.0,
-         beta = alpha / 3.0;
+  double alfa = (alpha + 1.0) / 3.0, beta = alpha / 3.0;
 
   /* Note that ALPHA_MIN setting is somewhat critical due to   */
   /* numerical instability caused by very small rate[0] values */
@@ -319,13 +318,10 @@ lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
   }
 
   if (categories == 1) { output_rates[0] = 1.0; }
-  double middle = 1.0 / (2.0 * categories), t = 0.0;
+  double ratio = 1.0 / (categories + 1);
 
   for (i = 0; i < categories; i++)
-    output_rates[i] = POINT_GAMMA((double)(i * 2 + 1) * middle, alfa, beta);
-
-  for (i = 0; i < categories; i++) t += output_rates[i];
-  for (i = 0; i < categories; i++) output_rates[i] *= factor / t;
+    output_rates[i] = POINT_GAMMA((double)(i + 1) * ratio, alfa, beta);
 
   return CORAX_SUCCESS;
 }
@@ -363,10 +359,10 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
   unsigned int i, iter;
 
   /* Maximum number of Lloyd-Max iterations */
-  const unsigned int max_iter = 2000;
+  const unsigned int max_iter = 1000;
 
   /* Relative convergence tolerance for changes in rK[] */
-  const double tol = 1e-12;
+  const double tol = 1e-4;
 
   double beta = alpha;
 
@@ -532,7 +528,8 @@ CORAX_EXPORT int corax_compute_gamma_cats_opt_weights(double       alpha,
     if (converged) { break; }
   }
 
-  if(iter == max_iter){
+  if (iter == max_iter)
+  {
     corax_set_error(CORAX_ERROR_OPT_CONVERGE,
                     "Failed to converge for Lloyd-Max quantization of gamma "
                     "distribution after %d iterations",
