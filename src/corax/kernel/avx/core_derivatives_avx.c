@@ -1824,7 +1824,8 @@ corax_core_likelihood_derivatives_avx(unsigned int         states,
     _mm256_store_pd(&site_lk[offset], v_sitelk);
     offset += 4;
 
-    invariant_ptr++;
+    if (invariant_ptr)
+      invariant_ptr++;
 
     /* build derivatives for 4 adjacent sites at once */
     if (offset == 16)

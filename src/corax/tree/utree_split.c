@@ -271,7 +271,7 @@ static int cb_get_splits(corax_unode_t * node, void *data)
         assert(tip_id < tip_count);
         split_id   = tip_id / split_size;
         tip_id    %= split_size;
-        current_split[split_id] |= (1 << tip_id);
+        current_split[split_id] |= (1u << tip_id);
       }
 
       snode = snode->next;

@@ -294,7 +294,7 @@ static int fill_parsimony_vectors(const corax_partition_t *partition,
             c = partition->tipchars[i][j];
             if (states != 4) c = partition->tipmap[c];
             for (k = 0; k < parsimony->states; ++k, c >>= 1)
-              if (c & 1) val[k] |= (1 << bitcount);
+              if (c & 1) val[k] |= (1u << bitcount);
           }
           else
           {
@@ -303,7 +303,7 @@ static int fill_parsimony_vectors(const corax_partition_t *partition,
                                 * partition->rate_cats;
 
             for (k = 0; k < states; ++k)
-              if ((int)(clv[k])) { val[k] |= (1 << bitcount); }
+              if ((int)(clv[k])) { val[k] |= (1u << bitcount); }
           }
 
           bitcount++;

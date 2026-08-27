@@ -847,7 +847,8 @@ corax_core_likelihood_derivatives(unsigned int        states,
                                        diagptable,
                                        site_lk);
 
-      invariant_ptr++;
+      if (invariant_ptr)
+        invariant_ptr++;
       sum += rate_cats * states_padded;
 
       /* build derivatives */
