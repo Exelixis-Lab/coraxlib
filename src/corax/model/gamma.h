@@ -2,6 +2,7 @@
 #define CORAX_MODEL_GAMMA_H_
 
 #include "corax/corax_core.h"
+#include "corax/model/gamma_laguerre.h"
 
 /* GAMMA discretization modes */
 #define CORAX_GAMMA_RATES_MEAN 0
