@@ -557,7 +557,7 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
     switch (mode) {
         case CORAX_GAMMA_RATES_MEAN:
         case CORAX_GAMMA_RATES_MEDIAN:
-            for (auto c = 0U; c < categories; ++c) {
+            for (unsigned int c = 0; c < categories; ++c) {
                 output_weights[c] = 1.0 / categories;
             }
             return corax_compute_gamma_rates(alpha, categories, output_rates, mode);
