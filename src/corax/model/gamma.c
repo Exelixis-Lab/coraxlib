@@ -27,7 +27,7 @@
   PointChi2(prob, 2.0 * (alpha)) / (2.0 * (beta))
 #define ALPHA_MIN 0.02
 
-static double IncompleteGamma(double x, double alpha, double ln_gamma_alpha)
+double IncompleteGamma(double x, double alpha, double ln_gamma_alpha)
 {
   /* returns the incomplete gamma ratio I(x,alpha) where x is the upper
              limit of the integration and alpha is the shape parameter.
