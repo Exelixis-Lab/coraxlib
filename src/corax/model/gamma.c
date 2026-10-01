@@ -27,7 +27,8 @@
   PointChi2(prob, 2.0 * (alpha)) / (2.0 * (beta))
 #define ALPHA_MIN 0.02
 
-double IncompleteGamma(double x, double alpha, double ln_gamma_alpha)
+CORAX_EXPORT
+double corax_compute_incomplete_gamma(double x, double alpha, double ln_gamma_alpha)
 {
   /* returns the incomplete gamma ratio I(x,alpha) where x is the upper
              limit of the integration and alpha is the shape parameter.
@@ -212,9 +213,9 @@ l3:
 l4:
   q  = ch;
   p1 = .5 * ch;
-  if ((t = IncompleteGamma(p1, xx, g)) < 0.0)
+  if ((t = corax_compute_incomplete_gamma(p1, xx, g)) < 0.0)
   {
-    printf("IncompleteGamma \n");
+    printf("corax_compute_incomplete_gamma \n");
     return (-1);
   }
 
@@ -279,7 +280,7 @@ CORAX_EXPORT int corax_compute_gamma_rates(double       alpha,
       gammaProbs[i] = POINT_GAMMA((i + 1.0) / categories, alfa, beta);
 
     for (i = 0; i < categories - 1; i++)
-      gammaProbs[i] = IncompleteGamma(gammaProbs[i] * beta, alfa + 1, lnga1);
+      gammaProbs[i] = corax_compute_incomplete_gamma(gammaProbs[i] * beta, alfa + 1, lnga1);
 
     output_rates[0] = gammaProbs[0] * factor;
 
@@ -353,7 +354,7 @@ CORAX_EXPORT int corax_compute_gamma_cats_lloyd_max(double       alpha,
 
      External functions/macros assumed to be available elsewhere:
         QuantileGamma(prob, alpha, beta)
-        IncompleteGamma(x, alpha, ln_gamma_alpha)
+        corax_compute_incomplete_gamma(x, alpha, ln_gamma_alpha)
         malloc(), free(), fabs(), lgamma()
 
   */
@@ -476,17 +477,17 @@ CORAX_EXPORT int corax_compute_gamma_cats_lloyd_max(double       alpha,
       }
       else
       {
-        /* IncompleteGamma() expects the argument beta*x for a Gamma
+        /* corax_compute_incomplete_gamma() expects the argument beta*x for a Gamma
            distribution with rate beta. */
-        Fa0 = IncompleteGamma(bound[i] * beta, alpha, lnga);
-        Ga0 = IncompleteGamma(bound[i] * beta, alpha + 1.0, lnga1);
+        Fa0 = corax_compute_incomplete_gamma(bound[i] * beta, alpha, lnga);
+        Ga0 = corax_compute_incomplete_gamma(bound[i] * beta, alpha + 1.0, lnga1);
       }
 
       /* Upper-bound CDF values.
 
          For the final bin, the upper boundary is infinity.  The CDF at
          infinity is 1, so we use 1.0 directly rather than storing infinity
-         or calling IncompleteGamma() with an infinite argument. */
+         or calling corax_compute_incomplete_gamma() with an infinite argument. */
       if (i == categories - 1)
       {
         Fa1 = 1.0;
@@ -494,8 +495,8 @@ CORAX_EXPORT int corax_compute_gamma_cats_lloyd_max(double       alpha,
       }
       else
       {
-        Fa1 = IncompleteGamma(bound[i + 1] * beta, alpha, lnga);
-        Ga1 = IncompleteGamma(bound[i + 1] * beta, alpha + 1.0, lnga1);
+        Fa1 = corax_compute_incomplete_gamma(bound[i + 1] * beta, alpha, lnga);
+        Ga1 = corax_compute_incomplete_gamma(bound[i + 1] * beta, alpha + 1.0, lnga1);
       }
 
       /* Probability mass in the current Lloyd-Max bin. */
@@ -855,6 +856,9 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
     switch (mode) {
         case CORAX_GAMMA_RATES_MEAN:
         case CORAX_GAMMA_RATES_MEDIAN:
+            for (auto c = 0U; c < categories; ++c) {
+                output_weights[c] = 1.0 / categories;
+            }
             return corax_compute_gamma_rates(alpha, categories, output_rates, mode);
         case CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX:
             return corax_compute_gamma_cats_lloyd_max(alpha, categories, output_rates, output_weights);
