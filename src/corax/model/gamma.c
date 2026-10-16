@@ -302,7 +302,7 @@ CORAX_EXPORT int corax_compute_gamma_rates(double       alpha,
   return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int
+static int
 lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
 {
   unsigned int i;
@@ -320,16 +320,20 @@ lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
     return CORAX_FAILURE;
   }
 
-  if (categories == 1) { output_rates[0] = 1.0; }
-  double ratio = 1.0 / (categories + 1);
+  if (categories == 1)
+    output_rates[0] = 1.0;
+  else
+  {
+    double ratio = 1.0 / (categories + 1);
 
-  for (i = 0; i < categories; i++)
-    output_rates[i] = POINT_GAMMA((double)(i + 1) * ratio, alfa, beta);
+    for (i = 0; i < categories; i++)
+      output_rates[i] = POINT_GAMMA((double)(i + 1) * ratio, alfa, beta);
+  }
 
   return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int corax_compute_gamma_cats_lloyd_max(double       alpha,
+static int compute_gamma_cats_lloyd_max(double       alpha,
                                                       unsigned int categories,
                                                       double      *output_rates,
                                                       double *output_weights)
@@ -562,7 +566,7 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
             }
             return corax_compute_gamma_rates(alpha, categories, output_rates, mode);
         case CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX:
-            return corax_compute_gamma_cats_lloyd_max(alpha, categories, output_rates, output_weights);
+            return compute_gamma_cats_lloyd_max(alpha, categories, output_rates, output_weights);
         default:
             corax_set_error(CORAX_ERROR_INVALID_PARAM, "Invalid gamma mode %i", mode);
             return CORAX_FAILURE;
