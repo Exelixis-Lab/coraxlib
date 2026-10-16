@@ -563,8 +563,6 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
             return corax_compute_gamma_rates(alpha, categories, output_rates, mode);
         case CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX:
             return corax_compute_gamma_cats_lloyd_max(alpha, categories, output_rates, output_weights);
-        case CORAX_GAMMA_RATES_WEIGHTS_LAGUERRE:
-            return corax_compute_gamma_cats_laguerre(alpha, categories, output_rates, output_weights);
         default:
             corax_set_error(CORAX_ERROR_INVALID_PARAM, "Invalid gamma mode %i", mode);
             return CORAX_FAILURE;

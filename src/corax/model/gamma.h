@@ -2,13 +2,11 @@
 #define CORAX_MODEL_GAMMA_H_
 
 #include "corax/corax_core.h"
-#include "corax/model/gamma_laguerre.h"
 
 /* GAMMA discretization modes */
 #define CORAX_GAMMA_RATES_MEAN 0
 #define CORAX_GAMMA_RATES_MEDIAN 1
 #define CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX 2
-#define CORAX_GAMMA_RATES_WEIGHTS_LAGUERRE 3
 
 #ifdef __cplusplus
 extern "C"

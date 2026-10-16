@@ -160,8 +160,6 @@ static void BM_GammaCompute(benchmark::State& state, int mode, double alpha) {
 }
 BENCHMARK_CAPTURE(BM_GammaCompute, mean, CORAX_GAMMA_RATES_MEAN, 0.3)
     ->RangeMultiplier(2)->Range(2,10)->Unit(benchmark::TimeUnit::kMicrosecond);
-BENCHMARK_CAPTURE(BM_GammaCompute, laguerre, CORAX_GAMMA_RATES_WEIGHTS_LAGUERRE, 0.3)
-    ->RangeMultiplier(2)->Range(2,9)->Unit(benchmark::TimeUnit::kMicrosecond);
 BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, 0.3)
     ->RangeMultiplier(2)->Range(2,10)->Unit(benchmark::TimeUnit::kMicrosecond);
 BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_min_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, CORAX_OPT_MIN_ALPHA)

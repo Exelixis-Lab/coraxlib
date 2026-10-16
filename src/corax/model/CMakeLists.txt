@@ -10,8 +10,6 @@ target_sources_local(
             evolmodel.hpp
             gamma.c
             gamma.h
-            gamma_laguerre.c
-            gamma_laguerre.h
             invariant.c
             invariant.h
             modutil.c
