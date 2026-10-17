@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
   if (N_RATE_CATS > 1)
   {
-    if (corax_compute_gamma_cats(
+    if (corax_compute_gamma_rates(
             ALPHA, N_RATE_CATS, rate_cats, CORAX_GAMMA_RATES_MEAN)
         == CORAX_FAILURE)
     {

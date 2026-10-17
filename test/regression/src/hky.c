@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   double       subst_params[6]   = {1, 1, 1, 1, 1, 1};
   double       rate_cats[4];
 
-  corax_compute_gamma_cats(alpha, N_CAT_GAMMA, rate_cats, CORAX_GAMMA_RATES_MEAN);
+  corax_compute_gamma_rates(alpha, N_CAT_GAMMA, rate_cats, CORAX_GAMMA_RATES_MEAN);
 
   corax_set_frequencies(partition, 0, frequencies);
 

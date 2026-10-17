@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
   double *     persite_lnl       = (double *)malloc(n_sites * sizeof(double));
   double       checksum;
 
-  if (corax_compute_gamma_cats(
+  if (corax_compute_gamma_rates(
           alpha, n_cat_gamma, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {

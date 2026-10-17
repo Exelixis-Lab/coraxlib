@@ -287,7 +287,7 @@ int eval(corax_partition_t *partition, double alpha, double pinv)
   unsigned int i;
   double       d_f, dd_f;
 
-  corax_compute_gamma_cats(alpha, n_cat_gamma, rate_cats, CORAX_GAMMA_RATES_MEAN);
+  corax_compute_gamma_rates(alpha, n_cat_gamma, rate_cats, CORAX_GAMMA_RATES_MEAN);
   corax_set_category_rates(partition, rate_cats);
 
   for (i = 0; i < partition->rate_matrices; ++i)

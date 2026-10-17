@@ -32,7 +32,7 @@ extern "C"
    *
    * @param alpha Shape parameter alpha
    * @param categories Number of categories
-   * @param output_rates Pointer to array where rates will be stored. Must be at least `categories` doubles long.
+   * @param output_rates Pointer to array where category rates will be stored. Must be at least `categories` doubles long.
    * @param rates_mode Either `CORAX_GAMMA_RATES_MEAN` or `CORAX_GAMMA_RATES_MEDIAN`
    *
    * @returns `CORAX_SUCCESS` if operation succeeded and substitution rates were written, CORAX_FAILURE otherwise.
@@ -47,7 +47,7 @@ extern "C"
    * 
    * @param alpha Shape parameter alpha
    * @param categories Number of categories
-   * @param output_rates Pointer to array where rates will be stored. Must be at least `categories` doubles long.
+   * @param output_rates Pointer to array where category rates will be stored. Must be at least `categories` doubles long.
    * @param output_weights Pointer to array where category weights will be stored. Must be at least `categories` doubles long.
    * @param rates_mode Either `CORAX_GAMMA_RATES_MEAN` or `CORAX_GAMMA_RATES_MEDIAN` or `CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX`
    *

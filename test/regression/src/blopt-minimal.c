@@ -47,7 +47,7 @@ int main(int argc, char * argv[])
   unsigned int matrix_indices[3] = { 0, 1, 2 };
   double subst_params[6] = {1.452176, 0.937951, 0.462880, 0.617729, 1.745312, 1.000000};
   double rate_cats[4];
-  corax_compute_gamma_cats(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+  corax_compute_gamma_rates(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
 
   /* set */
   corax_set_frequencies(partition, 0, frequencies);

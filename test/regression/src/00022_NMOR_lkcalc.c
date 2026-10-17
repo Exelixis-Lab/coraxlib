@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
                                          1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4,
                                          2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 1.0};
 
-  if (corax_compute_gamma_cats(
+  if (corax_compute_gamma_rates(
           alpha, n_cat_gamma, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 
   /* test illegal alpha value */
   double invalid_alpha = 0;
-  if (corax_compute_gamma_cats(
+  if (corax_compute_gamma_rates(
           invalid_alpha, N_CAT_GAMMA, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {
