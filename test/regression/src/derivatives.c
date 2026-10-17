@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
         double *rate_cats = (double *)malloc(n_cat_gamma[k] * sizeof(double));
 
-        if (corax_compute_gamma_cats(
+        if (corax_compute_gamma_rates(
                 alpha[i], n_cat_gamma[k], rate_cats, CORAX_GAMMA_RATES_MEAN)
             == CORAX_FAILURE)
         {

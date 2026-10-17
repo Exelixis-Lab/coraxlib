@@ -36,7 +36,7 @@ void test_bad_alpha()
 
   /* test illegal alpha value */
   double invalid_alpha = 0;
-  if (corax_compute_gamma_cats(
+  if (corax_compute_gamma_rates(
           invalid_alpha, N_CAT_GAMMA, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {
@@ -65,7 +65,7 @@ double test_lk(corax_partition_t *partition, int gamma_mode)
 
   strcpy(prefix, gamma_mode == CORAX_GAMMA_RATES_MEDIAN ? "MEDIAN" : "MEAN");
 
-  if (corax_compute_gamma_cats(alpha, n_cat_gamma, rate_cats, gamma_mode)
+  if (corax_compute_gamma_rates(alpha, n_cat_gamma, rate_cats, gamma_mode)
       == CORAX_FAILURE)
   {
     printf("Error %d: %s\n", corax_errno, corax_errmsg);

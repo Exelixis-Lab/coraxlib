@@ -770,7 +770,7 @@ void Model::init_model_opts(const std::string &model_opts, const corax_mixture_m
       case CORAX_UTIL_MIXTYPE_GAMMA:
         /* compute the discretized category rates from a gamma distribution
            with given alpha shape and store them in rate_cats  */
-        corax_compute_gamma_cats(_alpha, _num_ratecats, _ratecat_rates.data(), _gamma_mode);
+        corax_compute_gamma_cats(_alpha, _num_ratecats, _ratecat_rates.data(), _ratecat_weights.data(), _gamma_mode);
         if (_param_mode[CORAX_OPT_PARAM_ALPHA] == ParamValue::undefined)
           _param_mode[CORAX_OPT_PARAM_ALPHA] = ParamValue::ML;
         break;
@@ -779,7 +779,7 @@ void Model::init_model_opts(const std::string &model_opts, const corax_mixture_m
         if (_param_mode[CORAX_OPT_PARAM_FREE_RATES] == ParamValue::undefined)
         {
           /* use GAMMA rates as initial values -> can be changed */
-          corax_compute_gamma_cats(_alpha, _num_ratecats, _ratecat_rates.data(), _gamma_mode);
+          corax_compute_gamma_cats(_alpha, _num_ratecats, _ratecat_rates.data(), _ratecat_weights.data(), _gamma_mode);
           _param_mode[CORAX_OPT_PARAM_FREE_RATES] = ParamValue::ML;
         }
         if (_param_mode[CORAX_OPT_PARAM_RATE_WEIGHTS] == ParamValue::undefined)

@@ -51,7 +51,7 @@ public:
         std::vector<double> category_rates(rate_cats, 0);
         std::vector<double> category_weights(rate_cats, 1.0 / rate_cats);
 
-        corax_compute_gamma_cats(alpha, rate_cats, category_rates.data(), CORAX_GAMMA_RATES_MEAN);
+        corax_compute_gamma_cats(alpha, rate_cats, category_rates.data(), category_weights.data(), CORAX_GAMMA_RATES_MEAN);
         corax_set_category_rates(part, category_rates.data());
         corax_set_category_weights(part, category_weights.data());
     }

@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
   /* compute the discretized category rates from a gamma distribution
      with alpha shape 1 and store them in rate_cats  */
-  corax_compute_gamma_cats(1, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+  corax_compute_gamma_rates(1, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
 
   /* set frequencies at model with index 0 (we currently have only one model) */
   corax_set_frequencies(partition, 0, frequencies);

@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
   unsigned int matrix_indices[4] = {0, 1, 2, 3};
   double       subst_params[6]   = {1, titv, 1, 1, titv, 1};
 
-  if (corax_compute_gamma_cats(
+  if (corax_compute_gamma_rates(
           alpha, n_cat_gamma, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
   /* test illegal alpha value */
   double invalid_alpha = 0;
-  if (corax_compute_gamma_cats(
+  if (corax_compute_gamma_rates(
           invalid_alpha, N_CAT_GAMMA, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {

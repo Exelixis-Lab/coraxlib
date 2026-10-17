@@ -84,7 +84,7 @@ static double eval(corax_partition_t *partition,
 
   corax_set_subst_params(partition, 0, subst_params);
   corax_set_frequencies(partition, 0, frequencies);
-  corax_compute_gamma_cats(
+  corax_compute_gamma_rates(
       alpha, partition->rate_cats, categories, CORAX_GAMMA_RATES_MEAN);
   corax_set_category_rates(partition, categories);
 

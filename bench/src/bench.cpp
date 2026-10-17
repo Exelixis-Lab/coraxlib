@@ -3,6 +3,10 @@
 #include <corax/corax.h>
 #include <iostream>
 #include "PLLTreeInfo.hpp"
+#include "corax/core/common.h"
+#include "corax/model/gamma.h"
+#include "corax/optimize/opt_generic.h"
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -144,6 +148,26 @@ void BM_search(benchmark::State& state, Args&&... args) {
   }
 }
 
+static void BM_GammaCompute(benchmark::State& state, int mode, double alpha) {
+    const unsigned int categories = state.range(0);
+    std::vector<double> rates(categories, 0);
+    std::vector<double> weights(categories, 0);
+
+    for (auto _ : state) {
+        int ret = corax_compute_gamma_cats(alpha, categories, rates.data(), weights.data(), mode);
+        if (ret != CORAX_SUCCESS) throw std::runtime_error("computation of gamma cats failed: " + std::string(corax_errmsg));
+    }
+}
+BENCHMARK_CAPTURE(BM_GammaCompute, mean, CORAX_GAMMA_RATES_MEAN, 0.3)
+    ->RangeMultiplier(2)->Range(2,10)->Unit(benchmark::TimeUnit::kMicrosecond);
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, 0.3)
+    ->RangeMultiplier(2)->Range(2,10)->Unit(benchmark::TimeUnit::kMicrosecond);
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_min_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, CORAX_OPT_MIN_ALPHA)
+    ->Arg(4)->Unit(benchmark::TimeUnit::kMicrosecond);
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_max_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, CORAX_OPT_MAX_ALPHA)
+    ->Arg(4)->Unit(benchmark::TimeUnit::kMicrosecond);
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_extreme_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, 1e5)
+    ->Arg(4)->Unit(benchmark::TimeUnit::kMicrosecond);
 
 #define GET_TREE(DATA) GET_DATA(trees/DATA ## .newick)
 #define GET_MSA(DATA) GET_DATA(msas/DATA ## .phy)

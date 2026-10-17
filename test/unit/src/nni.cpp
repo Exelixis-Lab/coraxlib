@@ -205,7 +205,7 @@ TEST(coraxlib_nni, simple0)
     double frequencies[4] = { 0.25, 0.25, 0.25, 0.25 };
     double subst_params[6] = {1,1,1,1,1,1};
     double rate_cats[4];
-    corax_compute_gamma_cats(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+    corax_compute_gamma_rates(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
     
     /* set */
     corax_set_frequencies(partition, 0, frequencies);
@@ -296,7 +296,7 @@ TEST(coraxlib_nni, simple1)
     double frequencies[4] = { 0.25, 0.25, 0.25, 0.25 };
     double subst_params[6] = {1,1,1,1,1,1};
     double rate_cats[4];
-    corax_compute_gamma_cats(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+    corax_compute_gamma_rates(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
     
     /* set */
     corax_set_frequencies(partition, 0, frequencies);
@@ -392,7 +392,7 @@ TEST(coraxlib_nni, simple2)
     double frequencies[4] = { 0.25, 0.25, 0.25, 0.25 };
     double subst_params[6] = {1,1,1,1,1,1};
     double rate_cats[4];
-    corax_compute_gamma_cats(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+    corax_compute_gamma_rates(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
     
     /* set */
     corax_set_frequencies(partition, 0, frequencies);
@@ -489,7 +489,7 @@ TEST(coraxlib_nni, simple3)
     double frequencies[4] = { 0.25, 0.25, 0.25, 0.25 };
     double subst_params[6] = {1,1,1,1,1,1};
     double rate_cats[4];
-    corax_compute_gamma_cats(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+    corax_compute_gamma_rates(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
     
     /* set */
     corax_set_frequencies(partition, 0, frequencies);
@@ -587,7 +587,7 @@ TEST(coraxlib_nni, simple4)
     double frequencies[4] = { 0.25, 0.25, 0.25, 0.25 };
     double subst_params[6] = {1,1,1,1,1,1};
     double rate_cats[4];
-    corax_compute_gamma_cats(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
+    corax_compute_gamma_rates(alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN);
     
     /* set */
     corax_set_frequencies(partition, 0, frequencies);

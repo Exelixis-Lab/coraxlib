@@ -153,6 +153,7 @@ static int treeinfo_set_alpha(corax_treeinfo_t *treeinfo,
   if (!corax_compute_gamma_cats(treeinfo->alphas[part_num],
                                 partition->rate_cats,
                                 partition->rates,
+                                partition->rate_weights,
                                 treeinfo->gamma_mode[part_num]))
     return CORAX_FAILURE;
 

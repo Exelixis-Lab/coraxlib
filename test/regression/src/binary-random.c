@@ -213,7 +213,7 @@ int main (int argc, char * argv[])
     return 1;
   }
 
-  corax_compute_gamma_cats(ALPHA, N_RATE_CATS, rate_cats, CORAX_GAMMA_RATES_MEAN);
+  corax_compute_gamma_rates(ALPHA, N_RATE_CATS, rate_cats, CORAX_GAMMA_RATES_MEAN);
   corax_set_frequencies(partition, 0, frequencies);
   corax_set_subst_params(partition, 0, subst_params);
   corax_set_category_rates(partition, rate_cats);

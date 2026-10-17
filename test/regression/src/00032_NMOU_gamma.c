@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   /* test illegal alpha value */
   double  invalid_alpha = 0;
   double *rate_cats     = (double *)malloc(4 * sizeof(double));
-  if (corax_compute_gamma_cats(invalid_alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN)
+  if (corax_compute_gamma_rates(invalid_alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {
     if (corax_errno != CORAX_ERROR_INVALID_PARAM)
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 
         double *rate_cats = (double *)malloc(n_cat_gamma[k] * sizeof(double));
 
-        if (corax_compute_gamma_cats(
+        if (corax_compute_gamma_rates(
                 alpha[i], n_cat_gamma[k], rate_cats, modes[m])
             == CORAX_FAILURE)
         {

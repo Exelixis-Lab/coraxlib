@@ -21,6 +21,7 @@
 
 #include "callback.h"
 #include "corax/corax.h"
+#include "corax/model/gamma.h"
 
 double target_freqs_func(void *p, double *x)
 {
@@ -125,7 +126,7 @@ double target_alpha_func(void *p, double x)
 
   /* update rate categories */
   if (!corax_compute_gamma_cats(
-          x, partition->rate_cats, partition->rates, params->gamma_mode))
+          x, partition->rate_cats, partition->rates, partition->rate_weights, params->gamma_mode))
   {
     return CORAX_FAILURE;
   }
@@ -172,7 +173,7 @@ double target_alpha_pinv_func(void *p, double *x)
 
   /* update rate categories */
   if (!corax_compute_gamma_cats(
-          x[0], partition->rate_cats, partition->rates, params->gamma_mode))
+          x[0], partition->rate_cats, partition->rates, partition->rate_weights, params->gamma_mode))
   {
     return CORAX_FAILURE;
   }
@@ -388,6 +389,7 @@ target_func_multidim_treeinfo(void *p, double **x, double *fx, int *converged)
         if (!corax_compute_gamma_cats(treeinfo->alphas[i],
                                       partition->rate_cats,
                                       partition->rates,
+                                      partition->rate_weights,
                                       params->treeinfo->gamma_mode[i]))
         {
           assert(corax_errno);

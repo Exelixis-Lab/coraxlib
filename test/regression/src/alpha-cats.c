@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2015 Diego Darriba, Tomas Flouri
+    Copyright (C) 2015 Diego Darriba, Tomas Flouri, Oleksiy Kozlov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -22,12 +22,10 @@
 
 #define NUM_ALPHAS 9
 #define NUM_CATS 5
-#define N_MODES 2
+#define N_MODES 3
 #define N_STATES_NT 4
 
 #define FLOAT_PRECISION 4
-
-#define MODENAME(x) x == CORAX_GAMMA_RATES_MEAN ? "MEAN" : "MEDIAN"
 
 static double titv = 2.5;
 
@@ -36,7 +34,10 @@ static unsigned int n_cat_gamma[NUM_CATS] = {1, 2, 4, 8, 16};
 unsigned int        params_indices[16]    = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static int modes[N_MODES] = {CORAX_GAMMA_RATES_MEDIAN, CORAX_GAMMA_RATES_MEAN};
+static int modes[N_MODES] = {CORAX_GAMMA_RATES_MEDIAN, CORAX_GAMMA_RATES_MEAN,
+                             CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX};
+
+static const char* mode_names[N_MODES] = {"MEDIAN", "MEAN", "LLOYD-MAX"};
 
 int main(int argc, char *argv[])
 {
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
   /* test illegal alpha value */
   double  invalid_alpha = 0;
   double *rate_cats     = (double *)malloc(4 * sizeof(double));
-  if (corax_compute_gamma_cats(invalid_alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN)
+  if (corax_compute_gamma_rates(invalid_alpha, 4, rate_cats, CORAX_GAMMA_RATES_MEAN)
       == CORAX_FAILURE)
   {
     if (corax_errno != CORAX_ERROR_INVALID_PARAM)
@@ -134,22 +135,30 @@ int main(int argc, char *argv[])
         printf("\n\n TEST alpha(ncats) = %6.2f(%2d), mode = %s\n\n",
                alpha[i],
                n_cat_gamma[k],
-               MODENAME(m));
+               mode_names[m]);
 
         double *rate_cats = (double *)malloc(n_cat_gamma[k] * sizeof(double));
+        double *weight_cats = (double *)malloc(n_cat_gamma[k] * sizeof(double));
 
-        if (corax_compute_gamma_cats(
-                alpha[i], n_cat_gamma[k], rate_cats, modes[m])
+        if (corax_compute_gamma_cats(alpha[i], n_cat_gamma[k],
+                                     rate_cats, weight_cats, modes[m])
             == CORAX_FAILURE)
         {
           printf("Fail computing the gamma rates\n");
           continue;
         }
 
+        printf("cat-rates:   ");
         for (j = 0; j < n_cat_gamma[k]; j++) { printf("%f ", rate_cats[j]); }
         printf("\n");
         corax_set_category_rates(partition, rate_cats);
         free(rate_cats);
+
+        printf("cat-weights: ");
+        for (j = 0; j < n_cat_gamma[k]; j++) { printf("%f ", weight_cats[j]); }
+        printf("\n");
+        corax_set_category_weights(partition, weight_cats);
+        free(weight_cats);
 
         corax_update_prob_matrices(
             partition, params_indices, matrix_indices, branch_lengths, 4);
@@ -193,10 +202,10 @@ int main(int argc, char *argv[])
       for (m = 0; m < N_MODES; ++m)
       {
         printf(
-            "ti/tv:alpha(ncats) = %6.2f(%2d), mode = %6s(%d)    logL: %17.6f\n",
+            "ti/tv:alpha(ncats) = %6.2f(%2d), mode = %10s(%d)    logL: %17.6f\n",
             alpha[i],
             n_cat_gamma[k],
-            MODENAME(modes[m]),
+            mode_names[m],
             modes[m],
             lk_scores[k * NUM_ALPHAS * N_MODES + i * N_MODES + m]);
       }
