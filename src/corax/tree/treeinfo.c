@@ -23,7 +23,7 @@
 #include "corax/corax.h"
 
 static int treeinfo_check_tree(const corax_treeinfo_t *treeinfo,
-                               const corax_utree_t *   tree);
+                               const corax_utree_t    *tree);
 static int treeinfo_init_tree(corax_treeinfo_t *treeinfo);
 
 /* a callback function for performing a full traversal */
@@ -223,7 +223,7 @@ CORAX_EXPORT corax_treeinfo_t *corax_treeinfo_create(corax_unode_t *root,
 CORAX_EXPORT
 int corax_treeinfo_set_parallel_context(
     corax_treeinfo_t *treeinfo,
-    void *            parallel_context,
+    void             *parallel_context,
     void (*parallel_reduce_cb)(void *, double *, size_t, int))
 {
   treeinfo->parallel_context   = parallel_context;
@@ -234,29 +234,25 @@ int corax_treeinfo_set_parallel_context(
 
 CORAX_EXPORT
 void corax_treeinfo_parallel_reduce(corax_treeinfo_t *treeinfo,
-                          double           *data,
-                          size_t            size,
-                          int               op)
+                                    double           *data,
+                                    size_t            size,
+                                    int               op)
 {
   if (treeinfo->parallel_reduce_cb)
   {
-    treeinfo->parallel_reduce_cb(treeinfo->parallel_context,
-                                 data,
-                                 size,
-                                 op);
+    treeinfo->parallel_reduce_cb(treeinfo->parallel_context, data, size, op);
   }
 }
 
-
 CORAX_EXPORT int
-corax_treeinfo_init_partition(corax_treeinfo_t *  treeinfo,
+corax_treeinfo_init_partition(corax_treeinfo_t   *treeinfo,
                               unsigned int        partition_index,
-                              corax_partition_t * partition,
+                              corax_partition_t  *partition,
                               int                 params_to_optimize,
                               int                 gamma_mode,
                               double              alpha,
                               const unsigned int *param_indices,
-                              const int *         subst_matrix_symmetries)
+                              const int          *subst_matrix_symmetries)
 {
   if (!treeinfo)
   {
@@ -394,7 +390,7 @@ CORAX_EXPORT int corax_treeinfo_set_active_partition(corax_treeinfo_t *treeinfo,
 }
 
 CORAX_EXPORT int corax_treeinfo_set_root(corax_treeinfo_t *treeinfo,
-                                         corax_unode_t *   root)
+                                         corax_unode_t    *root)
 {
   if (!treeinfo || !root || root->data != (void *)treeinfo)
   {
@@ -411,8 +407,8 @@ CORAX_EXPORT int corax_treeinfo_set_root(corax_treeinfo_t *treeinfo,
 
 CORAX_EXPORT
 int corax_treeinfo_get_branch_length_all(const corax_treeinfo_t *treeinfo,
-                                         const corax_unode_t *   edge,
-                                         double *                lengths)
+                                         const corax_unode_t    *edge,
+                                         double                 *lengths)
 {
   unsigned int pmatrix_index = edge->pmatrix_index;
 
@@ -431,7 +427,7 @@ int corax_treeinfo_get_branch_length_all(const corax_treeinfo_t *treeinfo,
 }
 
 CORAX_EXPORT int corax_treeinfo_set_branch_length(corax_treeinfo_t *treeinfo,
-                                                  corax_unode_t *   edge,
+                                                  corax_unode_t    *edge,
                                                   double            length)
 {
   assert(treeinfo->brlen_linkage != CORAX_BRLEN_UNLINKED);
@@ -440,8 +436,8 @@ CORAX_EXPORT int corax_treeinfo_set_branch_length(corax_treeinfo_t *treeinfo,
 
 CORAX_EXPORT
 int corax_treeinfo_set_branch_length_all(corax_treeinfo_t *treeinfo,
-                                         corax_unode_t *   edge,
-                                         const double *    lengths)
+                                         corax_unode_t    *edge,
+                                         const double     *lengths)
 {
   unsigned int pmatrix_index = edge->pmatrix_index;
   if (treeinfo->brlen_linkage == CORAX_BRLEN_UNLINKED)
@@ -482,7 +478,7 @@ int corax_treeinfo_set_branch_length_all(corax_treeinfo_t *treeinfo,
 
 CORAX_EXPORT
 int corax_treeinfo_set_branch_length_partition(corax_treeinfo_t *treeinfo,
-                                               corax_unode_t *   edge,
+                                               corax_unode_t    *edge,
                                                int    partition_index,
                                                double length)
 {
@@ -546,7 +542,8 @@ corax_treeinfo_get_partition_tree(const corax_treeinfo_t *treeinfo,
     for (unsigned int i = 0; i < node_count; ++i)
     {
       corax_unode_t *snode = ptree->nodes[i];
-      do {
+      do
+      {
         unsigned int pmat_idx = snode->pmatrix_index;
         if (pmat_idx > edge_count)
         {
@@ -569,7 +566,7 @@ corax_treeinfo_get_partition_tree(const corax_treeinfo_t *treeinfo,
 
 CORAX_EXPORT
 corax_treeinfo_topology_t *
-corax_treeinfo_get_topology(const corax_treeinfo_t *   treeinfo,
+corax_treeinfo_get_topology(const corax_treeinfo_t    *treeinfo,
                             corax_treeinfo_topology_t *topol)
 {
   unsigned int brlen_set_count =
@@ -664,7 +661,7 @@ corax_treeinfo_get_topology(const corax_treeinfo_t *   treeinfo,
 }
 
 CORAX_EXPORT
-int corax_treeinfo_set_topology(corax_treeinfo_t *               treeinfo,
+int corax_treeinfo_set_topology(corax_treeinfo_t                *treeinfo,
                                 const corax_treeinfo_topology_t *topol)
 {
   unsigned int brlen_set_count;
@@ -921,7 +918,7 @@ CORAX_EXPORT void corax_treeinfo_invalidate_all(corax_treeinfo_t *treeinfo)
 }
 
 CORAX_EXPORT int corax_treeinfo_validate_clvs(corax_treeinfo_t *treeinfo,
-                                              corax_unode_t **  travbuffer,
+                                              corax_unode_t   **travbuffer,
                                               unsigned int      travbuffer_size)
 {
   for (unsigned int i = 0; i < treeinfo->init_partition_count; ++i)
@@ -961,7 +958,7 @@ CORAX_EXPORT void corax_treeinfo_invalidate_pmatrix(corax_treeinfo_t *treeinfo,
   }
 }
 
-CORAX_EXPORT void corax_treeinfo_invalidate_clv(corax_treeinfo_t *   treeinfo,
+CORAX_EXPORT void corax_treeinfo_invalidate_clv(corax_treeinfo_t    *treeinfo,
                                                 const corax_unode_t *edge)
 {
   for (unsigned int i = 0; i < treeinfo->init_partition_count; ++i)
@@ -975,8 +972,9 @@ CORAX_EXPORT void corax_treeinfo_invalidate_clv(corax_treeinfo_t *   treeinfo,
 static double treeinfo_compute_loglh(corax_treeinfo_t *treeinfo,
                                      int               incremental,
                                      int               update_pmatrices,
-                                     double **persite_lnl,
-                                     double **sitecat_lh) {
+                                     double          **persite_lnl,
+                                     double          **sitecat_lh)
+{
   /* tree root must be an inner node! */
   assert(!CORAX_UTREE_IS_TIP(treeinfo->root));
 
@@ -1074,16 +1072,16 @@ static double treeinfo_compute_loglh(corax_treeinfo_t *treeinfo,
        the CLV indices at the two end-point of the branch, the probability
        matrix index for the concrete branch length, and the index of the model
        of whose frequency vector is to be used */
-    treeinfo->partition_loglh[p] =
-        corax_compute_edge_loglikelihood_sitecat(treeinfo->partitions[p],
-                                                 treeinfo->root->clv_index,
-                                                 treeinfo->root->scaler_index,
-                                                 treeinfo->root->back->clv_index,
-                                                 treeinfo->root->back->scaler_index,
-                                                 treeinfo->root->pmatrix_index,
-                                                 treeinfo->param_indices[p],
-                                                 persite_lnl ? persite_lnl[p] : NULL,
-                                                 sitecat_lh ? sitecat_lh[p] : NULL);
+    treeinfo->partition_loglh[p] = corax_compute_edge_loglikelihood_sitecat(
+        treeinfo->partitions[p],
+        treeinfo->root->clv_index,
+        treeinfo->root->scaler_index,
+        treeinfo->root->back->clv_index,
+        treeinfo->root->back->scaler_index,
+        treeinfo->root->pmatrix_index,
+        treeinfo->param_indices[p],
+        persite_lnl ? persite_lnl[p] : NULL,
+        sitecat_lh ? sitecat_lh[p] : NULL);
   }
 
   /* sum up likelihood from all threads */
@@ -1109,26 +1107,34 @@ static double treeinfo_compute_loglh(corax_treeinfo_t *treeinfo,
 
 CORAX_EXPORT double corax_treeinfo_compute_loglh(corax_treeinfo_t *treeinfo,
                                                  int               incremental)
-{
-  return treeinfo_compute_loglh(treeinfo, incremental, 1, NULL,NULL);
-}
+{ return treeinfo_compute_loglh(treeinfo, incremental, 1, NULL, NULL); }
 
 CORAX_EXPORT double corax_treeinfo_compute_loglh_flex(
     corax_treeinfo_t *treeinfo, int incremental, int update_pmatrices)
 {
-  return treeinfo_compute_loglh(treeinfo, incremental, update_pmatrices, NULL,NULL);
+  return treeinfo_compute_loglh(
+      treeinfo, incremental, update_pmatrices, NULL, NULL);
 }
 
-CORAX_EXPORT double corax_treeinfo_compute_loglh_persite(
-    corax_treeinfo_t *treeinfo, int incremental, int update_matrices, double **persite_lnl)
+CORAX_EXPORT double
+corax_treeinfo_compute_loglh_persite(corax_treeinfo_t *treeinfo,
+                                     int               incremental,
+                                     int               update_matrices,
+                                     double          **persite_lnl)
 {
-  return treeinfo_compute_loglh(treeinfo, incremental, update_matrices, persite_lnl,NULL);
+  return treeinfo_compute_loglh(
+      treeinfo, incremental, update_matrices, persite_lnl, NULL);
 }
 
 // TODO: implement for all kernels
-CORAX_EXPORT double corax_treeinfo_compute_loglh_sitecat(
-  corax_treeinfo_t *treeinfo, int incremental, int update_matrices, double **sitecat_lh) {
-  return treeinfo_compute_loglh(treeinfo, incremental, update_matrices, NULL, sitecat_lh);
+CORAX_EXPORT double
+corax_treeinfo_compute_loglh_sitecat(corax_treeinfo_t *treeinfo,
+                                     int               incremental,
+                                     int               update_matrices,
+                                     double          **sitecat_lh)
+{
+  return treeinfo_compute_loglh(
+      treeinfo, incremental, update_matrices, NULL, sitecat_lh);
 }
 
 CORAX_EXPORT
@@ -1225,7 +1231,7 @@ int corax_treeinfo_normalize_brlen_scalers(corax_treeinfo_t *treeinfo)
 }
 
 static int treeinfo_check_tree(const corax_treeinfo_t *treeinfo,
-                               const corax_utree_t *   tree)
+                               const corax_utree_t    *tree)
 {
   if (!treeinfo || !tree)
   {
@@ -1266,7 +1272,8 @@ static int treeinfo_init_tree(corax_treeinfo_t *treeinfo)
   for (unsigned int i = 0; i < node_count; ++i)
   {
     corax_unode_t *snode = tree->nodes[i];
-    do {
+    do
+    {
       unsigned int pmat_idx = snode->pmatrix_index;
       if (pmat_idx > edge_count)
       {
@@ -1304,7 +1311,7 @@ static int treeinfo_init_tree(corax_treeinfo_t *treeinfo)
 }
 
 CORAX_EXPORT int corax_treeinfo_set_tree(corax_treeinfo_t *treeinfo,
-                                         corax_utree_t *   tree)
+                                         corax_utree_t    *tree)
 {
   if (!treeinfo_check_tree(treeinfo, tree)) return CORAX_FAILURE;
 
@@ -1323,7 +1330,7 @@ CORAX_EXPORT int corax_treeinfo_set_tree(corax_treeinfo_t *treeinfo,
 
 CORAX_EXPORT int
 corax_treeinfo_set_constraint_clvmap(corax_treeinfo_t *treeinfo,
-                                     const int *       clv_index_map)
+                                     const int        *clv_index_map)
 {
   const unsigned int tip_count   = treeinfo->tree->tip_count;
   const unsigned int inner_count = treeinfo->tree->inner_count;
@@ -1354,12 +1361,11 @@ corax_treeinfo_set_constraint_clvmap(corax_treeinfo_t *treeinfo,
   return CORAX_SUCCESS;
 }
 
-static int
-treeinfo_set_constraint_vector(corax_treeinfo_t *   treeinfo,
-                               const corax_utree_t *cons_tree)
+static int treeinfo_set_constraint_vector(corax_treeinfo_t    *treeinfo,
+                                          const corax_utree_t *cons_tree)
 {
   unsigned int node_count    = cons_tree->tip_count * 2 - 2;
-  int *        clv_index_map = NULL;
+  int         *clv_index_map = NULL;
   int          retval;
 
   if (treeinfo->tip_count < cons_tree->tip_count)
@@ -1404,7 +1410,7 @@ treeinfo_set_constraint_vector(corax_treeinfo_t *   treeinfo,
     // non-comprehensive constraint
     unsigned int free_count        = treeinfo->tip_count - cons_tree->tip_count;
     unsigned int ext_node_count    = treeinfo->tip_count * 2 - 2;
-    int *        ext_clv_index_map = (int *)calloc(ext_node_count, sizeof(int));
+    int         *ext_clv_index_map = (int *)calloc(ext_node_count, sizeof(int));
 
     for (unsigned int i = 0; i < ext_node_count; ++i)
     {
@@ -1445,9 +1451,10 @@ treeinfo_set_constraint_vector(corax_treeinfo_t *   treeinfo,
   return retval;
 }
 
-CORAX_EXPORT int corax_treeinfo_set_constraint_tree(corax_treeinfo_t * treeinfo,
-                                                    const corax_utree_t * cons_tree,
-                                                    int fast_and_dirty)
+CORAX_EXPORT int
+corax_treeinfo_set_constraint_tree(corax_treeinfo_t    *treeinfo,
+                                   const corax_utree_t *cons_tree,
+                                   int                  fast_and_dirty)
 {
   int retval;
 
@@ -1467,7 +1474,7 @@ CORAX_EXPORT int corax_treeinfo_set_constraint_tree(corax_treeinfo_t * treeinfo,
 }
 
 static unsigned int find_cons_id(const corax_unode_t *node,
-                                 const unsigned int * constraint,
+                                 const unsigned int  *constraint,
                                  unsigned int         s)
 {
   unsigned int cons_group_id = constraint[node->clv_index];
@@ -1486,16 +1493,15 @@ static unsigned int find_cons_id(const corax_unode_t *node,
   }
 }
 
-static unsigned int is_cons_free(corax_unode_t * node,
-                                 const unsigned int * constraint)
+static unsigned int is_cons_free(corax_unode_t      *node,
+                                 const unsigned int *constraint)
 {
   unsigned int cons_group_id = constraint[node->clv_index];
   if (!node->next)
     return cons_group_id == 0;
   else
   {
-    if (!is_cons_free(node->next->back, constraint))
-      return 0;
+    if (!is_cons_free(node->next->back, constraint)) return 0;
     if (!is_cons_free(node->next->next->back, constraint))
       return 0;
     else
@@ -1503,9 +1509,9 @@ static unsigned int is_cons_free(corax_unode_t * node,
   }
 }
 
-static int treeinfo_check_constraint_vector(corax_treeinfo_t * treeinfo,
-                                            corax_unode_t * subtree,
-                                            corax_unode_t * regraft_edge)
+static int treeinfo_check_constraint_vector(corax_treeinfo_t *treeinfo,
+                                            corax_unode_t    *subtree,
+                                            corax_unode_t    *regraft_edge)
 {
   if (treeinfo->constraint)
   {
@@ -1513,8 +1519,7 @@ static int treeinfo_check_constraint_vector(corax_treeinfo_t * treeinfo,
     unsigned int s = treeinfo->constraint[subtree->clv_index];
     s = s ? s : find_cons_id(subtree->back, treeinfo->constraint, 0);
 
-    if (is_cons_free(subtree->back, treeinfo->constraint))
-      return CORAX_SUCCESS;
+    if (is_cons_free(subtree->back, treeinfo->constraint)) return CORAX_SUCCESS;
 
     if (s)
     {
@@ -1533,43 +1538,41 @@ static int treeinfo_check_constraint_vector(corax_treeinfo_t * treeinfo,
     return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int corax_treeinfo_constraint_check_nni(corax_treeinfo_t * treeinfo,
-                                                     corax_unode_t * edge,
-                                                     int nni_type)
+CORAX_EXPORT int corax_treeinfo_constraint_check_nni(corax_treeinfo_t *treeinfo,
+                                                     corax_unode_t    *edge,
+                                                     int               nni_type)
 {
   if (treeinfo->constraint)
-//    return treeinfo_check_constraint_vector(treeinfo, subtree, regraft_edge);
+    //    return treeinfo_check_constraint_vector(treeinfo, subtree,
+    //    regraft_edge);
     return CORAX_FAILURE;
   else if (treeinfo->cons_splits)
   {
-    return corax_utree_constraint_check_nni(treeinfo->cons_splits,
-                                            treeinfo->tree_splits,
-                                            edge,
-                                            nni_type);
+    return corax_utree_constraint_check_nni(
+        treeinfo->cons_splits, treeinfo->tree_splits, edge, nni_type);
   }
   else
     return CORAX_SUCCESS;
 }
 
-
-CORAX_EXPORT int corax_treeinfo_constraint_check_spr(corax_treeinfo_t * treeinfo,
-                                                    corax_unode_t * subtree,
-                                                    corax_unode_t * regraft_edge)
+CORAX_EXPORT int
+corax_treeinfo_constraint_check_spr(corax_treeinfo_t *treeinfo,
+                                    corax_unode_t    *subtree,
+                                    corax_unode_t    *regraft_edge)
 {
   if (treeinfo->constraint)
     return treeinfo_check_constraint_vector(treeinfo, subtree, regraft_edge);
   else if (treeinfo->cons_splits)
   {
-    return corax_utree_constraint_check_spr(treeinfo->cons_splits,
-                                            treeinfo->tree_splits,
-                                            subtree,
-                                            regraft_edge);
+    return corax_utree_constraint_check_spr(
+        treeinfo->cons_splits, treeinfo->tree_splits, subtree, regraft_edge);
   }
   else
     return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int corax_treeinfo_constraint_check_current(corax_treeinfo_t * treeinfo)
+CORAX_EXPORT int
+corax_treeinfo_constraint_check_current(corax_treeinfo_t *treeinfo)
 {
   if (treeinfo->cons_splits)
   {
@@ -1580,20 +1583,21 @@ CORAX_EXPORT int corax_treeinfo_constraint_check_current(corax_treeinfo_t * tree
     return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int corax_treeinfo_constraint_subtree_affected(corax_treeinfo_t * treeinfo,
-                                                             corax_unode_t * subtree)
+CORAX_EXPORT int
+corax_treeinfo_constraint_subtree_affected(corax_treeinfo_t *treeinfo,
+                                           corax_unode_t    *subtree)
 {
   if (treeinfo->cons_splits)
   {
-    return corax_utree_constraint_subtree_affected(treeinfo->cons_splits,
-                                                   treeinfo->tree_splits,
-                                                   subtree);
+    return corax_utree_constraint_subtree_affected(
+        treeinfo->cons_splits, treeinfo->tree_splits, subtree);
   }
   else
     return CORAX_SUCCESS;
 }
 
-CORAX_EXPORT int corax_treeinfo_constraint_update_splits(corax_treeinfo_t * treeinfo)
+CORAX_EXPORT int
+corax_treeinfo_constraint_update_splits(corax_treeinfo_t *treeinfo)
 {
   if (treeinfo->cons_splits)
   {
@@ -1603,7 +1607,6 @@ CORAX_EXPORT int corax_treeinfo_constraint_update_splits(corax_treeinfo_t * tree
   else
     return CORAX_SUCCESS;
 }
-
 
 static corax_ancestral_t *
 corax_treeinfo_create_ancestral(const corax_treeinfo_t *treeinfo)
@@ -1655,11 +1658,11 @@ CORAX_EXPORT void corax_treeinfo_destroy_ancestral(corax_ancestral_t *ancestral)
   free(ancestral->probs);
   free(ancestral);
 }
-bool label_inner_nodes(const unsigned int  node_count,
-                       corax_ancestral_t  *ancestral)
+bool label_inner_nodes(const unsigned int node_count,
+                       corax_ancestral_t *ancestral)
 {
-  unsigned int    i;
-  unsigned int    traversal_size;
+  unsigned int i;
+  unsigned int traversal_size;
 
   corax_unode_t **travbuffer =
       (corax_unode_t **)calloc(node_count, sizeof(corax_unode_t *));
@@ -1667,7 +1670,7 @@ bool label_inner_nodes(const unsigned int  node_count,
   {
     free(travbuffer);
     corax_set_error(CORAX_ERROR_MEM_ALLOC,
-      "Can't allocate memory for inner node labelings\n");
+                    "Can't allocate memory for inner node labelings\n");
     return CORAX_FAILURE;
   }
 
@@ -1719,7 +1722,8 @@ bool label_inner_nodes(const unsigned int  node_count,
 }
 
 CORAX_EXPORT
-corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *treeinfo)
+corax_ancestral_t *
+corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *treeinfo)
 {
   const unsigned int node_count =
       treeinfo->tree->tip_count + treeinfo->tree->inner_count;
@@ -1747,7 +1751,7 @@ corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *t
   {
     corax_unode_t *node          = ancestral->nodes[i];
     corax_unode_t *treeinfo_node = treeinfo->subnodes[node->node_index];
-    double *       ancp          = ancestral->probs[i];
+    double        *ancp          = ancestral->probs[i];
 
     treeinfo->root = treeinfo_node;
     corax_treeinfo_compute_loglh(treeinfo, 1);
@@ -1782,23 +1786,42 @@ corax_ancestral_t *corax_treeinfo_compute_marginal_ancestral(corax_treeinfo_t *t
   return ancestral;
 }
 
-corax_ancestral_t *corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *treeinfo)
+corax_ancestral_t *
+corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *treeinfo)
 {
   const unsigned int node_count =
-    treeinfo->tree->tip_count + treeinfo->tree->inner_count;
+      treeinfo->tree->tip_count + treeinfo->tree->inner_count;
 
-  /* Assume op i == node i */
-  corax_operation_t *operations = treeinfo->operations;
-  const unsigned int ops_count  = treeinfo->counter;
+  unsigned int traversal_size = 0;
+  unsigned int ops_count;
+
+  /* compute full traversal and update CLVs */
+  if (!corax_utree_traverse(treeinfo->root,
+                            CORAX_TREE_TRAVERSE_POSTORDER,
+                            cb_full_traversal,
+                            treeinfo->travbuffer,
+                            &traversal_size))
+  {
+    return NULL;
+  }
+
+  /* create operations based on partial traversal obtained above */
+  corax_utree_create_operations(
+      (const corax_unode_t *const *)treeinfo->travbuffer,
+      traversal_size,
+      NULL,
+      NULL,
+      treeinfo->operations,
+      NULL,
+      &ops_count);
 
   corax_ancestral_t *ancestral = corax_treeinfo_create_ancestral(treeinfo);
 
   if (!ancestral)
   {
     corax_treeinfo_destroy_ancestral(ancestral);
-    corax_set_error(
-        CORAX_ERROR_MEM_ALLOC,
-        "Can't allocate memory for ancestral reconstruction\n");
+    corax_set_error(CORAX_ERROR_MEM_ALLOC,
+                    "Can't allocate memory for ancestral reconstruction\n");
     return NULL;
   }
 
@@ -1829,7 +1852,7 @@ corax_ancestral_t *corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *tree
 
     /* per-partition offset within each node's concatenated output buffer
        TODO Works kind of reverse to marginal, maybe do it similar? */
-    size_t       prob_offset = 0;
+    size_t prob_offset = 0;
     for (unsigned int q = 0; q < p; ++q)
     {
       const corax_partition_t *prev = treeinfo->init_partitions[q];
@@ -1840,7 +1863,7 @@ corax_ancestral_t *corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *tree
       node_probs_buf[i] = ancestral->probs[i] + prob_offset;
 
     if (!corax_compute_joint_ancestral(partition,
-                                       operations,
+                                       treeinfo->operations,
                                        ops_count,
                                        treeinfo->root->clv_index,
                                        treeinfo->root->scaler_index,
@@ -1865,9 +1888,9 @@ corax_ancestral_t *corax_treeinfo_compute_joint_ancestral(corax_treeinfo_t *tree
 }
 
 CORAX_EXPORT int
-corax_treeinfo_set_partition_linkage(corax_treeinfo_t   * treeinfo,
-                                     const unsigned int * subst_linkage,
-                                     const unsigned int * freqs_linkage)
+corax_treeinfo_set_partition_linkage(corax_treeinfo_t   *treeinfo,
+                                     const unsigned int *subst_linkage,
+                                     const unsigned int *freqs_linkage)
 {
   size_t link_arr_size = treeinfo->partition_count * sizeof(unsigned int);
 
@@ -1905,12 +1928,10 @@ corax_treeinfo_set_partition_linkage(corax_treeinfo_t   * treeinfo,
 }
 
 CORAX_EXPORT void
-corax_treeinfo_clear_partition_linkage(corax_treeinfo_t   * treeinfo)
+corax_treeinfo_clear_partition_linkage(corax_treeinfo_t *treeinfo)
 {
   free(treeinfo->partition_freqs_linkage);
   free(treeinfo->partition_subst_linkage);
   treeinfo->partition_freqs_linkage = NULL;
   treeinfo->partition_subst_linkage = NULL;
 }
-
-
