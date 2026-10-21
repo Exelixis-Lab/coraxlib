@@ -61,9 +61,13 @@ void run_tbe_test(const char* tree1_str, const char* tree2_str)
   corax_utree_t * tree1 = corax_utree_parse_newick_string (tree1_str);
   corax_utree_t * tree2 = corax_utree_parse_newick_string (tree2_str);
 
-  unsigned int split_count = tree1->tip_count - 3;
-  corax_unode_t ** node_split_map = (corax_unode_t **) calloc(split_count, sizeof(corax_unode_t *));
-  double * tbe = (double *) calloc(split_count, sizeof(double));
+  if (!tree1 || !tree2)
+   fatal("ERROR parsing a Newick tree: %s\n", corax_errmsg);
+
+  unsigned int split_count1 = tree1->edge_count - tree1->tip_count;
+  unsigned int split_count2 = tree2->edge_count - tree2->tip_count;
+  corax_unode_t ** node_split_map = (corax_unode_t **) calloc(split_count1, sizeof(corax_unode_t *));
+  double * tbe = (double *) calloc(split_count1, sizeof(double));
 
   corax_utree_consistency_set(tree1, tree2);
 
@@ -75,16 +79,19 @@ void run_tbe_test(const char* tree1_str, const char* tree2_str)
                                                     tree2->tip_count,
                                                     NULL);
 
+  if (!splits1 || !splits2)
+   fatal("ERROR extracting splits: %s\n", corax_errmsg);
 
   assert(tree1->tip_count == tree2->tip_count);
 
-  corax_utree_tbe_naive(splits1, splits2, tree1->tip_count, tbe);
+  corax_utree_tbe_naive(splits1, split_count1, splits2, split_count2,
+                        tree1->tip_count, tbe);
 
   corax_utree_draw_support(tree1, tbe, node_split_map, NULL);
 
   printf("TBE: ");
 
-  for (unsigned int i = 0; i < split_count; ++i)
+  for (unsigned int i = 0; i < split_count1; ++i)
     printf("%.6lf ", tbe[i]);
 
   printf("\n\n");
@@ -131,6 +138,11 @@ void test_tbe()
       "(Howler:0.100000,Orangutan:0.100000):0.100000):0.100000):0.100000):0.100000):0.100000,"
       "Gorilla:0.100000):0.100000):0.100000):0.0;";
 
+  const char *ref_tree_mf = "(t1, (t2,(t3,t8)), ((t4,(t7,t71,t72,t73,t74,t75)),t5));";
+  const char *ref_tree_bf = "(t1,(t2,(t3,t8)),(t4,(((t7,t71),((t72,t73),t74)),t75),t5));";
+  const char *boot_tree_mf = "(t1, (t75,(t3,t8,t2)), ((t4,(t7,t71,t72,t73,t74)),t5));";
+  const char *boot_tree_bf = "(t1, (t75,((t3,t8),t2)), ((t4,((t7,t71),(t72,(t73,t74)))),t5));";
+
   printf("TEST #1:\n");
 
   run_tbe_test(ref_tree, boot1_tree);
@@ -138,6 +150,18 @@ void test_tbe()
   printf("\nTEST #2:\n");
 
   run_tbe_test(ref_tree, boot2_tree);
+
+  printf("\nTEST #3:\n");
+
+  run_tbe_test(ref_tree_mf, boot_tree_mf);
+
+  printf("\nTEST #4:\n");
+
+  run_tbe_test(ref_tree_mf, boot_tree_bf);
+
+  printf("\nTEST #5:\n");
+
+  run_tbe_test(ref_tree_bf, boot_tree_mf);
 }
 
 int main (int argc, char * argv[])

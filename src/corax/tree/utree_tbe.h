@@ -34,7 +34,9 @@ extern "C"
   /* This is an old, naive and rather inefficient TBE computation method by
    * Alexey. Keep it here just in case */
   CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
+                                         unsigned int   ref_split_count,
                                          corax_split_t *bs_splits,
+                                         unsigned int   bs_split_count,
                                          unsigned int   tip_count,
                                          double *       support);
 

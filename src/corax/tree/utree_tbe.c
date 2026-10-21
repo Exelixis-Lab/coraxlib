@@ -322,12 +322,14 @@ CORAX_EXPORT int corax_utree_tbe_nature(corax_split_t *         ref_splits,
 /* This is an old, naive and rather inefficient TBE computation method by
  * Alexey, keep it here just in case */
 CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
+                                       unsigned int   ref_split_count,
                                        corax_split_t *bs_splits,
+                                       unsigned int   bs_split_count,
                                        unsigned int   tip_count,
                                        double *       support)
 {
   unsigned int i, j, k;
-  unsigned int split_count  = tip_count - 3;
+//  unsigned int split_count  = tip_count - 3;
   unsigned int split_len    = bitv_length(tip_count);
   unsigned int split_size   = sizeof(corax_split_base_t) * 8;
   unsigned int split_offset = tip_count % split_size;
@@ -343,12 +345,12 @@ CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
   }
 
   bitv_hashtable_t *bs_splits_hash = corax_utree_split_hashtable_insert(
-      NULL, bs_splits, tip_count, split_count, NULL, 0);
+      NULL, bs_splits, tip_count, bs_split_count, NULL, 0);
 
   if (!bs_splits_hash) { return CORAX_FAILURE; }
 
   inv_split = (corax_split_t)calloc(split_len, sizeof(corax_split_base_t));
-  bs_light  = calloc(split_count, sizeof(unsigned int));
+  bs_light  = calloc(bs_split_count, sizeof(unsigned int));
 
   if (!inv_split || !bs_light)
   {
@@ -360,13 +362,13 @@ CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
   }
 
   /* precompute lightside size for all bootstrap splits */
-  for (j = 0; j < split_count; j++)
+  for (j = 0; j < bs_split_count; j++)
   {
     bs_light[j] = corax_utree_split_lightside(bs_splits[j], tip_count);
   }
 
   /* iterate over all splits of the reference tree */
-  for (i = 0; i < split_count; i++)
+  for (i = 0; i < ref_split_count; i++)
   {
     corax_split_t ref_split = ref_splits[i];
     unsigned int  p         = corax_utree_split_lightside(ref_split, tip_count);
@@ -386,7 +388,7 @@ CORAX_EXPORT int corax_utree_tbe_naive(corax_split_t *ref_splits,
     inv_split[split_len - 1] &= split_mask;
 
     /* iterate over all splits of the bootstrap tree */
-    for (j = 0; j < split_count; j++)
+    for (j = 0; j < bs_split_count; j++)
     {
       unsigned int hdist, hdist_inv;
 
