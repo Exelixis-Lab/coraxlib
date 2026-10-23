@@ -923,174 +923,565 @@ cleanup:
 /* =============================================================================
    Joint (Pupko et al. 1998) ancestral state reconstruction.
 
-   For every internal node in `operations`, computes a
-   probability vector (softmax of the log-score the winning traceback
-   path was chosen from) such that the arg max over states at every node,
-   taken together, forms a single globally most likely joint assignment
+   For every internal node in `operations`, computes a probability vector
+   (softmax of the log-scores that the node's PARENT compared when it recorded
+   the backpointer to this node) such that the arg max over states at every
+   node, taken together, forms a single globally most likely joint assignment
    of states to all internal nodes (and, per site, to the rate category).
 
-   Rate heterogeneity is a per-site, tree-wide hidden variable in
-   GTR+GAMMA/FreeRate: one rate category is shared by the whole tree for
-   a given site. Marginalizing it out while jointly maximizing states
-   does not decompose into a single tree-shaped max-sum DP the way
-   summing (as corax_compute_node_ancestral_extbuf() does) does. So
-   instead rate is treated as an additional jointly-maximized hidden
-   variable: for every site we search over both the state assigned to
-   every internal node and the rate category, and report the single
-   best combination (argmax_{states,r} w_r * P_r(data, states)).
+   Rate heterogeneity: one rate category is shared by the whole tree for a
+   given site, and summing it out does not fold into a max-sum DP. Instead the
+   rate is treated as one more jointly maximized hidden variable, i.e. for
+   every site we report argmax_{states,r} w_r * P_r(data, states).
+   This is a joint MAP over (rate category, ancestral states), NOT a joint MAP
+   over ancestral states with the rate categories summed out.
 
-   This is done in two tree passes per partition:
+   Implementation notes on performance:
 
-     pass 1 selects, for every site, the rate category giving the best
-       total joint log-score (values only, no backpointers, tables
-       reused/overwritten across rate categories);
+     * Sites are independent, so the alignment is processed in small BLOCKS of
+       sites. For each rate category the value-only DP of the whole block is
+       evaluated and kept (val_all); each site's best rate is then picked from
+       the root-edge totals and its traceback reads the tables of that rate.
+       This needs R DP runs and no backpointer tables: the argmax is recomputed
+       in the top-down traceback, where it costs O(states) per node and site.
+       Working memory is O(block * ops * states).
 
-     pass 2 re-runs the same max-sum DP once, letting every site use
-       its own already-selected rate category, this time keeping
-       backpointers, then does a single top-down traceback that fixes
-       the winning state at every node and, at the same time, emits
-       that node's output probability vector: the small (per-state)
-       set of scores its PARENT's own DP step compared when recording
-       the backpointer to it, softmax-normalized. Because that is the
-       exact quantity the backpointer was an argmax of, each node's own
-       arg max is guaranteed -- by construction -- to equal its traced
-       back state.
+     * The log-pmatrices are stored transposed (child state major), so the
+       max-plus step is an element-wise max over the parent-state axis, which
+       the compiler vectorizes.
 
-      `root_scaler_index` / `root_other_scaler_index` are accepted for
-      interface symmetry but unused (everything is computed in log-space
-      directly from CLV/tip values).
+     * A tip with a single possible state is simply one row of the log-pmatrix,
+       a fully ambiguous tip (gap) uses a precomputed row maximum, and only
+       partially ambiguous tips combine a few rows. A tip therefore costs
+       O(states) and about half of all children in a binary tree are tips.
+
+     * The traceback walks a precomputed flat list of (parent op, child op)
+       edges, so it has no tip/inner branch, and the softmax shares its max
+       with the argmax. The hot loops are instantiated for the usual
+       (states, states_padded) combinations so the compiler sees constant trip
+       counts.
+
+   `root_scaler_index` / `root_other_scaler_index` are accepted for interface
+   symmetry but unused: everything is computed in log-space directly from the
+   tip data, so there is nothing to rescale.
+    ^-- I'm unsure if this is correct --^
    =============================================================================
  */
 
-static double corax_joint_leaf_logclv(const corax_partition_t *partition,
-                                      unsigned int             clv_index,
-                                      unsigned int             site,
-                                      unsigned int             rate,
-                                      unsigned int             state)
+#if defined(__GNUC__) || defined(__clang__)
+#define CORAX_JOINT_FORCE_INLINE static inline __attribute__((always_inline))
+#else
+#define CORAX_JOINT_FORCE_INLINE static inline
+#endif
+ 
+/* possible-states bitmask of a tip at `site` */
+static inline corax_state_t corax_joint_tip_mask(
+    const corax_partition_t *partition, unsigned int clv_index, unsigned int site)
 {
   if (!(partition->attributes & CORAX_ATTRIB_PATTERN_TIP))
   {
-    /* no tip compression -> look up in clv */
-    unsigned int  states_padded = partition->states_padded;
-    unsigned int  rate_cats     = partition->rate_cats;
-    const double *clv           = partition->clv[clv_index];
-
-    double v = clv[(size_t)site * rate_cats * states_padded
-                   + (size_t)rate * states_padded + state];
-
-    assert(v == 0.0 || v == 1.0);
-
-    return v ? 0.0 : -INFINITY;
+    /* no tip compression -> derive the mask from the (rate independent)
+       0/1 tip clv */
+    const double *clv = partition->clv[clv_index]
+                        + (size_t)site * partition->rate_cats
+                              * partition->states_padded;
+    corax_state_t m = 0;
+    for (unsigned int k = 0; k < partition->states; ++k)
+    {
+      assert(clv[k] == 0.0 || clv[k] == 1.0);
+      if (clv[k] != 0.0) m |= (corax_state_t)1 << k;
+    }
+    return m;
   }
-
+ 
   unsigned char charcode = partition->tipchars[clv_index][site];
-
+ 
   /* For 4 states (DNA), corax's own specialized kernel
      corax_core_update_clv_ti_4x4() uses tipchars[][site] directly
      as the corax_state_t bitmask. For proteins, use it as an index */
-  corax_state_t smask = (partition->states == 4) ? (corax_state_t)charcode
-                                                 : partition->tipmap[charcode];
-
-  return ((smask >> state) & 1u) ? 0.0 : -INFINITY;
+  return (partition->states == 4) ? (corax_state_t)charcode
+                                  : partition->tipmap[charcode];
 }
-
-/* Softmax-normalize `score` (length `states`) into `out`. Falls back to
-   a uniform vector if every entry is -INFINITY (data contradicts the
-   model at every state). */
-static void
-corax_joint_softmax(const double *score, unsigned int states, double *out)
+ 
+/* Index of the first maximum of `v` (ties -> lowest index); *maxval is
+   -INFINITY and the index 0 if every entry is -INFINITY. */
+static inline unsigned int
+corax_joint_argmax(const double *v, unsigned int states, double *maxval)
 {
-  unsigned int s;
-  double       maxv = -INFINITY;
-
-  for (s = 0; s < states; ++s)
-    if (score[s] > maxv) maxv = score[s];
-
+  double       best = -INFINITY;
+  unsigned int arg  = 0;
+  for (unsigned int k = 0; k < states; ++k)
+  {
+    int gt = v[k] > best;
+    best   = gt ? v[k] : best;
+    arg    = gt ? k : arg;
+  }
+  *maxval = best;
+  return arg;
+}
+ 
+/* Softmax-normalize `score` (length `states`) into `out` and return its
+   arg max. `out` is a uniform vector if every entry is -INFINITY (data
+   contradicts the model at every state). */
+static inline unsigned int
+corax_joint_softmax_argmax(const double *score, unsigned int states, double *out)
+{
+  double       maxv;
+  unsigned int arg = corax_joint_argmax(score, states, &maxv);
+ 
   if (maxv == -INFINITY)
   {
-    for (s = 0; s < states; ++s) out[s] = 1.0 / states;
-    return;
+    for (unsigned int s = 0; s < states; ++s) out[s] = 1.0 / states;
+    return arg;
   }
-
+ 
   double sum = 0.;
-  for (s = 0; s < states; ++s)
+  for (unsigned int s = 0; s < states; ++s)
   {
-    double e = exp(score[s] - maxv);
+    /* the maximum contributes exp(0) == 1 exactly: skip the libm call */
+    double e = (score[s] == maxv) ? 1.0 : exp(score[s] - maxv);
     out[s]   = e;
     sum += e;
   }
-  for (s = 0; s < states; ++s) out[s] /= sum;
+  for (unsigned int s = 0; s < states; ++s) out[s] /= sum;
+ 
+  return arg;
 }
-
-/* Per-state log-scores of one node (`clv_index`) at site `n`, rate `r`.
-   If it's an inner node (`op_idx`): it's just the `table` row
-   If it's a leaf: fill `buf` and return that */
-static const double *
-corax_joint_node_logvals(const corax_partition_t *partition,
-                         unsigned int             clv_index,
-                         unsigned int             is_op,
-                         unsigned int             op_idx,
-                         double *const           *table,
-                         unsigned int             n,
-                         unsigned int             r,
-                         unsigned int             states,
-                         double                  *buf)
+ 
+/* lt[r][k][s] = log P_r[s][k] (transposed, so that the DP max-plus step is an
+   element-wise max over the parent state s) and rowmax[r][s] = max_k lt[r][k][s].
+   Non-positive entries (numerical noise) count as probability 0, i.e. -inf.
+   Padding lanes (s >= states) are -inf. */
+static void corax_joint_build_lt(const corax_partition_t *partition,
+                                 const double            *pmat,
+                                 double                  *lt,
+                                 double                  *rowmax)
 {
-  if (is_op) return table[op_idx] + (size_t)n * states;
-
-  for (unsigned int k = 0; k < states; ++k)
-    buf[k] = corax_joint_leaf_logclv(partition, clv_index, n, r, k);
-  return buf;
-}
-
-/* max_k (logrow[k] + vals[k]) over `states`. If `argmax` is non-NULL, also
-   write the maximizing k there. This is the core max-plus reduction
-   shared by the value-only pass and the backpointer-keeping pass -- they
-   differ only in whether they need the argmax. */
-static double corax_joint_max_plus(const double *logrow,
-                                   const double *vals,
-                                   unsigned int  states,
-                                   unsigned int *argmax)
-{
-  unsigned int k;
-  double       best = -INFINITY;
-  unsigned int arg  = 0;
-
-  for (k = 0; k < states; ++k)
+  const unsigned int states = partition->states;
+  const unsigned int sp     = partition->states_padded;
+ 
+  for (unsigned int r = 0; r < partition->rate_cats; ++r)
   {
-    double v = logrow[k] + vals[k];
-    if (v > best)
+    double       *l = lt + (size_t)r * states * sp;
+    double       *m = rowmax + (size_t)r * sp;
+    const double *p = pmat + (size_t)r * states * sp;
+ 
+    for (unsigned int s = 0; s < sp; ++s) m[s] = -INFINITY;
+    for (size_t i = 0; i < (size_t)states * sp; ++i) l[i] = -INFINITY;
+ 
+    for (unsigned int s = 0; s < states; ++s)
+      for (unsigned int k = 0; k < states; ++k)
+      {
+        double pr              = p[(size_t)s * sp + k];
+        double lg              = pr > 0.0 ? log(pr) : -INFINITY;
+        l[(size_t)k * sp + s]  = lg;
+        if (lg > m[s]) m[s] = lg;
+      }
+  }
+}
+ 
+/* contrib[s] = max_k ( logP[s][k] + child[k] )   for every parent state s,
+   with logP stored transposed: lt[k * sp + s].
+ 
+   child_val != NULL: inner child, `child_val[k]` is its DP score. The result
+                      is written to `tmp`.
+   child_val == NULL: tip child with possible-state set `mask` (child[k] is 0
+                      or -inf). The result is, where possible, a pointer into
+                      the precomputed tables and `tmp` is only touched for
+                      partially ambiguous tips.
+ 
+   Returns a vector of length `sp` (entries >= states are meaningless). */
+static inline const double *corax_joint_contrib(const double *lt,
+                                                const double *rowmax,
+                                                const double *child_val,
+                                                corax_state_t mask,
+                                                corax_state_t full,
+                                                unsigned int  states,
+                                                unsigned int  sp,
+                                                const double *neg_inf,
+                                                double       *tmp)
+{
+  if (child_val)
+  {
+    for (unsigned int s = 0; s < sp; ++s) tmp[s] = lt[s] + child_val[0];
+    for (unsigned int k = 1; k < states; ++k)
+      for (unsigned int s = 0; s < sp; ++s)
+      {
+        double t = lt[(size_t)k * sp + s] + child_val[k];
+        tmp[s]   = t > tmp[s] ? t : tmp[s];
+      }
+    return tmp;
+  }
+ 
+  mask &= full;
+  if (mask == full) return rowmax; /* gap / fully ambiguous */
+  if (!mask) return neg_inf;       /* no state possible */
+  if (!(mask & (mask - 1)))        /* exactly one state: a row of lt */
+  {
+    unsigned int k = 0;
+    while (!((mask >> k) & 1u)) ++k;
+    return lt + (size_t)k * sp;
+  }
+ 
+  /* partially ambiguous: max over the possible states */
+  for (unsigned int s = 0; s < sp; ++s) tmp[s] = -INFINITY;
+  for (unsigned int k = 0; k < states; ++k)
+    if ((mask >> k) & 1u)
+      for (unsigned int s = 0; s < sp; ++s)
+      {
+        double t = lt[(size_t)k * sp + s];
+        tmp[s]   = t > tmp[s] ? t : tmp[s];
+      }
+  return tmp;
+}
+ 
+/* The whole computation. `states` and `sp` (states_padded) are parameters so
+   that the dispatcher below can instantiate it with compile-time constants for
+   the usual sizes; this lets the compiler unroll/vectorize the inner loops. */
+CORAX_JOINT_FORCE_INLINE int
+corax_joint_impl(corax_partition_t       *partition,
+                 const corax_operation_t *operations,
+                 unsigned int             op_count,
+                 unsigned int             root_clv_index,
+                 unsigned int             root_other_clv_index,
+                 unsigned int             root_matrix_index,
+                 const unsigned int      *freqs_indices,
+                 double                 **node_probs,
+                 const unsigned int       states,
+                 const unsigned int       sp)
+{
+  const unsigned int sites     = partition->sites;
+  const unsigned int rate_cats = partition->rate_cats;
+  const size_t       S         = states;
+  const size_t       lt_block  = (size_t)rate_cats * S * sp; /* one (op, child) */
+ 
+  const corax_state_t full = (states >= 8 * sizeof(corax_state_t))
+                                 ? ~(corax_state_t)0
+                                 : (((corax_state_t)1 << states) - 1);
+ 
+  unsigned int max_clv_index = root_clv_index > root_other_clv_index
+                                   ? root_clv_index
+                                   : root_other_clv_index;
+  for (unsigned int i = 0; i < op_count; ++i)
+  {
+    const corax_operation_t *o = &operations[i];
+    if (o->parent_clv_index > max_clv_index) max_clv_index = o->parent_clv_index;
+    if (o->child1_clv_index > max_clv_index) max_clv_index = o->child1_clv_index;
+    if (o->child2_clv_index > max_clv_index) max_clv_index = o->child2_clv_index;
+  }
+ 
+  /* Block of sites processed together: at most 64, and keep the DP tables
+     around 8 MiB. */
+  size_t B = ((size_t)8 << 20)
+             / ((size_t)rate_cats * op_count * sp * sizeof(double));
+  if (B > 64) B = 64;
+  if (B > sites) B = sites;
+  if (B < 1) B = 1;
+ 
+  /* All working memory is carved out of one allocation: doubles first, then
+     corax_state_t, unsigned int and unsigned short (decreasing alignment). */
+  const size_t n_dbl = (size_t)op_count * 2 * (lt_block + (size_t)rate_cats * sp)
+                       + lt_block + 2 * (size_t)rate_cats * sp + rate_cats
+                       + (size_t)rate_cats * op_count * B * sp + B * sp + B
+                       + 6 * (size_t)sp;
+  const size_t n_msk = ((size_t)op_count * 2 + 2) * B;
+  const size_t n_u32 = (size_t)max_clv_index + 1 + 9 * (size_t)op_count + B;
+ 
+  void *arena = malloc(n_dbl * sizeof(double) + n_msk * sizeof(corax_state_t)
+                       + n_u32 * sizeof(unsigned int)
+                       + (size_t)op_count * sizeof(unsigned short));
+  if (!arena)
+  {
+    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
+    return CORAX_FAILURE;
+  }
+ 
+  /* [op][j][r][k][sp] transposed log-pmatrices of child j of op */
+  double *lt = (double *)arena;
+  /* [op][j][r][sp] row maxima of the above */
+  double *rowmax = lt + (size_t)op_count * 2 * lt_block;
+  /* same for the root edge: [r][k][sp] and [r][sp] */
+  double *lt_root     = rowmax + (size_t)op_count * 2 * rate_cats * sp;
+  double *rowmax_root = lt_root + lt_block;
+  double *logfreq     = rowmax_root + (size_t)rate_cats * sp; /* [r][sp] */
+  double *logw        = logfreq + (size_t)rate_cats * sp;     /* [r] */
+  /* [r][b][op][sp] value-only DP tables of the current block */
+  double *val_all = logw + rate_cats;
+  /* [b][sp]: 0/-inf vector of the root if it is a tip */
+  double *rootleaf   = val_all + (size_t)rate_cats * op_count * B * sp;
+  double *best_total = rootleaf + B * sp; /* [b] */
+  /* sp-sized scratch vectors */
+  double *tmp1       = best_total + B;
+  double *tmp2       = tmp1 + sp;
+  double *tmpo       = tmp2 + sp;
+  double *neg_inf    = tmpo + sp;
+  double *root_score = neg_inf + sp;
+  double *scratch    = root_score + sp;
+ 
+  /* [op][j][b] tip masks, and the masks of the two root-edge nodes [b] */
+  corax_state_t *masks      = (corax_state_t *)(scratch + sp);
+  corax_state_t *root_mask  = masks + (size_t)op_count * 2 * B;
+  corax_state_t *other_mask = root_mask + B;
+ 
+  /* clv index -> op index (UINT_MAX: tip) */
+  unsigned int *clv_to_op = (unsigned int *)(other_mask + B);
+  /* [op*2+j]: op index of child j (UINT_MAX: tip) */
+  unsigned int *child_op = clv_to_op + (size_t)max_clv_index + 1;
+  /* tip children: slot (op*2+j) and clv index */
+  unsigned int *tip_slot = child_op + 2 * (size_t)op_count;
+  unsigned int *tip_clv  = tip_slot + 2 * (size_t)op_count;
+  /* inner parent->child edges, parents in descending op order */
+  unsigned int *edge_par   = tip_clv + 2 * (size_t)op_count;
+  unsigned int *edge_child = edge_par + op_count;
+  unsigned int *edge_slot  = edge_child + op_count;
+  unsigned int *best_rate  = edge_slot + op_count; /* [b] */
+  /* [op]: traceback state */
+  unsigned short *op_state = (unsigned short *)(best_rate + B);
+  assert((size_t)((char *)(op_state + op_count) - (char *)arena)
+         == n_dbl * sizeof(double) + n_msk * sizeof(corax_state_t)
+                + n_u32 * sizeof(unsigned int)
+                + (size_t)op_count * sizeof(unsigned short));
+ 
+  for (unsigned int s = 0; s < sp; ++s) neg_inf[s] = -INFINITY;
+ 
+  /* Anything that is not the parent of an op is read as a tip */
+  for (unsigned int i = 0; i <= max_clv_index; ++i) clv_to_op[i] = UINT_MAX;
+  for (unsigned int i = 0; i < op_count; ++i)
+    clv_to_op[operations[i].parent_clv_index] = i;
+ 
+  unsigned int tip_count = 0;
+  unsigned int edge_count = 0;
+  for (unsigned int op = 0; op < op_count; ++op)
+    for (unsigned int j = 0; j < 2; ++j)
     {
-      best = v;
-      arg  = k;
+      const unsigned int clv =
+          j ? operations[op].child2_clv_index : operations[op].child1_clv_index;
+      child_op[2 * op + j] = clv_to_op[clv];
+      if (clv_to_op[clv] == UINT_MAX)
+      {
+        tip_slot[tip_count] = 2 * op + j;
+        tip_clv[tip_count]  = clv;
+        ++tip_count;
+      }
+    }
+  for (unsigned int op = op_count; op-- > 0;)
+    for (unsigned int j = 0; j < 2; ++j)
+      if (child_op[2 * op + j] != UINT_MAX)
+      {
+        edge_par[edge_count]   = op;
+        edge_child[edge_count] = child_op[2 * op + j];
+        edge_slot[edge_count]  = 2 * op + j;
+        ++edge_count;
+      }
+ 
+  const unsigned int root_op     = clv_to_op[root_clv_index];
+  const unsigned int other_op    = clv_to_op[root_other_clv_index];
+  const int          root_is_op  = (root_op != UINT_MAX);
+  const int          other_is_op = (other_op != UINT_MAX);
+ 
+  for (unsigned int op = 0; op < op_count; ++op)
+    for (unsigned int j = 0; j < 2; ++j)
+      corax_joint_build_lt(partition,
+                           partition->pmatrix[j ? operations[op].child2_matrix_index
+                                                : operations[op].child1_matrix_index],
+                           lt + ((size_t)op * 2 + j) * lt_block,
+                           rowmax + ((size_t)op * 2 + j) * rate_cats * sp);
+  corax_joint_build_lt(
+      partition, partition->pmatrix[root_matrix_index], lt_root, rowmax_root);
+ 
+  for (unsigned int r = 0; r < rate_cats; ++r)
+  {
+    const double *freqs = partition->frequencies[freqs_indices[r]];
+    for (unsigned int s = 0; s < sp; ++s)
+      logfreq[(size_t)r * sp + s] = (s < states) ? log(freqs[s]) : -INFINITY;
+    logw[r] = log(partition->rate_weights[r]);
+  }
+ 
+  /* =====================================================================
+     Process the alignment in blocks of B sites.
+     ===================================================================== */
+  for (unsigned int n0 = 0; n0 < sites; n0 += (unsigned int)B)
+  {
+    const unsigned int nb = (sites - n0 < B) ? (sites - n0) : (unsigned int)B;
+ 
+    /* ---- tip masks (rate independent) + reset the rate selection ---- */
+    for (unsigned int t = 0; t < tip_count; ++t)
+      for (unsigned int b = 0; b < nb; ++b)
+        masks[(size_t)tip_slot[t] * B + b] =
+            corax_joint_tip_mask(partition, tip_clv[t], n0 + b);
+ 
+    for (unsigned int b = 0; b < nb; ++b)
+    {
+      root_mask[b]  = root_is_op ? 0
+                                 : corax_joint_tip_mask(
+                                       partition, root_clv_index, n0 + b);
+      other_mask[b] = other_is_op ? 0
+                                  : corax_joint_tip_mask(
+                                        partition, root_other_clv_index, n0 + b);
+ 
+      for (unsigned int s = 0; s < sp; ++s)
+        rootleaf[(size_t)b * sp + s] =
+            (s < states && ((root_mask[b] >> s) & 1u)) ? 0.0 : -INFINITY;
+ 
+      best_total[b] = -INFINITY;
+      best_rate[b]  = 0;
+    }
+ 
+    /* ---- value-only DP + root-edge total, one rate category at a time ---- */
+    for (unsigned int r = 0; r < rate_cats; ++r)
+    {
+      for (unsigned int op = 0; op < op_count; ++op)
+      {
+        const unsigned int c1op = child_op[2 * op];
+        const unsigned int c2op = child_op[2 * op + 1];
+        const size_t       o1   = (size_t)op * 2;
+        const double *lt1 = lt + o1 * lt_block + (size_t)r * S * sp;
+        const double *lt2 = lt + (o1 + 1) * lt_block + (size_t)r * S * sp;
+        const double *rm1 = rowmax + (o1 * rate_cats + r) * sp;
+        const double *rm2 = rowmax + ((o1 + 1) * rate_cats + r) * sp;
+ 
+        for (unsigned int b = 0; b < nb; ++b)
+        {
+          double *vb = val_all + ((size_t)r * B + b) * op_count * sp;
+ 
+          const double *x1 = corax_joint_contrib(
+              lt1,
+              rm1,
+              c1op == UINT_MAX ? NULL : vb + (size_t)c1op * sp,
+              masks[o1 * B + b],
+              full,
+              states,
+              sp,
+              neg_inf,
+              tmp1);
+          const double *x2 = corax_joint_contrib(
+              lt2,
+              rm2,
+              c2op == UINT_MAX ? NULL : vb + (size_t)c2op * sp,
+              masks[(o1 + 1) * B + b],
+              full,
+              states,
+              sp,
+              neg_inf,
+              tmp2);
+ 
+          double *out = vb + (size_t)op * sp;
+          for (unsigned int s = 0; s < sp; ++s) out[s] = x1[s] + x2[s];
+        }
+      }
+ 
+      /* root-edge combination for this rate category */
+      const double *lf = logfreq + (size_t)r * sp;
+      for (unsigned int b = 0; b < nb; ++b)
+      {
+        const double *vb = val_all + ((size_t)r * B + b) * op_count * sp;
+ 
+        const double *oc = corax_joint_contrib(
+            lt_root + (size_t)r * S * sp,
+            rowmax_root + (size_t)r * sp,
+            other_is_op ? vb + (size_t)other_op * sp : NULL,
+            other_mask[b],
+            full,
+            states,
+            sp,
+            neg_inf,
+            tmpo);
+        const double *rv =
+            root_is_op ? vb + (size_t)root_op * sp : rootleaf + (size_t)b * sp;
+ 
+        double total_best = -INFINITY;
+        for (unsigned int s = 0; s < states; ++s)
+        {
+          double v = lf[s] + rv[s] + oc[s];
+          if (v > total_best) total_best = v;
+        }
+ 
+        double candidate = logw[r] + total_best;
+        if (r == 0 || candidate > best_total[b])
+        {
+          best_total[b] = candidate;
+          best_rate[b]  = r;
+        }
+      }
+    }
+ 
+    /* ---- per site: root combination at its best rate, then top-down
+            traceback emitting each node's probability vector ---- */
+    for (unsigned int b = 0; b < nb; ++b)
+    {
+      const unsigned int n   = n0 + b;
+      const unsigned int rr  = best_rate[b];
+      const double      *lf  = logfreq + (size_t)rr * sp;
+      const double      *ltr = lt_root + (size_t)rr * S * sp;
+      const double      *vb  = val_all + ((size_t)rr * B + b) * op_count * sp;
+ 
+      const double *other_val = other_is_op ? vb + (size_t)other_op * sp : NULL;
+      const double *oc        = corax_joint_contrib(ltr,
+                                             rowmax_root + (size_t)rr * sp,
+                                             other_val,
+                                             other_mask[b],
+                                             full,
+                                             states,
+                                             sp,
+                                             neg_inf,
+                                             tmpo);
+      const double *rv =
+          root_is_op ? vb + (size_t)root_op * sp : rootleaf + (size_t)b * sp;
+ 
+      for (unsigned int s = 0; s < states; ++s)
+        root_score[s] = lf[s] + rv[s] + oc[s];
+ 
+      /* best root state (also needed for the other side if the root is a tip) */
+      double       best_val;
+      unsigned int best_s;
+      if (root_is_op)
+      {
+        best_s = corax_joint_softmax_argmax(
+            root_score, states, node_probs[root_op] + (size_t)n * states);
+        best_val          = root_score[best_s];
+        op_state[root_op] = (unsigned short)best_s;
+      }
+      else
+        best_s = corax_joint_argmax(root_score, states, &best_val);
+ 
+      if (other_is_op)
+      {
+        for (unsigned int k = 0; k < states; ++k)
+          scratch[k] = ltr[(size_t)k * sp + best_s] + other_val[k];
+ 
+        unsigned int arg = corax_joint_softmax_argmax(
+            scratch, states, node_probs[other_op] + (size_t)n * states);
+ 
+        /* if no root state has a finite score (data contradicts the model),
+           keep state 0 for the other side, as the previous implementation did */
+        op_state[other_op] = (unsigned short)((best_val == -INFINITY) ? 0 : arg);
+      }
+ 
+      /* Edges are sorted by descending parent op index and `operations` is in
+         postorder (children before parents), so an op's own state is always
+         set -- by the root seeding above or by the edge into it -- before an
+         edge out of it is processed. */
+      for (unsigned int e = 0; e < edge_count; ++e)
+      {
+        const unsigned int xs = op_state[edge_par[e]];
+        const unsigned int cp = edge_child[e];
+        const double *ltj = lt + (size_t)edge_slot[e] * lt_block
+                            + (size_t)rr * S * sp;
+        const double *cv = vb + (size_t)cp * sp;
+ 
+        for (unsigned int k = 0; k < states; ++k)
+          scratch[k] = ltj[(size_t)k * sp + xs] + cv[k];
+ 
+        op_state[cp] = (unsigned short)corax_joint_softmax_argmax(
+            scratch, states, node_probs[cp] + (size_t)n * states);
+      }
     }
   }
-
-  if (argmax) *argmax = arg;
-  return best;
+ 
+  free(arena);
+  return CORAX_SUCCESS;
 }
-
-/* Sum a log-pmatrix row with a child/sibling's full per-state DP
-   score into `scratch`, softmax-normalize it, and write the result into
-   `out` */
-static void corax_joint_emit_probs(const double *logrow,
-                                   const double *score,
-                                   unsigned int  states,
-                                   double       *scratch,
-                                   double       *out)
-{
-  for (unsigned int k = 0; k < states; ++k) scratch[k] = logrow[k] + score[k];
-  corax_joint_softmax(scratch, states, out);
-}
-
-/*
- * Note on rate heterogeneity: this is a joint MAP over (rate category,
- * ancestral states) per site, NOT a joint MAP over ancestral states with the
- * rate categories summed out.
- * For every site the rate category r is treated as one more unknown and the
- * single best combination is selected.
- * Reason: The sum over r cannot be folded into the max-product DP exactly.
- */
+ 
 CORAX_EXPORT int
 corax_compute_joint_ancestral(corax_partition_t       *partition,
                               const corax_operation_t *operations,
@@ -1103,16 +1494,15 @@ corax_compute_joint_ancestral(corax_partition_t       *partition,
                               const unsigned int      *freqs_indices,
                               double                 **node_probs)
 {
-  // TODO Pretty sure scaling is also needed in log-space?
   CORAX_UNUSED(root_scaler_index);
   CORAX_UNUSED(root_other_scaler_index);
-
+ 
   if (!partition || !operations || !node_probs || !freqs_indices)
   {
     corax_set_error(CORAX_ERROR_INVALID_PARAM, "Parameter value is NULL!");
     return CORAX_FAILURE;
   }
-
+ 
   if (corax_repeats_enabled(partition))
   {
     corax_set_error(
@@ -1120,547 +1510,33 @@ corax_compute_joint_ancestral(corax_partition_t       *partition,
         "Site repeats are not compatible with ancestral state reconstruction!");
     return CORAX_FAILURE;
   }
-
+ 
   if (op_count == 0)
   {
     corax_set_error(CORAX_ERROR_INVALID_PARAM, "op_count must be > 0");
     return CORAX_FAILURE;
   }
-
-  unsigned int states        = partition->states;
-  unsigned int states_padded = partition->states_padded;
-  unsigned int sites         = partition->sites;
-  unsigned int rate_cats     = partition->rate_cats;
-
-  unsigned int i, n, r, s, op;
-  int          retval = CORAX_FAILURE;
-
-  /* map clv_idx (tips+inner nodes) to op_idx (only inner nodes) */
-  unsigned int max_clv_index = root_clv_index;
-  if (root_other_clv_index > max_clv_index)
-    max_clv_index = root_other_clv_index;
-  for (i = 0; i < op_count; ++i)
-    if (operations[i].parent_clv_index > max_clv_index)
-      max_clv_index = operations[i].parent_clv_index;
-
-  unsigned int *clv_to_op = (unsigned int *)malloc(((size_t)max_clv_index + 1)
-                                                   * sizeof(unsigned int));
-
-  double       *best_total = (double *)malloc(sites * sizeof(double));
-  unsigned int *best_rate =
-    (unsigned int *)malloc(sites * sizeof(unsigned int));
-
-  if (!clv_to_op || !best_total || !best_rate)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    free(clv_to_op);
-    free(best_total);
-    free(best_rate);
-    return CORAX_FAILURE;
-  }
-
-  /* For RAxML-NG, `clv_idx + partition->tips == op_idx` is always correct
-   * because `--ancestral` doesn't allow a tree topology change.
-   * For coraxlib, this could be different but as I am now recomputing the ops
-   * in treeinfo.c this should be fine as well */
-
-  /* clv_index -> operation index map (only internal/computed nodes
-      are keys; anything else is read as a leaf) */
-  for (i = 0; i <= max_clv_index; ++i) clv_to_op[i] = UINT_MAX;
-  for (i = 0; i < op_count; ++i) clv_to_op[operations[i].parent_clv_index] = i;
-
-  unsigned int root_is_op =
-      (root_clv_index <= max_clv_index) && (clv_to_op[root_clv_index] != UINT_MAX);
-  unsigned int other_is_op = (root_other_clv_index <= max_clv_index) && (clv_to_op[root_other_clv_index] != UINT_MAX);
-  unsigned int root_op = root_is_op ? clv_to_op[root_clv_index] : UINT_MAX;
-  unsigned int other_op =
-      other_is_op ? clv_to_op[root_other_clv_index] : UINT_MAX;
-
-  /*
-   * NOTE (memory layout): the DP is organised as "ops outer, sites inner" in
-   * two passes. Pass 1 computes the DP per rate category and only records the
-   * best rate per site (best_rate[]); pass 2 recomputes the DP with each
-   * site's selected rate and stores backpointers.
-   *
-   * val, jtable, bp1 and bp2 are each op_count * sites * states entrieother_is_ops
-   * (about 20 bytes per cell across the four tables), on top of the output
-   * node_probs, which is already op_count * sites * states doubles. Peak
-   * memory is therefore roughly 3.5x the output size.
-   *
-   * Sites are independent in the DP, so the same result *could* be computed with
-   * the site loop outermost:
-   *
-   *   for each site n:
-   *     for each rate r:
-   *       run the DP over all ops for (n, r) into a scratch buffer
-   *         (op_count * states values + backpointers)
-   *       compute the root-edge total
-   *       if better than the best so far: swap with the "best" buffer
-   *     root combination + traceback from the best buffer
-   *
-   * This needs only O(op_count * states) working memory, removes best_rate[]
-   * and best_total[], and saves pass 2's recomputation (R DP runs instead of
-   * R+1; the buffer swap is a pointer swap, not a copy). Peak memory then
-   * drops to about 1x the output size.
-   *
-   * Not done here because the current structure is simpler to verify and only
-   * matters for large alignments.
-   */
-  double **val    = NULL; /* pass 1: reused across rate categories */
-  double **jtable = NULL; /* pass 2 */
-  /* backpointers */
-  unsigned short **bp1 = NULL;
-  unsigned short **bp2 = NULL;
-  /* log(pmatrix) cache: hold for every rate category the log-transformed
-     child1/child2 pmatrix of operation `op` (states x states, unpadded) */
-  double        **log_pmat1     = NULL;
-  double        **log_pmat2     = NULL;
-  double         *log_pmat_root = NULL;
-  unsigned short *root_state    = NULL;
-  unsigned short *other_state   = NULL;
-  double         *root_score    = NULL;
-  double         *other_score   = NULL;
-  double         *child_score   = NULL;
-  /* `op`'s resolved MAP state, filled in during the top-down traceback
-     below either by seeding (root_op/other_op) or by its parent op
-     (which always has a strictly larger index, see the traceback loop) */
-  unsigned short *op_state      = NULL;
-  /* scratch for corax_joint_node_logvals()'s leaf case: one side's
-     per-state log-scores, materialized once per (node, site) and reused
-     across every state of the other side of the combination */
-  double *child1_logvals = NULL;
-  double *child2_logvals = NULL;
-  double *other_logvals  = NULL;
-
-  /* Precompute log(pmatrix) once per (op, rate). Every DP step below only
-     ever needs log(pmatrix[matrix_index][rate][s][k]), which does not
-     depend on the site */
-  log_pmat1 = (double **)calloc(op_count, sizeof(double *));
-  log_pmat2 = (double **)calloc(op_count, sizeof(double *));
-  log_pmat_root =
-      (double *)malloc((size_t)rate_cats * states * states * sizeof(double));
-  if (!log_pmat1 || !log_pmat2 || !log_pmat_root)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    goto cleanup;
-  }
-  {
-    int alloc_fail = 0;
-    for (op = 0; op < op_count; ++op)
-    {
-      log_pmat1[op] = (double *)malloc((size_t)rate_cats * states * states
-                                       * sizeof(double));
-      log_pmat2[op] = (double *)malloc((size_t)rate_cats * states * states
-                                       * sizeof(double));
-      if (!log_pmat1[op] || !log_pmat2[op]) alloc_fail = 1;
-    }
-    if (alloc_fail)
-    {
-      corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-      goto cleanup;
-    }
-  }
-
-  for (op = 0; op < op_count; ++op)
-  {
-    const corax_operation_t *o = &operations[op];
-    const double *pmat1_full   = partition->pmatrix[o->child1_matrix_index];
-    const double *pmat2_full   = partition->pmatrix[o->child2_matrix_index];
-
-    for (r = 0; r < rate_cats; ++r)
-      for (s = 0; s < states; ++s)
-      {
-        unsigned int k;
-        size_t       dst_base = ((size_t)r * states + s) * states;
-        size_t       src_base =
-            (size_t)r * states * states_padded + (size_t)s * states_padded;
-
-        for (k = 0; k < states; ++k)
-        {
-          log_pmat1[op][dst_base + k] = log(pmat1_full[src_base + k]);
-          log_pmat2[op][dst_base + k] = log(pmat2_full[src_base + k]);
-        }
-      }
-  }
-
-  {
-    const double *pmat_root_full = partition->pmatrix[root_matrix_index];
-
-    for (r = 0; r < rate_cats; ++r)
-      for (s = 0; s < states; ++s)
-      {
-        unsigned int k;
-        size_t       dst_base = ((size_t)r * states + s) * states;
-        size_t       src_base =
-            (size_t)r * states * states_padded + (size_t)s * states_padded;
-
-        for (k = 0; k < states; ++k)
-          log_pmat_root[dst_base + k] = log(pmat_root_full[src_base + k]);
-      }
-  }
-
-  child1_logvals = (double *)malloc(states * sizeof(double));
-  child2_logvals = (double *)malloc(states * sizeof(double));
-  other_logvals  = (double *)malloc(states * sizeof(double));
-  if (!child1_logvals || !child2_logvals || !other_logvals)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    goto cleanup;
-  }
-
-  /* =====================================================================
-     PASS 1: for every site, pick the rate category with the best total
-     joint log-score. `val[op]` is reused (overwritten) for each rate.
-     ===================================================================== */
-  val = (double **)calloc(op_count, sizeof(double *));
-  if (!val)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    goto cleanup;
-  }
-  {
-    int alloc_fail = 0;
-    for (op = 0; op < op_count; ++op)
-    {
-      val[op] = (double *)malloc((size_t)sites * states * sizeof(double));
-      if (!val[op]) alloc_fail = 1;
-    }
-    if (alloc_fail)
-    {
-      corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-      goto cleanup;
-    }
-  }
-
-  for (n = 0; n < sites; ++n)
-  {
-    best_total[n] = -INFINITY;
-    best_rate[n]  = 0;
-  }
-
-  for (r = 0; r < rate_cats; ++r)
-  {
-    for (op = 0; op < op_count; ++op)
-    {
-      const corax_operation_t *o  = &operations[op];
-      unsigned int             c1 = o->child1_clv_index;
-      unsigned int             c2 = o->child2_clv_index;
-      unsigned int             c1_is_op =
-          (c1 <= max_clv_index) && (clv_to_op[c1] != UINT_MAX);
-      unsigned int c2_is_op =
-          (c2 <= max_clv_index) && (clv_to_op[c2] != UINT_MAX);
-      unsigned int op1 = c1_is_op ? clv_to_op[c1] : UINT_MAX;
-      unsigned int op2 = c2_is_op ? clv_to_op[c2] : UINT_MAX;
-
-      const double *log_pmat1_r = log_pmat1[op] + (size_t)r * states * states;
-      const double *log_pmat2_r = log_pmat2[op] + (size_t)r * states * states;
-
-      for (n = 0; n < sites; ++n)
-      {
-        const double *c1vals = corax_joint_node_logvals(
-            partition, c1, c1_is_op, op1, val, n, r, states, child1_logvals);
-        const double *c2vals = corax_joint_node_logvals(
-            partition, c2, c2_is_op, op2, val, n, r, states, child2_logvals);
-
-        for (s = 0; s < states; ++s)
-        {
-          double best1 = corax_joint_max_plus(
-              log_pmat1_r + (size_t)s * states, c1vals, states, NULL);
-          double best2 = corax_joint_max_plus(
-              log_pmat2_r + (size_t)s * states, c2vals, states, NULL);
-
-          val[op][(size_t)n * states + s] = best1 + best2;
-        }
-      }
-    }
-
-    /* ---- root-edge combination for this rate category ---- */
-    {
-      const double *freqs           = partition->frequencies[freqs_indices[r]];
-      double        log_rate_weight = log(partition->rate_weights[r]);
-      const double *log_pmat_root_r =
-          log_pmat_root + (size_t)r * states * states;
-
-      for (n = 0; n < sites; ++n)
-      {
-        double total_best = -INFINITY;
-
-        const double *other_vals =
-            corax_joint_node_logvals(partition,
-                                     root_other_clv_index,
-                                     other_is_op,
-                                     other_op,
-                                     val,
-                                     n,
-                                     r,
-                                     states,
-                                     other_logvals);
-
-        for (s = 0; s < states; ++s)
-        {
-          double root_val =
-              root_is_op
-                  ? val[root_op][(size_t)n * states + s]
-                  : corax_joint_leaf_logclv(partition, root_clv_index, n, r, s);
-
-          double back_best = corax_joint_max_plus(
-              log_pmat_root_r + (size_t)s * states, other_vals, states, NULL);
-
-          double total = log(freqs[s]) + root_val + back_best;
-          if (total > total_best) total_best = total;
-        }
-
-        double candidate = log_rate_weight + total_best;
-        if (candidate > best_total[n])
-        {
-          best_total[n] = candidate;
-          best_rate[n]  = r;
-        }
-      }
-    }
-  }
-
-  for (op = 0; op < op_count; ++op) free(val[op]);
-  free(val);
-  val = NULL;
-
-  /* =====================================================================
-     PASS 2: recompute the DP once more, using each site's own selected
-     rate category, this time keeping backpointers.
-     ===================================================================== */
-  jtable = (double **)calloc(op_count, sizeof(double *));
-  bp1    = (unsigned short **)calloc(op_count, sizeof(unsigned short *));
-  bp2    = (unsigned short **)calloc(op_count, sizeof(unsigned short *));
-  if (!jtable || !bp1 || !bp2)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    goto cleanup;
-  }
-  {
-    int alloc_fail = 0;
-    for (op = 0; op < op_count; ++op)
-    {
-      jtable[op] = (double *)malloc((size_t)sites * states * sizeof(double));
-      bp1[op]    = (unsigned short *)malloc((size_t)sites * states
-                                         * sizeof(unsigned short));
-      bp2[op]    = (unsigned short *)malloc((size_t)sites * states
-                                         * sizeof(unsigned short));
-      if (!jtable[op] || !bp1[op] || !bp2[op]) alloc_fail = 1;
-    }
-    if (alloc_fail)
-    {
-      corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-      goto cleanup;
-    }
-  }
-
-  for (op = 0; op < op_count; ++op)
-  {
-    const corax_operation_t *o  = &operations[op];
-    unsigned int             c1 = o->child1_clv_index;
-    unsigned int             c2 = o->child2_clv_index;
-    unsigned int             c1_is_op =
-        (c1 <= max_clv_index) && (clv_to_op[c1] != UINT_MAX);
-    unsigned int c2_is_op =
-        (c2 <= max_clv_index) && (clv_to_op[c2] != UINT_MAX);
-    unsigned int op1 = c1_is_op ? clv_to_op[c1] : UINT_MAX;
-    unsigned int op2 = c2_is_op ? clv_to_op[c2] : UINT_MAX;
-
-    for (n = 0; n < sites; ++n)
-    {
-      unsigned int  rr           = best_rate[n];
-      const double *log_pmat1_rr = log_pmat1[op] + (size_t)rr * states * states;
-      const double *log_pmat2_rr = log_pmat2[op] + (size_t)rr * states * states;
-
-      const double *c1vals = corax_joint_node_logvals(
-          partition, c1, c1_is_op, op1, jtable, n, rr, states, child1_logvals);
-      const double *c2vals = corax_joint_node_logvals(
-          partition, c2, c2_is_op, op2, jtable, n, rr, states, child2_logvals);
-
-      for (s = 0; s < states; ++s)
-      {
-        unsigned int arg1, arg2;
-        double       best1 = corax_joint_max_plus(
-            log_pmat1_rr + (size_t)s * states, c1vals, states, &arg1);
-        double best2 = corax_joint_max_plus(
-            log_pmat2_rr + (size_t)s * states, c2vals, states, &arg2);
-
-        jtable[op][(size_t)n * states + s] = best1 + best2;
-        bp1[op][(size_t)n * states + s]    = (unsigned short)arg1;
-        bp2[op][(size_t)n * states + s]    = (unsigned short)arg2;
-      }
-    }
-  }
-
-  /* ---- root-edge combination + emission, using each site's own rate ---- */
-  root_state  = (unsigned short *)malloc(sites * sizeof(unsigned short));
-  other_state = (unsigned short *)malloc(sites * sizeof(unsigned short));
-  root_score  = (double *)malloc(states * sizeof(double));
-  other_score = (double *)malloc(states * sizeof(double));
-  if (!root_state || !other_state || !root_score || !other_score)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    goto cleanup;
-  }
-
-  for (n = 0; n < sites; ++n)
-  {
-    unsigned int  rr    = best_rate[n];
-    const double *freqs = partition->frequencies[freqs_indices[rr]];
-    const double *log_pmat_root_rr =
-        log_pmat_root + (size_t)rr * states * states;
-
-    double       best_val = -INFINITY;
-    unsigned int best_s = 0, best_k = 0;
-
-    const double *other_vals = corax_joint_node_logvals(partition,
-                                                        root_other_clv_index,
-                                                        other_is_op,
-                                                        other_op,
-                                                        jtable,
-                                                        n,
-                                                        rr,
-                                                        states,
-                                                        other_logvals);
-
-    for (s = 0; s < states; ++s)
-    {
-      double root_val =
-          root_is_op
-              ? jtable[root_op][(size_t)n * states + s]
-              : corax_joint_leaf_logclv(partition, root_clv_index, n, rr, s);
-
-      unsigned int back_arg;
-      double       back_best = corax_joint_max_plus(
-          log_pmat_root_rr + (size_t)s * states, other_vals, states, &back_arg);
-
-      double total  = log(freqs[s]) + root_val + back_best;
-      root_score[s] = total;
-      if (total > best_val)
-      {
-        best_val = total;
-        best_s   = s;
-        best_k   = back_arg;
-      }
-    }
-
-    root_state[n]  = (unsigned short)best_s;
-    other_state[n] = (unsigned short)best_k;
-
-    if (root_is_op)
-      corax_joint_softmax(
-          root_score, states, node_probs[root_op] + (size_t)n * states);
-
-    if (other_is_op)
-      corax_joint_emit_probs(log_pmat_root_rr + (size_t)best_s * states,
-                             other_vals,
-                             states,
-                             other_score,
-                             node_probs[other_op] + (size_t)n * states);
-  }
-
-  /* =====================================================================
-     Top-down traceback: fix each remaining node's state via bp1/bp2 and
-     emit its conditioned probability vector.
-
-     `operations` is in postorder, so every op's child ops (c1_op/c2_op
-     below) have a strictly smaller index than the op itself -- pass 1
-     and pass 2 above already rely on that same property to read
-     val[op1]/val[op2] resp. jtable[op1]/jtable[op2] before op is filled.
-     Walking `operations` back-to-front is therefore already a valid
-     top-down (parent-before-child) order, so no explicit traversal
-     stack is needed: op_state[op] is guaranteed to have been written
-     already, either by the seeding below or by op's (higher-index)
-     parent earlier in this same reverse loop.
-     ===================================================================== */
-  op_state = (unsigned short *)malloc((size_t)op_count * sizeof(unsigned short));
-  child_score = (double *)malloc(states * sizeof(double));
-  if (!op_state || !child_score)
-  {
-    corax_set_error(CORAX_ERROR_MEM_ALLOC, "Cannot allocate memory");
-    goto cleanup;
-  }
-
-  for (n = 0; n < sites; ++n)
-  {
-    unsigned int rr = best_rate[n];
-
-    if (root_is_op) op_state[root_op] = root_state[n];
-    if (other_is_op) op_state[other_op] = other_state[n];
-
-    for (op = op_count; op-- > 0;)
-    {
-      unsigned int              xs = op_state[op];
-      const corax_operation_t *o  = &operations[op];
-      unsigned int             c1 = o->child1_clv_index;
-      unsigned int             c2 = o->child2_clv_index;
-      unsigned int             c1_is_op =
-          (c1 <= max_clv_index) && (clv_to_op[c1] != UINT_MAX);
-      unsigned int c2_is_op =
-          (c2 <= max_clv_index) && (clv_to_op[c2] != UINT_MAX);
-
-      if (c1_is_op)
-      {
-        unsigned int c1_op = clv_to_op[c1];
-        corax_joint_emit_probs(log_pmat1[op]
-                                   + ((size_t)rr * states + xs) * states,
-                               jtable[c1_op] + (size_t)n * states,
-                               states,
-                               child_score,
-                               node_probs[c1_op] + (size_t)n * states);
-
-        op_state[c1_op] = bp1[op][(size_t)n * states + xs];
-      }
-
-      if (c2_is_op)
-      {
-        unsigned int c2_op = clv_to_op[c2];
-        corax_joint_emit_probs(log_pmat2[op]
-                                   + ((size_t)rr * states + xs) * states,
-                               jtable[c2_op] + (size_t)n * states,
-                               states,
-                               child_score,
-                               node_probs[c2_op] + (size_t)n * states);
-
-        op_state[c2_op] = bp2[op][(size_t)n * states + xs];
-      }
-    }
-  }
-
-  retval = CORAX_SUCCESS;
-
-cleanup:
-  if (val)
-    for (i = 0; i < op_count; ++i) free(val[i]);
-  free(val);
-  if (jtable)
-    for (i = 0; i < op_count; ++i) free(jtable[i]);
-  free(jtable);
-  if (bp1)
-    for (i = 0; i < op_count; ++i) free(bp1[i]);
-  free(bp1);
-  if (bp2)
-    for (i = 0; i < op_count; ++i) free(bp2[i]);
-  free(bp2);
-  free(child1_logvals);
-  free(child2_logvals);
-  free(other_logvals);
-  if (log_pmat1)
-    for (i = 0; i < op_count; ++i) free(log_pmat1[i]);
-  free(log_pmat1);
-  if (log_pmat2)
-    for (i = 0; i < op_count; ++i) free(log_pmat2[i]);
-  free(log_pmat2);
-  free(log_pmat_root);
-  free(clv_to_op);
-  free(best_total);
-  free(best_rate);
-  free(root_state);
-  free(other_state);
-  free(root_score);
-  free(other_score);
-  free(child_score);
-  free(op_state);
-
-  return retval;
+ 
+  const unsigned int states = partition->states;
+  const unsigned int sp     = partition->states_padded;
+ 
+  if (states == 4 && sp == 4)
+    return corax_joint_impl(partition, operations, op_count, root_clv_index,
+                            root_other_clv_index, root_matrix_index,
+                            freqs_indices, node_probs, 4, 4);
+  if (states == 4 && sp == 8)
+    return corax_joint_impl(partition, operations, op_count, root_clv_index,
+                            root_other_clv_index, root_matrix_index,
+                            freqs_indices, node_probs, 4, 8);
+  if (states == 20 && sp == 20)
+    return corax_joint_impl(partition, operations, op_count, root_clv_index,
+                            root_other_clv_index, root_matrix_index,
+                            freqs_indices, node_probs, 20, 20);
+  if (states == 20 && sp == 24)
+    return corax_joint_impl(partition, operations, op_count, root_clv_index,
+                            root_other_clv_index, root_matrix_index,
+                            freqs_indices, node_probs, 20, 24);
+  return corax_joint_impl(partition, operations, op_count, root_clv_index,
+                          root_other_clv_index, root_matrix_index,
+                          freqs_indices, node_probs, states, sp);
 }
