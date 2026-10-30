@@ -23,8 +23,6 @@
 
 __thread corax_hardware_t corax_hardware = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static void dealloc_partition_data(corax_partition_t *partition);
-
 static void dealloc_partition_data(corax_partition_t *partition)
 {
   unsigned int i;
@@ -36,8 +34,6 @@ static void dealloc_partition_data(corax_partition_t *partition)
   free(partition->eigen_decomp_valid);
   if (partition->prop_invar) free(partition->prop_invar);
   if (partition->invariant) free(partition->invariant);
-  if (!partition->pattern_weights) free(partition->pattern_weights);
-  if (!partition->fp_weights) free(partition->fp_weights);
 
   if (partition->scale_buffer)
     for (i = 0; i < partition->scale_buffers; ++i)
