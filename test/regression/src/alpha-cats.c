@@ -35,9 +35,9 @@ unsigned int        params_indices[16]    = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static int modes[N_MODES] = {CORAX_GAMMA_RATES_MEDIAN, CORAX_GAMMA_RATES_MEAN,
-                             CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX};
+                             CORAX_GAMMA_RATES_DGM_STAR};
 
-static const char* mode_names[N_MODES] = {"MEDIAN", "MEAN", "LLOYD-MAX"};
+static const char* mode_names[N_MODES] = {"MEDIAN", "MEAN", "DGM-STAR"};
 
 int main(int argc, char *argv[])
 {

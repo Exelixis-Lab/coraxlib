@@ -160,13 +160,13 @@ static void BM_GammaCompute(benchmark::State& state, int mode, double alpha) {
 }
 BENCHMARK_CAPTURE(BM_GammaCompute, mean, CORAX_GAMMA_RATES_MEAN, 0.3)
     ->RangeMultiplier(2)->Range(2,10)->Unit(benchmark::TimeUnit::kMicrosecond);
-BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, 0.3)
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax, CORAX_GAMMA_RATES_DGM_STAR, 0.3)
     ->RangeMultiplier(2)->Range(2,10)->Unit(benchmark::TimeUnit::kMicrosecond);
-BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_min_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, CORAX_OPT_MIN_ALPHA)
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_min_α, CORAX_GAMMA_RATES_DGM_STAR, CORAX_OPT_MIN_ALPHA)
     ->Arg(4)->Unit(benchmark::TimeUnit::kMicrosecond);
-BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_max_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, CORAX_OPT_MAX_ALPHA)
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_max_α, CORAX_GAMMA_RATES_DGM_STAR, CORAX_OPT_MAX_ALPHA)
     ->Arg(4)->Unit(benchmark::TimeUnit::kMicrosecond);
-BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_extreme_α, CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX, 1e5)
+BENCHMARK_CAPTURE(BM_GammaCompute, lloydmax_extreme_α, CORAX_GAMMA_RATES_DGM_STAR, 1e5)
     ->Arg(4)->Unit(benchmark::TimeUnit::kMicrosecond);
 
 #define GET_TREE(DATA) GET_DATA(trees/DATA ## .newick)

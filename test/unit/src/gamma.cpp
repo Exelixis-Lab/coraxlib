@@ -69,7 +69,7 @@ TEST_P(GammaTest, lloyd_max_discretization) {
 
     vector<double> rate_weights(ncategories, 0), rates(ncategories, 0);
 
-    int ret = corax_compute_gamma_cats(alpha, ncategories, rates.data(), rate_weights.data(), CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX);
+    int ret = corax_compute_gamma_cats(alpha, ncategories, rates.data(), rate_weights.data(), CORAX_GAMMA_RATES_DGM_STAR);
     ASSERT_EQ(ret, CORAX_SUCCESS);
     const double wasserstein_lloyd_max = compute_wasserstein1(alpha, rate_weights, rates);
     RecordProperty("Lloyd-Max-Wasserstein1", wasserstein_lloyd_max);

@@ -304,9 +304,20 @@ CORAX_EXPORT int corax_compute_gamma_rates(double       alpha,
   return CORAX_SUCCESS;
 }
 
+/**
+ * Compute category rate starting values for DGM-Star.
+ *
+ * Refer to Equation (28) in the preprint for details.
+ *
+ * Sets the rate for each category k to ρₖ = F⁻¹(k / (K + 1))
+ * where
+ *   - K is the total number of categories
+ *   - F⁻¹ is the inverse CDF of the distribution Gamma((α+1)/3, α/3)
+ */
 static int
 lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
 {
+  assert(categories >= 1);
   unsigned int i;
 
   double alfa = (alpha + 1.0) / 3.0, beta = alpha / 3.0;
@@ -315,7 +326,7 @@ lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
   /* numerical instability caused by very small rate[0] values */
   /* induced by low alpha values around 0.01 */
 
-  if (alpha < ALPHA_MIN || categories < 1)
+  if (alpha < ALPHA_MIN)
   {
     corax_set_error(
         CORAX_ERROR_INVALID_PARAM, "Invalid alpha value (%f)", alpha);
@@ -335,42 +346,39 @@ lloyd_max_init_cats(double alpha, unsigned int categories, double *output_rates)
   return CORAX_SUCCESS;
 }
 
+/**
+Log-mean Lloyd-Max discretization of a Gamma distribution G(alpha, beta), also
+referred to as DGM-Star.
+
+Described in:
+    Sokolovskii, Roman, Christoph Stelz, Yuning Wang, et al. ‘DGM
+    Is Dead; Long Live DGM-Star! A Quantization-Theoretic Approach to Gamma
+    Rate Discretization’. Preprint, Evolutionary Biology, 31 October 2026.
+    https://doi.org/10.64898/2026.10.30.763052.
+
+Inputs:
+    alpha         Shape parameter of the Gamma distribution.
+    categories    Number of discrete categories/bins.
+
+Outputs:
+    output_weights[i]   Probability mass in Lloyd-Max bin i.
+                        These probabilities are generally not equal.
+    output_rates[i]     Representative rate for bin i.  In Lloyd-Max, this
+                        is the conditional mean/centroid of the Gamma
+                        distribution within that bin.
+*/
 static int compute_gamma_cats_lloyd_max(double       alpha,
                                         unsigned int categories,
                                         double      *output_rates,
                                         double      *output_weights)
 {
-  /*
-     Lloyd-Max discretization of a Gamma distribution G(alpha, beta).
-
-     This function has the same argument format as PAML's original
-     DiscreteGamma() function, but it produces a Lloyd-Max discretization
-     instead of forcing all bins to have equal probability.
-
-     Inputs:
-        alpha         Shape parameter of the Gamma distribution.
-        categories    Number of discrete categories/bins.
-
-     Outputs:
-        freqK[i]   Probability mass in Lloyd-Max bin i.
-                   These probabilities are generally not equal.
-        rK[i]      Representative rate for bin i.  In Lloyd-Max, this is
-                   the conditional mean/centroid of the Gamma distribution
-                   within that bin.
-
-     External functions/macros assumed to be available elsewhere:
-        QuantileGamma(prob, alpha, beta)
-        corax_compute_incomplete_gamma(x, alpha, ln_gamma_alpha)
-        malloc(), free(), fabs(), lgamma()
-
-  */
 
   unsigned int i, iter;
 
   /* Maximum number of Lloyd-Max iterations */
   const unsigned int max_iter = 1000;
 
-  /* Relative convergence tolerance for changes in rK[] */
+  /* Relative convergence tolerance for changes in output_rates[] */
   const double tol = 1e-4;
 
   double beta = alpha;
@@ -385,18 +393,23 @@ static int compute_gamma_cats_lloyd_max(double       alpha,
                       corresponding CDF values for a Gamma distribution with
                       shape alpha + 1.  The alpha + 1 terms are used to compute
                       the first moment inside a bin. */
-  double *bound;   /* Boundary array of length K + 1.  Do not explicitly store
-                      infinity in bound[K].   For the final bin, the upper CDF
-                      values are set directly to 1.0. */
+  double *bound = NULL;   /* Boundary array of length K + 1.  Do not explicitly store
+                             infinity in bound[K].   For the final bin, the upper CDF
+                             values are set directly to 1.0. */
+  int return_value = CORAX_SUCCESS;
 
-  if (categories <= 0 || alpha <= 0 || beta <= 0)
-    return (-1); /* Basic validity check */
+  if (categories <= 0 || alpha <= 0 || beta <= 0) {
+      corax_set_error(CORAX_ERROR_INVALID_PARAM,
+              "Invalid parameters to DGM-Star discretization, categories = %u, alpha = %f, beta = %f\n",
+              categories, alpha, beta);
+      return CORAX_FAILURE;
+  }
 
   assert(output_rates);
   assert(output_weights);
 
   /* temporary storage for bin boundaries */
-  bound = (double *)malloc((categories + 1) * sizeof(double));
+  bound = (double *) malloc((categories + 1) * sizeof(double));
 
   if (bound == 0)
   {
@@ -406,19 +419,10 @@ static int compute_gamma_cats_lloyd_max(double       alpha,
     return CORAX_FAILURE;
   }
 
-  /*
-     Initialization step.
-
-     Lloyd-Max needs an initial ordered set of representative values.  Here we
-     use the medians of K equal-probability Gamma intervals:
-
-        p_i = (2i + 1) / (2K)
-        rK[i] = Gamma quantile at p_i
-
-     These are not the final Lloyd-Max representatives.  They are just a simple,
-     stable, ordered starting point for the iteration.
-  */
-  lloyd_max_init_cats(alpha, categories, output_rates);
+  if (lloyd_max_init_cats(alpha, categories, output_rates) != CORAX_SUCCESS) {
+      return_value = CORAX_FAILURE;
+      goto cleanup;
+  }
 
   /* Main Lloyd-Max iteration. */
   for (iter = 0; iter < max_iter; iter++)
@@ -427,8 +431,9 @@ static int compute_gamma_cats_lloyd_max(double       alpha,
     /*
        Step 1: compute decision boundaries from current representatives.
 
-       For squared-error Lloyd-Max quantization, the boundary between two
-       adjacent representatives is the midpoint between them.
+       For log-mean Lloyd-Max quantization, the boundary between two
+       adjacent representatives is their logarithmic mean.
+       Refer to Equation (19) in the DGM-Star paper.
 
        The Gamma distribution has support [0, infinity), so the first lower
        boundary is 0.  The final upper boundary is infinity, handled later
@@ -450,12 +455,12 @@ static int compute_gamma_cats_lloyd_max(double       alpha,
 
        For bin i with lower boundary a and upper boundary b:
 
-          freqK[i] = P(a <= X < b)
+          output_weights[i] = P(a <= X < b)
                    = F_alpha(b) - F_alpha(a)
 
        The conditional mean is:
 
-          rK[i] = E[X | a <= X < b]
+          output_rates[i] = E[X | a <= X < b]
 
        For Gamma(alpha, beta), the partial first moment over [a,b] is:
 
@@ -464,9 +469,11 @@ static int compute_gamma_cats_lloyd_max(double       alpha,
 
        Therefore:
 
-          rK[i] = (alpha / beta)
-                  * [F_{alpha+1}(b) - F_{alpha+1}(a)]
-                  / [F_alpha(b) - F_alpha(a)]
+          output_rates[i] = (alpha / beta)
+                            * [F_{alpha+1}(b) - F_{alpha+1}(a)]
+                            / [F_alpha(b) - F_alpha(a)]
+
+       Refer to Equation (17) in the DGM-Star paper.
     */
     for (i = 0; i < categories; i++)
     {
@@ -547,12 +554,16 @@ static int compute_gamma_cats_lloyd_max(double       alpha,
                     "Failed to converge for Lloyd-Max quantization of gamma "
                     "distribution after %d iterations",
                     iter);
-    return CORAX_FAILURE;
+    return_value =  CORAX_FAILURE;
+    goto cleanup;
   }
 
-  free(bound); /* Release temporary storage */
+cleanup:
+  if (bound) {
+    free(bound); /* Release temporary storage */
+  }
 
-  return CORAX_SUCCESS;
+  return return_value;
 }
 
 CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
@@ -561,6 +572,8 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
                                           double      *output_weights,
                                           int          mode)
 {
+  assert(categories >= 1);
+
   switch (mode)
   {
     case CORAX_GAMMA_RATES_MEAN:
@@ -572,7 +585,7 @@ CORAX_EXPORT int corax_compute_gamma_cats(double       alpha,
           output_weights[c] = eq_weight;
       }
       return corax_compute_gamma_rates(alpha, categories, output_rates, mode);
-    case CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX:
+    case CORAX_GAMMA_RATES_DGM_STAR:
       return compute_gamma_cats_lloyd_max(alpha, categories, output_rates, output_weights);
     default:
       corax_set_error(CORAX_ERROR_INVALID_PARAM, "Invalid gamma mode %i", mode);

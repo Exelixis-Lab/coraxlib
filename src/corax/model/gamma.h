@@ -6,7 +6,7 @@
 /* GAMMA discretization modes */
 #define CORAX_GAMMA_RATES_MEAN 0
 #define CORAX_GAMMA_RATES_MEDIAN 1
-#define CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX 2
+#define CORAX_GAMMA_RATES_DGM_STAR 2
 
 #ifdef __cplusplus
 extern "C"
@@ -49,7 +49,7 @@ extern "C"
    * @param categories Number of categories
    * @param output_rates Pointer to array where category rates will be stored. Must be at least `categories` doubles long.
    * @param output_weights Pointer to array where category weights will be stored. Must be at least `categories` doubles long.
-   * @param rates_mode Either `CORAX_GAMMA_RATES_MEAN` or `CORAX_GAMMA_RATES_MEDIAN` or `CORAX_GAMMA_RATES_WEIGHTS_LLOYD_MAX`
+   * @param rates_mode Either `CORAX_GAMMA_RATES_MEAN` or `CORAX_GAMMA_RATES_MEDIAN` or `CORAX_GAMMA_RATES_DGM_STAR`
    *
    * @returns `CORAX_SUCCESS` if operation succeeded and substitution rates and weights were written, `CORAX_FAILURE` otherwise.
    */
